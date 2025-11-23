@@ -1,0 +1,259 @@
+/* Main container */
+.register-container {
+  width: 100%;
+  max-width: 450px;
+  padding: 20px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Logo section */
+.logo-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  justify-content: center;
+}
+
+.logo-container h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: 0.5px;
+}
+
+.logo-icon {
+  font-size: 24px;
+  color: #4f46e5;
+  margin-right: 8px;
+  background: #eef2ff;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+/* Registration card */
+.register-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 40px;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+
+/* Header section */
+.register-header {
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.register-header h2 {
+  margin: 0 0 8px 0;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.register-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* Form elements */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #111827;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  height: 42px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-group input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* Password input container */
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input input {
+  padding-right: 36px;
+  width: 100%;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.toggle-password:hover {
+  color: #6b7280;
+}
+
+/* Password strength indicator */
+.password-strength {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  width: 100%;
+}
+
+.strength-meter {
+  height: 4px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  margin: 6px 0 8px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.strength-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  transition: all 0.3s ease-in-out;
+}
+
+.strength-text {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 4px;
+  transition: color 0.3s ease-in-out;
+}
+
+/* Password strength color indicators */
+.strength-too-short { background-color: #ff4d4f; } /* Red */
+.strength-weak { background-color: #ffa940; }     /* Orange */
+.strength-good { background-color: #ffd666; }     /* Yellow */
+.strength-strong { background-color: #52c41a; }   /* Green */
+
+/* Submit button */
+.submit-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.submit-btn:hover {
+  background: #059669;
+}
+
+.submit-btn:active {
+  transform: translateY(1px);
+}
+
+/* Login link */
+.login-link {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.login-link a {
+  color: #10b981;
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 4px;
+  transition: color 0.2s;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+
+/* Footer links */
+.footer-links {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 12px;
+  color: #9ca3af;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.footer-links a {
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover {
+  color: #4b5563;
+  text-decoration: underline;
+}
+
+/* Add some responsive adjustments */
+@media (max-width: 480px) {
+  .register-card {
+    padding: 24px 20px;
+    margin: 0 16px;
+  }
+  
+  .register-header h2 {
+    font-size: 18px;
+  }
+  
+  .form-group input {
+    height: 40px;
+  }
+  
+  .submit-btn {
+    padding: 8px 12px;
+  }
+}
