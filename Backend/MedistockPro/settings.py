@@ -41,8 +41,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Authentication',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'drf_yasg',
     'corsheaders',
+    'inventory',
+    'django_filters'
 ]
 
 AUTH_USER_MODEL = "Authentication.CustomUser"
@@ -137,14 +140,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:5173",
 ]
 CORS_ALLOW_ALL_ORIGINS = True
 
 # JWT Configuration
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20
 }
 
 SIMPLE_JWT = {

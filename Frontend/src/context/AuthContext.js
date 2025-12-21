@@ -7,8 +7,6 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  // ... other auth functions like login ...
-
   const logout = async () => {
     try {
       const refreshToken = localStorage.getItem('refresh_token');
@@ -20,12 +18,11 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      setUser(null); // Clear user from state
+      setUser(null);
       window.location.href = '/login';
     }
   };
 
-  // ... rest of your context provider ...
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

@@ -7,12 +7,20 @@ from .managers import CustomUserManager
 
 
 class CustomUser(AbstractUser):
-    """
-    Custom user model with approval and registration status.
-    Used for login, dashboard, and registration workflow.
-    """
-    username = None  # Remove the username field
+
+    Role_Choices = (
+        ('admin', 'Admin'),
+        ('customer', 'Customer'),
+        ('delivery', 'Delivery Person')
+    )
+
+    username = None
     email = models.EmailField(_('email address'), unique=True)
+
+    role = models.CharField(
+        max_length= 20,
+        choices= Role_Choices
+    )
     is_approved = models.BooleanField(
         default=False,
         help_text="Indicates if the user is approved by admin."
@@ -52,7 +60,13 @@ class CustomUser(AbstractUser):
         return self.email
 
     def can_login(self):
-        """User can log in only if approved and registration complete."""
+        """
+        Check if user can login.
+        Admin users can login if they are active (no document verification needed).
+        Other users need to be approved and have completed registration.
+        """
+        if self.role == 'admin':
+            return self.is_active  # Admin only needs to be active
         return self.is_approved and self.registration_complete
 
 
@@ -70,17 +84,17 @@ class PharmacyDocument(models.Model):
     )
     pharmacy_license = models.FileField(
         upload_to='documents/pharmacy_license/',
-        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])],
         help_text="Upload pharmacy license document"
     )
     pan_number = models.FileField(
         upload_to='documents/pan/',
-        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])],
         help_text="Upload PAN card document"
     )
     citizenship = models.FileField(
         upload_to='documents/citizenship/',
-        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])],
         help_text="Upload citizenship document"
     )
     status = models.CharField(

@@ -4,6 +4,57 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api.js';
 import './Register.css';
 
+// Add the missing checkPasswordStrength function
+const checkPasswordStrength = (password) => {
+  if (!password) return { score: 0, message: 'Enter a password', color: '#e0e0e0' };
+  
+  let score = 0;
+  
+  // Check length
+  if (password.length >= 8) score += 1;
+  
+  // Check for lowercase
+  if (/[a-z]/.test(password)) score += 1;
+  
+  // Check for uppercase
+  if (/[A-Z]/.test(password)) score += 1;
+  
+  // Check for numbers
+  if (/[0-9]/.test(password)) score += 1;
+  
+  // Check for special characters
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+  
+  // Determine strength message and color
+  let message = '';
+  let color = '';
+  
+  if (score === 0) {
+    message = 'Enter a password';
+    color = '#e0e0e0';
+  } else if (score === 1) {
+    message = 'Very Weak';
+    color = '#ff4444';
+  } else if (score === 2) {
+    message = 'Weak';
+    color = '#ff8800';
+  } else if (score === 3) {
+    message = 'Fair';
+    color = '#ffbb33';
+  } else if (score === 4) {
+    message = 'Good';
+    color = '#00C851';
+  } else {
+    message = 'Strong';
+    color = '#007E33';
+  }
+  
+  return { score, message, color };
+};
+
+
+
+
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -12,7 +63,8 @@ const Register = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'customer' // Default to customer
   });
 
   const [passwordStrength, setPasswordStrength] = useState({
@@ -21,57 +73,7 @@ const Register = () => {
     color: '#e0e0e0'
   });
 
-  const checkPasswordStrength = (password) => {
-    let score = 0;
-    let message = '';
-    let color = '#e0e0e0';
-
-    if (password.length === 0) {
-      return { score: 0, message: '', color: '#e0e0e0' };
-    } else if (password.length < 6) {
-      score = 1;
-      message = 'Too short';
-      color = '#ff4d4f';
-    } else if (password.length < 8) {
-      score = 2;
-      message = 'Weak';
-      color = '#ffa940';
-    } else if (password.length < 10) {
-      score = 3;
-      message = 'Good';
-      color = '#ffd666';
-    } else {
-      score = 4;
-      message = 'Strong';
-      color = '#52c41a';
-    }
-
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasUpperCase = /[A-Z]/.test(password);
-
-    if (hasSpecialChar) score = Math.min(score + 1, 4);
-    if (hasNumber) score = Math.min(score + 0.5, 4);
-    if (hasUpperCase) score = Math.min(score + 0.5, 4);
-
-    score = Math.round(score);
-
-    if (score === 1) {
-      message = 'Too short';
-      color = '#ff4d4f';
-    } else if (score === 2) {
-      message = 'Weak';
-      color = '#ffa940';
-    } else if (score === 3) {
-      message = 'Good';
-      color = '#ffd666';
-    } else if (score === 4) {
-      message = 'Strong';
-      color = '#52c41a';
-    }
-
-    return { score, message, color };
-  };
+  // ... keep your existing checkPasswordStrength function ...
 
   useEffect(() => {
     if (formData.password) {
@@ -102,11 +104,21 @@ const Register = () => {
         email: formData.email,
         password: formData.password,
         password_confirm: formData.confirmPassword,
+        role: formData.role
       });
 
       console.log("Response:", res.data);
-      // Navigate to documents page with the user ID
-      navigate(`/documents?user_id=${res.data.user_id}`);
+      
+      
+      if (formData.role === 'customer') {
+        // Customer needs to upload documents
+        navigate(`/documents?user_id=${res.data.user_id}`);
+      } else if (formData.role === 'delivery') {
+        // Delivery person goes directly to login
+        alert('Registration successful! Please login with your credentials.');
+        navigate('/login');
+      }
+      
     } catch (err) {
       if (err.response) {
         alert("Error: " + JSON.stringify(err.response.data));
@@ -117,107 +129,127 @@ const Register = () => {
   };
 
   return (
-    <div className="register-container">
-      <div className="logo-container">
-        <FaShieldAlt className="logo-icon" />
-        <h1>MediStock Pro</h1>
-      </div>
-
-      <div className="register-card">
-        <div className="register-header">
-          <h2>Create Your Account</h2>
-          <p>Join our network of trusted retailers and wholesalers.</p>
+    <div className='body'>
+      <div className="register-container">
+        <div className="logo-container">
+          <FaShieldAlt className="logo-icon" />
+          <h1>MediStock Pro</h1>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="name@company.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+        <div className="register-card">
+          <div className="register-header">
+            <h2>Create Your Account</h2>
+            <p>Select your role to get started</p>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <div className="password-input">
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
               <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                name="password"
-                placeholder="Enter your password"
-                value={formData.password}
+                type="email"
+                id="email"
+                name="email"
+                placeholder="name@company.com"
+                value={formData.email}
                 onChange={handleChange}
                 required
               />
-              <span
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
             </div>
 
-            <div className="password-strength">
-              <div className="strength-meter">
-                <div
-                  className="strength-bar"
-                  style={{
-                    width: `${passwordStrength.score * 25}%`,
-                    backgroundColor: passwordStrength.color,
-                    transition: 'all 0.3s ease-in-out'
-                  }}
-                ></div>
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <div className="password-input">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <span
+                  className="toggle-password"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </span>
               </div>
 
-              {passwordStrength.message && (
-                <span className="strength-text" style={{ color: passwordStrength.color }}>
-                  Password Strength: {passwordStrength.message}
+              <div className="password-strength">
+                <div className="strength-meter">
+                  <div
+                    className="strength-bar"
+                    style={{
+                      width: `${passwordStrength.score * 25}%`,
+                      backgroundColor: passwordStrength.color,
+                      transition: 'all 0.3s ease-in-out'
+                    }}
+                  ></div>
+                </div>
+
+                {passwordStrength.message && (
+                  <span className="strength-text" style={{ color: passwordStrength.color }}>
+                    Password Strength: {passwordStrength.message}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <div className="password-input">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  placeholder="Confirm your password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+                <span
+                  className="toggle-password"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                 </span>
-              )}
+              </div>
             </div>
-          </div>
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <div className="password-input">
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                id="confirmPassword"
-                name="confirmPassword"
-                placeholder="Confirm your password"
-                value={formData.confirmPassword}
+            {/* Role Selection */}
+            <div className="form-group">
+              <label htmlFor="role">Select Your Role</label>
+              <div className="role-info-text">
+              </div>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
                 onChange={handleChange}
+                className="role-dropdown"
                 required
-              />
-              <span
-                className="toggle-password"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
-                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
+                <option value="customer">Customer</option>
+                <option value="delivery">Delivery Person</option>
+              </select>
             </div>
+
+            <button type="submit" className="submit-btn">
+              Register
+            </button>
+          </form>
+
+          <div className="login-link">
+            Already have an account? <Link to="/login">Log In</Link>
           </div>
-
-          <button type="submit" className="submit-btn">
-            Next
-          </button>
-        </form>
-
-        <div className="login-link">
-          Already have an account? <Link to="/login">Log In</Link>
         </div>
-      </div>
 
-      <div className="footer-links">
-        <a href="#">Terms of Service</a>
-        <span> · </span>
-        <a href="#">Privacy Policy</a>
+        <div className="footer-links">
+          <a href="#">Terms of Service</a>
+          <span> · </span>
+          <a href="#">Privacy Policy</a>
+        </div>
       </div>
     </div>
   );

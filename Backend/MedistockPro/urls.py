@@ -45,6 +45,8 @@ urlpatterns = [
 
     # Protected endpoints
     path('api/dashboard/', views.dashboard, name='dashboard'),
+    path('api/inventory/', include('inventory.urls')),
+    path('inventory/', include('inventory.urls')),  # Also support /inventory/ for frontend compatibility
 ]
 
 # Serve media files in development

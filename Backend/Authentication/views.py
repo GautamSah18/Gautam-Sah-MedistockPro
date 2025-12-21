@@ -4,8 +4,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.exceptions import AuthenticationFailed
 from django.core.cache import cache
 from .models import CustomUser
 from .forms import RegistrationStep1Form, RegistrationStep2Form, LoginForm
@@ -16,12 +14,20 @@ from .forms import RegistrationStep1Form, RegistrationStep2Form, LoginForm
 def registration_step1(request):
     """Step 1 registration (API)"""
     form = RegistrationStep1Form(request.data)
+
+    role = request.data.get('role')
+    if role == 'admin':
+        return Response({
+            "error": "Admin role cannot be selected during registration.",
+            "allowed_roles": ["customer", "delivery"]
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
     if form.is_valid():
         user = form.save(commit=True)
         user.is_active = True
         # Store registration user ID in cache instead of session
         registration_key = f'registration_{user.id}'
-        cache.set(registration_key, user.id, timeout=3600)  # 1 hour expiry
+        cache.set(registration_key, user.id, timeout=3600)
         return Response({
             "message": "Account created! Please upload your documents.",
             "user_id": user.id
@@ -34,13 +40,13 @@ def registration_step1(request):
 def registration_step2(request):
     """Step 2: Document upload (API)"""
     try:
-        # Debug logging
-        print("Request data:", request.data)  # Debug log
-        print("Request FILES:", request.FILES)  # Debug log
+        
+        print("Request data:", request.data)
+        print("Request FILES:", request.FILES)
         
         # Get and validate user_id
         user_id = request.data.get('user_id')
-        print("Raw user_id from request:", user_id, "Type:", type(user_id))  # Debug log
+        print("Raw user_id from request:", user_id, "Type:", type(user_id))
         
         if not user_id:
             return Response({
@@ -48,7 +54,7 @@ def registration_step2(request):
                 "code": "missing_user_id"
             }, status=status.HTTP_400_BAD_REQUEST)
             
-        # Convert user_id to integer if it's a string
+        
         try:
             user_id = int(user_id)
         except (ValueError, TypeError):
@@ -107,6 +113,10 @@ def registration_step2(request):
                 documents = form.save(commit=False)
                 documents.user = user
                 documents.save()
+                # Mark registration as complete and clear cache
+                user.registration_complete = True
+                user.save()
+                cache.delete(registration_key)
                 return Response({"message": "Documents uploaded successfully. Waiting for admin approval."}, status=status.HTTP_201_CREATED)
             except Exception as e:
                 return Response({"error": f"Error saving documents: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -120,28 +130,53 @@ def registration_step2(request):
 
     except Exception as e:
         return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        user.registration_complete = True
-        user.save()
-        cache.delete(registration_key)
-        return Response({"message": "Documents uploaded successfully!"}, status=status.HTTP_201_CREATED)
-        
-        return Response({"error": form.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def user_login(request):
-    """Login API with JWT"""
+    "Login API with JWT"
     form = LoginForm(request.data)
+
     if form.is_valid():
+        
         email = form.cleaned_data['email']
         password = form.cleaned_data['password']
+        role = form.cleaned_data['role']
         user = authenticate(request, username=email, password=password)
+
+        if not user:
+         return Response(
+            {"error": "Invalid email or password."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
         
+        if user.role != role:
+         return Response(
+            {"error": "Invalid role selected for this account."},
+            status=status.HTTP_403_FORBIDDEN
+        )
         if user:
+            # Admin users can login without document verification
+            if user.role == 'admin':
+                if user.is_active:
+                    refresh = RefreshToken.for_user(user)
+                    return Response({
+                        "message": f"Welcome, {user.email}!",
+                        "access": str(refresh.access_token),
+                        "refresh": str(refresh),
+                        "user": {
+                            "id": user.id,
+                            "email": user.email,
+                            "role": user.role,
+                            "is_approved": user.is_approved,
+                            "registration_complete": user.registration_complete
+                        }
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response({"error": "Account is inactive. Please contact administrator."}, status=status.HTTP_403_FORBIDDEN)
+            
+            # For non-admin users, check registration and approval status
             if user.can_login():
                 refresh = RefreshToken.for_user(user)
                 return Response({
@@ -151,6 +186,7 @@ def user_login(request):
                     "user": {
                         "id": user.id,
                         "email": user.email,
+                        "role": user.role,
                         "is_approved": user.is_approved,
                         "registration_complete": user.registration_complete
                     }
@@ -172,17 +208,38 @@ def user_login(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard(request):
-    """Dashboard API for authenticated users"""
     user = request.user
-    documents = getattr(user, 'documents', None)
-    documents_data = {
-        "uploaded": bool(documents),
-        "details": str(documents) if documents else None
+
+    base_data = {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role
     }
-    return Response({
-        "user": {"id": user.id, "email": user.email, "is_active": user.is_active},
-        "documents": documents_data
-    })
+
+    if user.role == "admin":
+        return Response({
+            "dashboard": "admin",
+            "user": base_data,
+        })
+
+    if user.role == "customer":
+        documents = getattr(user, 'documents', None)
+        return Response({
+            "dashboard": "customer",
+            "user": base_data,
+            "documents_uploaded": bool(documents),
+        })
+
+    if user.role == "delivery":
+        return Response({
+            "dashboard": "delivery",
+            "user": base_data,
+        })
+
+    return Response(
+        {"error": "Invalid role"},
+        status=status.HTTP_400_BAD_REQUEST
+    )
 
 
 @api_view(['POST'])

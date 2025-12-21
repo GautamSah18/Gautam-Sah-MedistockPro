@@ -3,7 +3,12 @@ from .models import CustomUser, PharmacyDocument
 
 
 class RegistrationStep1Form(forms.ModelForm):
-    """Step 1: Email, and password registration"""
+    """Step 1: Email, password, and role registration"""
+    ROLE_CHOICES = (
+        ('customer', 'Customer'),
+        ('delivery', 'Delivery Person'),
+    )
+
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter your password'}),
         min_length=8,
@@ -13,13 +18,17 @@ class RegistrationStep1Form(forms.ModelForm):
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm your password'}),
         label='Confirm Password'
     )
+    role = forms.ChoiceField(
+        choices=ROLE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Select Role'
+    )
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password']
+        fields = ['email', 'password', 'role']
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter your email'}),
-            
         }
 
     def clean_email(self):
@@ -38,6 +47,7 @@ class RegistrationStep1Form(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
+        user.role = self.cleaned_data['role']
         if commit:
             user.save()
         return user
@@ -49,9 +59,9 @@ class RegistrationStep2Form(forms.ModelForm):
         model = PharmacyDocument
         fields = ['pharmacy_license', 'pan_number', 'citizenship']
         widgets = {
-            'pharmacy_license': forms.FileInput(attrs={'class': 'form-control', 'accept':'.jpg,.jpeg,.png'}),
-            'pan_number': forms.FileInput(attrs={'class': 'form-control', 'accept':'.jpg,.jpeg,.png'}),
-            'citizenship': forms.FileInput(attrs={'class': 'form-control', 'accept':'.jpg,.jpeg,.png'}),
+            'pharmacy_license': forms.FileInput(attrs={'class': 'form-control', 'accept': '.jpg,.jpeg,.png'}),
+            'pan_number': forms.FileInput(attrs={'class': 'form-control', 'accept': '.jpg,.jpeg,.png'}),
+            'citizenship': forms.FileInput(attrs={'class': 'form-control', 'accept': '.jpg,.jpeg,.png'}),
         }
         labels = {
             'pharmacy_license': 'Pharmacy License Document',
@@ -59,13 +69,19 @@ class RegistrationStep2Form(forms.ModelForm):
             'citizenship': 'Citizenship Document',
         }
         help_texts = {
-            'pharmacy_license': 'Upload a valid pharmacy license document (PDF, JPG, PNG)',
-            'pan_number': 'Upload your PAN card document (PDF, JPG, PNG)',
-            'citizenship': 'Upload your citizenship document (PDF, JPG, PNG)',
+            'pharmacy_license': 'Upload a valid pharmacy license document (JPG, PNG)',
+            'pan_number': 'Upload your PAN card document (JPG, PNG)',
+            'citizenship': 'Upload your citizenship document (JPG, PNG)',
         }
 
 
 class LoginForm(forms.Form):
-    """Login form using email"""
+    ROLE_CHOICES = (
+        ('admin', 'Admin'),
+        ('customer', 'Customer'),
+        ('delivery', 'Delivery Person'),
+    )
+
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter your email'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter your password'}))
+    role = forms.ChoiceField(choices=ROLE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}), label='Select Role')

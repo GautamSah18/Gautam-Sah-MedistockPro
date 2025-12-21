@@ -1,8 +1,7 @@
-import React, { useState, useRef } from "react";
-import "./Document.css";
+import { useRef, useState } from "react";
 import { FaCheckCircle, FaTimesCircle, FaUpload } from "react-icons/fa";
 import api from '../services/api.js'; // make sure this path is correct
-import { useNavigate } from "react-router-dom";
+import "./Document.css";
 
 const DOCUMENT_TYPES = {
   PAN: 'shopPanCard',
