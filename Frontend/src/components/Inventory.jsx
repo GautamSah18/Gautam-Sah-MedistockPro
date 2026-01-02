@@ -123,29 +123,134 @@ const Inventory = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Prepare data for API - convert empty strings to null/undefined and strings to numbers
+      const formData = { ...currentMedicine };
+      
+      // Convert empty category string to null
+      if (formData.category === '' || formData.category === null) {
+        formData.category = null;
+      } else {
+        // Convert category ID to number if it's a string
+        formData.category = parseInt(formData.category) || null;
+      }
+      
+      // Convert numeric fields from strings to numbers
+      const numericFields = ['stock', 'min_stock', 'max_stock', 'cost_price', 'selling_price', 'mrp'];
+      numericFields.forEach(field => {
+        if (formData[field] !== '' && formData[field] !== null && formData[field] !== undefined) {
+          formData[field] = parseFloat(formData[field]) || 0;
+        } else if (field === 'stock' || field === 'min_stock' || field === 'max_stock') {
+          formData[field] = 0;
+        } else {
+          // For price fields, keep as is if empty (will be validated by backend)
+          formData[field] = formData[field] === '' ? null : formData[field];
+        }
+      });
+      
+      // Convert empty strings to null for optional text fields
+      const optionalTextFields = ['generic_name', 'description', 'storage_conditions'];
+      optionalTextFields.forEach(field => {
+        if (formData[field] === '') {
+          formData[field] = null;
+        }
+      });
+      
+      // Remove fields that shouldn't be sent
+      delete formData.id;
+      delete formData.created_at;
+      delete formData.updated_at;
+      delete formData.category_name;
+      delete formData.status; // Status is read-only and auto-calculated
+      
       if (isEditMode) {
         // Update existing medicine
-        const response = await api.put(`/inventory/medicines/${currentMedicine.id}/`, currentMedicine);
+        const response = await api.put(`/inventory/medicines/${currentMedicine.id}/`, formData);
         setMedicines(medicines.map(medicine =>
           medicine.id === currentMedicine.id ? response.data : medicine
         ));
       } else {
         // Add new medicine
-        const response = await api.post('/inventory/medicines/', currentMedicine);
+        const response = await api.post('/inventory/medicines/', formData);
         setMedicines([...medicines, response.data]);
       }
       setIsModalOpen(false);
+      // Reset form
+      setCurrentMedicine({
+        name: '',
+        generic_name: '',
+        company: '',
+        category_type: 'Tablet',
+        category: '',
+        batch_no: '',
+        manufacture_date: '',
+        expiry_date: '',
+        stock: '',
+        min_stock: '10',
+        max_stock: '1000',
+        unit: 'strip',
+        cost_price: '',
+        selling_price: '',
+        mrp: '',
+        status: 'In Stock',
+        is_active: true,
+        description: '',
+        storage_conditions: '',
+        created_by: '',
+        updated_by: ''
+      });
+      setIsEditMode(false);
     } catch (error) {
       console.error('Error saving medicine:', error);
-      alert('Failed to save medicine');
+      // Show detailed error message from backend
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        let errorMessage = 'Failed to save medicine:\n';
+        
+        // Format validation errors
+        if (typeof errorData === 'object') {
+          Object.keys(errorData).forEach(key => {
+            const value = errorData[key];
+            if (Array.isArray(value)) {
+              errorMessage += `${key}: ${value.join(', ')}\n`;
+            } else if (typeof value === 'string') {
+              errorMessage += `${key}: ${value}\n`;
+            } else {
+              errorMessage += `${key}: ${JSON.stringify(value)}\n`;
+            }
+          });
+        } else {
+          errorMessage += errorData;
+        }
+        
+        alert(errorMessage);
+      } else {
+        alert('Failed to save medicine. Please check the console for details.');
+      }
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Handle numeric fields - keep as string for input but validate
+    const numericFields = ['stock', 'min_stock', 'max_stock', 'cost_price', 'selling_price', 'mrp'];
+    let processedValue = value;
+    
+    if (type === 'checkbox') {
+      processedValue = checked;
+    } else if (numericFields.includes(name)) {
+      // For numeric fields, allow empty string or valid number
+      if (value === '' || !isNaN(value)) {
+        processedValue = value;
+      } else {
+        return; // Don't update if invalid number
+      }
+    }
+    // Keep category as string in state - will be converted to null/number on submit
+    
     setCurrentMedicine({
       ...currentMedicine,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: processedValue
     });
   };
 

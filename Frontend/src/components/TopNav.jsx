@@ -1,0 +1,147 @@
+import { useMemo, useState } from "react";
+import {
+    FaBell,
+    FaClock,
+    FaSearch,
+    FaShoppingCart,
+    FaTag,
+    FaTruck,
+    FaUndo,
+    FaUser,
+} from "react-icons/fa";
+import { Link, NavLink } from "react-router-dom";
+import "./customerDashboard.css";
+
+const demoNotifications = [
+  { id: 1, icon: <FaTruck />, title: "Order #1023", text: "Dispatched — arriving soon." },
+  { id: 2, icon: <FaClock />, title: "Credit Due", text: "Your credit bill is due in 10 days." },
+  { id: 3, icon: <FaUndo />, title: "Expiry Return", text: "Return request approved for 2 items." },
+  { id: 4, icon: <FaTag />, title: "New Scheme", text: "Flat 10% off on Pain Relief medicines." },
+];
+
+export default function TopNav({
+  searchValue = "",
+  onSearchChange = () => {},
+  showSearch = true,
+  cartCount = 0,
+  onCartClick = () => {},
+}) {
+  const [open, setOpen] = useState(false);
+  const [seen, setSeen] = useState(false);
+
+  const badgeCount = useMemo(() => (seen ? 0 : demoNotifications.length), [seen]);
+
+  return (
+    <header className="mdp-nav">
+      <div className="mdp-nav__left">
+        {/* FIXED: brand goes to customer dashboard */}
+        <Link to="/customerDashboard" className="brand-pill">
+          <span className="brand-icon">✚</span>
+          <span className="brand-text">Medistock Pro</span>
+        </Link>
+      </div>
+
+      <nav className="mdp-nav__center">
+        {/* FIXED: all routes match App.jsx */}
+        <NavLink
+          to="/customerDashboard"
+          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+        >
+          Home
+        </NavLink>
+
+        <NavLink
+          to="/customer/categories"
+          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+        >
+          Categories
+        </NavLink>
+
+        <NavLink
+          to="/customer/prescriptions"
+          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+        >
+          Prescriptions
+        </NavLink>
+
+        <NavLink
+          to="/customer/orders"
+          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+        >
+          Orders
+        </NavLink>
+
+        <NavLink
+          to="/customer/returns"
+          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+        >
+          Expiry Return
+        </NavLink>
+      </nav>
+
+      <div className="mdp-nav__right">
+        {showSearch ? (
+          <div className="search">
+            <FaSearch className="search-ic" />
+            <input
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search for medicines..."
+            />
+          </div>
+        ) : (
+          <div className="nav-spacer" />
+        )}
+
+        {/* Notifications */}
+        <div className="notif-wrap">
+          <button
+            className="icon-btn notif-btn"
+            aria-label="Notifications"
+            onClick={() => {
+              setOpen((v) => !v);
+              setSeen(true);
+            }}
+          >
+            <FaBell />
+            {badgeCount > 0 ? <span className="notif-badge">{badgeCount}</span> : null}
+          </button>
+
+          <div className={`notif-dd ${open ? "open" : ""}`}>
+            <div className="notif-head">
+              <div className="notif-title">Notifications</div>
+              <button className="notif-clear" onClick={() => setSeen(true)}>
+                Mark all read
+              </button>
+            </div>
+
+            <div className="notif-list">
+              {demoNotifications.map((n) => (
+                <div className="notif-item" key={n.id}>
+                  <div className="notif-ic">{n.icon}</div>
+                  <div>
+                    <div className="notif-item-title">{n.title}</div>
+                    <div className="notif-item-text">{n.text}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {open ? <div className="notif-backdrop" onClick={() => setOpen(false)} /> : null}
+        </div>
+
+        {/* Cart */}
+        <button className="icon-btn cart-btn" aria-label="Cart" onClick={onCartClick}>
+          <FaShoppingCart />
+          {cartCount > 0 ? <span className="cart-badge">{cartCount}</span> : null}
+        </button>
+
+        {/* FIXED: no /account route, so point to dashboard for now */}
+        <Link className="icon-btn" aria-label="Account" to="/customerDashboard">
+          <FaUser />
+        </Link>
+      </div>
+    </header>
+  );
+}
