@@ -1,7 +1,7 @@
 import { useState } from "react";
-import TopNav from "../components/TopNav";
+import { FaBoxOpen, FaHome, FaTruck } from "react-icons/fa";
 import "./CustomerDashboard.css";
-import { FaBoxOpen, FaTruck, FaHome } from "react-icons/fa";
+import TopNav from "./TopNav";
 
 const orders = [
   { id: "1023", date: "2025-12-28", amount: 20000, status: "Dispatch", items: 6 },

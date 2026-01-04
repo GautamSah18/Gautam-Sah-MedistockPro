@@ -1,25 +1,25 @@
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useLayoutEffect, useState } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "./App.css";
 
 // Auth
-import LoginPage from "./components/LoginPage";
-import Register from "./components/Register";
+import LoginPage from "./components/pages/Login/LoginPage";
+import Register from "./components/pages/Login/Register";
 
 // Docs
-import Document from "./components/Document";
+import Document from "./components/pages/Login/Document";
 
 // Admin
-import Dashboard from "./components/Dashboard";
-import Inventory from "./components/Inventory";
-import Billing from "./components/Billing";
+import Billing from "./components/pages/Dashboard/Billing";
+import Dashboard from "./components/pages/Dashboard/Dashboard";
+import Inventory from "./components/pages/Inventory/Inventory";
 
 // Customer
-import CustomerDashboard from "./components/customerDashboard";
-import CustomerCategories from "./components/CustomerCategories";
-import CustomerPrescriptions from "./components/CustomerPrescriptions";
-import Orders from "./components/Orders";
-import ExpiryReturn from "./components/ExpiryReturn";
+import CustomerCategories from "./components/pages/Dashboard/CustomerCategories";
+import CustomerDashboard from "./components/pages/Dashboard/customerDashboard";
+import CustomerPrescriptions from "./components/pages/Dashboard/CustomerPrescriptions";
+import ExpiryReturn from "./components/pages/Dashboard/ExpiryReturn";
+import Orders from "./components/pages/Dashboard/Orders";
 
 function RouteLoader({ children }) {
   const location = useLocation();

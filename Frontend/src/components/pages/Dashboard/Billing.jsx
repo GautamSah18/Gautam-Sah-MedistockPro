@@ -1,5 +1,5 @@
-import TopNav from "../components/TopNav";
 import "./CustomerDashboard.css";
+import TopNav from "./TopNav";
 
 const invoice = {
   no: "INV-2025-1228",

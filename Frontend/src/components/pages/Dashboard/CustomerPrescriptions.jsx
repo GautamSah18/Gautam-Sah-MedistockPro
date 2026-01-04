@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { FaCloudUploadAlt, FaFilePdf, FaImage, FaPaperPlane } from "react-icons/fa";
 import TopNav from "./TopNav";
 import "./customerDashboard.css";
-import { FaCloudUploadAlt, FaFilePdf, FaImage, FaPaperPlane } from "react-icons/fa";
 
 export default function CustomerPrescriptions() {
   const [fileName, setFileName] = useState("");

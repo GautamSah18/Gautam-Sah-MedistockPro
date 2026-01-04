@@ -15,7 +15,7 @@
   width: 100%;
   max-width: 450px;
   padding: 20px;
-  margin: 0 auto;
+  margin: 0 420px 0 0;
   box-sizing: border-box;
   transform: translateX(200px);
 }
@@ -23,7 +23,7 @@
 .logo-container {
   text-align: center;
   margin-bottom: 30px;
-  color: white;
+  color: rgb(5, 0, 0);
 }
 
 .logo-icon {

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { FaCheckCircle, FaTimesCircle, FaUpload } from "react-icons/fa";
-import api from '../services/api.js'; // make sure this path is correct
+import api from '../../../services/api.js'; // make sure this path is correct
 import "./Document.css";
 
 const DOCUMENT_TYPES = {

@@ -1,17 +1,17 @@
 import { useMemo, useState } from "react";
-import "./customerDashboard.css";
 import TopNav from "./TopNav";
+import "./customerDashboard.css";
 
 import {
-  FaStar,
-  FaRegStar,
-  FaStarHalfAlt,
-  FaCommentDots,
-  FaTimes,
-  FaMinus,
-  FaPlus,
-  FaCreditCard,
-  FaMoneyBillWave,
+    FaCommentDots,
+    FaCreditCard,
+    FaMinus,
+    FaMoneyBillWave,
+    FaPlus,
+    FaRegStar,
+    FaStar,
+    FaStarHalfAlt,
+    FaTimes,
 } from "react-icons/fa";
 
 /* ---- DATA ---- */

@@ -34,7 +34,7 @@ export default function TopNav({
   return (
     <header className="mdp-nav">
       <div className="mdp-nav__left">
-        {/* FIXED: brand goes to customer dashboard */}
+    
         <Link to="/customerDashboard" className="brand-pill">
           <span className="brand-icon">✚</span>
           <span className="brand-text">Medistock Pro</span>
@@ -137,7 +137,6 @@ export default function TopNav({
           {cartCount > 0 ? <span className="cart-badge">{cartCount}</span> : null}
         </button>
 
-        {/* FIXED: no /account route, so point to dashboard for now */}
         <Link className="icon-btn" aria-label="Account" to="/customerDashboard">
           <FaUser />
         </Link>

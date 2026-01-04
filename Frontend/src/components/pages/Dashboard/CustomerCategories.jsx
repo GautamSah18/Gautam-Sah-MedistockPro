@@ -1,15 +1,15 @@
 import { useMemo, useState } from "react";
+import {
+  FaAllergies,
+  FaAppleAlt,
+  FaArrowRight,
+  FaBandAid,
+  FaCapsules,
+  FaClinicMedical,
+  FaSyringe,
+} from "react-icons/fa";
 import TopNav from "./TopNav";
 import "./customerDashboard.css";
-import {
-  FaBandAid,
-  FaSyringe,
-  FaCapsules,
-  FaAppleAlt,
-  FaAllergies,
-  FaClinicMedical,
-  FaArrowRight,
-} from "react-icons/fa";
 
 const CATEGORY_DATA = [
   { id: 1, name: "Pain Relief", icon: <FaBandAid />, desc: "Fever, headache, body pain" },

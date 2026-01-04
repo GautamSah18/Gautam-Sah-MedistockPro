@@ -1,6 +1,6 @@
 import { useState } from "react";
-import TopNav from "../components/TopNav";
 import "./CustomerDashboard.css";
+import TopNav from "./TopNav";
 
 const initialHistory = [
   { id: "R-201", medicine: "Amoxicillin 250mg", expiry: "2026-01-10", qty: 4, status: "Pending" },

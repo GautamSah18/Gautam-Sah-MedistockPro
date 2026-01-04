@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { FaEye, FaEyeSlash, FaShieldAlt, FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaEye, FaEyeSlash, FaShieldAlt } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../services/api.js';
+import api from '../../../services/api.js';
 import './LoginPage.css';
 
 const Login = () => {
