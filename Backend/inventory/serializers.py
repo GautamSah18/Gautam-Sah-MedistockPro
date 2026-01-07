@@ -37,6 +37,19 @@ class MedicineSerializer(serializers.ModelSerializer):
         
         return data
 
+class PublicMedicineSerializer(serializers.ModelSerializer):
+    """Simplified serializer for public medicine view"""
+    category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = Medicine
+        fields = [
+            'id', 'name', 'generic_name', 'company', 'category_type', 'category',
+            'category_name', 'stock', 'unit', 'selling_price', 'mrp', 'status', 
+            'description', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['status', 'created_at', 'updated_at']
+
 class StockUpdateSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(min_value=1)
     action = serializers.ChoiceField(choices=['ADD', 'REMOVE', 'SET'])

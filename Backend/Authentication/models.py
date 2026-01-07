@@ -29,6 +29,7 @@ class CustomUser(AbstractUser):
         default=False,
         help_text="Indicates if user has uploaded all required documents."
     )
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

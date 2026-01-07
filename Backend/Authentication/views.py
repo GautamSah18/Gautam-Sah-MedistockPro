@@ -5,7 +5,9 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.cache import cache
+from django.core.files.storage import default_storage
 from .models import CustomUser
+from .serializers import UserProfileSerializer
 from .forms import RegistrationStep1Form, RegistrationStep2Form, LoginForm
 
 
@@ -259,3 +261,44 @@ def logout_view(request):
         return Response({"message": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def user_profile(request):
+    """Get or update user profile information"""
+    user = request.user
+    
+    if request.method == 'GET':
+        serializer = UserProfileSerializer(user)
+        profile_data = serializer.data.copy()
+        profile_data['id'] = user.id
+        profile_data['email'] = user.email
+        profile_data['role'] = user.role
+        profile_data['profile_picture'] = request.build_absolute_uri(user.profile_picture.url) if hasattr(user, 'profile_picture') and user.profile_picture else None
+        return Response(profile_data, status=status.HTTP_200_OK)
+    
+    elif request.method in ['PUT', 'PATCH']:
+        # Prepare data for serializer, excluding read-only fields that shouldn't be updated
+        update_data = {}
+        if 'first_name' in request.data:
+            update_data['first_name'] = request.data['first_name']
+        if 'last_name' in request.data:
+            update_data['last_name'] = request.data['last_name']
+        
+        # Handle profile picture separately if in FILES
+        if 'profile_picture' in request.FILES:
+            update_data['profile_picture'] = request.FILES['profile_picture']
+        
+        # Update fields using serializer
+        serializer = UserProfileSerializer(user, data=update_data, partial=request.method == 'PATCH')
+        if serializer.is_valid():
+            serializer.save()
+            profile_data = serializer.data.copy()
+            profile_data['id'] = user.id
+            profile_data['email'] = user.email
+            profile_data['role'] = user.role
+            profile_data['profile_picture'] = request.build_absolute_uri(user.profile_picture.url) if hasattr(user, 'profile_picture') and user.profile_picture else None
+            return Response(profile_data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

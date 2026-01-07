@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext.jsx";
 import "./App.css";
 
 // Auth
@@ -20,6 +21,7 @@ import CustomerDashboard from "./components/pages/Dashboard/customerDashboard";
 import CustomerPrescriptions from "./components/pages/Dashboard/CustomerPrescriptions";
 import ExpiryReturn from "./components/pages/Dashboard/ExpiryReturn";
 import Orders from "./components/pages/Dashboard/Orders";
+import ProfileManagement from "./components/pages/Dashboard/ProfileManagement";
 
 function RouteLoader({ children }) {
   const location = useLocation();
@@ -27,9 +29,9 @@ function RouteLoader({ children }) {
 
   useLayoutEffect(() => {
     setLoading(true);
-    const t = setTimeout(() => setLoading(false), 1000); // ✅ always 1 second
+    const t = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(t);
-  }, [location.key]); // ✅ more reliable than pathname
+  }, [location.key]);
 
   return (
     <>
@@ -50,28 +52,33 @@ function RouteLoader({ children }) {
 
 export default function App() {
   return (
-    <div className="app">
-      <RouteLoader>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<Register />} />
+    <AuthProvider>
+      <div className="app">
+        <RouteLoader>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<Register />} />
 
-          <Route path="/documents" element={<Document />} />
+            <Route path="/documents" element={<Document />} />
 
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/billing" element={<Billing />} />
+            <Route path="/dashboard" element={<Dashboard />} />
 
-          <Route path="/customerDashboard" element={<CustomerDashboard />} />
-          <Route path="/customer/categories" element={<CustomerCategories />} />
-          <Route path="/customer/prescriptions" element={<CustomerPrescriptions />} />
-          <Route path="/customer/orders" element={<Orders />} />
-          <Route path="/customer/returns" element={<ExpiryReturn />} />
+            <Route path="/inventory" element={<Inventory />} />
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </RouteLoader>
-    </div>
+            <Route path="/billing" element={<Billing />} />
+
+            <Route path="/customerDashboard" element={<CustomerDashboard />} />
+            <Route path="/customer/categories" element={<CustomerCategories />} />
+            <Route path="/customer/prescriptions" element={<CustomerPrescriptions />} />
+            <Route path="/customer/orders" element={<Orders />} />
+            <Route path="/customer/returns" element={<ExpiryReturn />} />
+            <Route path="/profile" element={<ProfileManagement />} />
+
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </RouteLoader>
+      </div>
+    </AuthProvider>
   );
 }

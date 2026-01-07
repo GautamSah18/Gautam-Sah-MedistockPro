@@ -1,23 +1,29 @@
+import { useLocation } from "react-router-dom";
 import "./CustomerDashboard.css";
 import TopNav from "./TopNav";
 
-const invoice = {
-  no: "INV-2025-1228",
-  date: "2025-12-28",
-  customer: "Retailer Customer",
-  paymentType: "Credit",
-  dueDate: "2026-02-28",
-  items: [
+export default function Billing() {
+  const location = useLocation();
+  const { cart, paymentType = 'cash', cartTotal } = location.state || {};
+  
+  // If no cart data is passed, use default values
+  const items = cart || [
     { name: "Paracetamol 500mg", qty: 10, price: 200 },
     { name: "Azithromycin 500mg", qty: 5, price: 500 },
     { name: "ORS Pack", qty: 8, price: 150 },
-  ],
-};
-
-export default function Billing() {
-  const subtotal = invoice.items.reduce((a, it) => a + it.qty * it.price, 0);
+  ];
+  
+  const subtotal = cartTotal || items.reduce((a, it) => a + it.qty * it.price, 0);
   const discount = Math.round(subtotal * 0.05);
   const total = subtotal - discount;
+  
+  // Generate invoice number and date
+  const invoiceNo = `INV-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}${Math.floor(1000 + Math.random() * 9000)}`;
+  const date = new Date().toISOString().split('T')[0];
+  const customer = "Customer"; // This could be retrieved from user context
+  const dueDate = new Date();
+  dueDate.setMonth(dueDate.getMonth() + 2);
+  const formattedDueDate = dueDate.toISOString().split('T')[0];
 
   return (
     <div className="mdp">
@@ -36,22 +42,22 @@ export default function Billing() {
             <div className="inv-top">
               <div>
                 <div className="inv-label">Invoice No</div>
-                <div className="inv-value">{invoice.no}</div>
+                <div className="inv-value">{invoiceNo}</div>
               </div>
               <div>
                 <div className="inv-label">Date</div>
-                <div className="inv-value">{invoice.date}</div>
+                <div className="inv-value">{date}</div>
               </div>
               <div>
                 <div className="inv-label">Customer</div>
-                <div className="inv-value">{invoice.customer}</div>
+                <div className="inv-value">{customer}</div>
               </div>
               <div>
                 <div className="inv-label">Payment</div>
                 <div className="inv-value">
-                  {invoice.paymentType}
-                  {invoice.paymentType === "Credit" ? (
-                    <span className="due-pill">Due: {invoice.dueDate}</span>
+                  {paymentType.charAt(0).toUpperCase() + paymentType.slice(1)}
+                  {paymentType === "credit" ? (
+                    <span className="due-pill">Due: {formattedDueDate}</span>
                   ) : null}
                 </div>
               </div>
@@ -65,8 +71,8 @@ export default function Billing() {
                 <div className="right">Total</div>
               </div>
 
-              {invoice.items.map((it, idx) => (
-                <div className="inv-row" key={idx}>
+              {items.map((it, idx) => (
+                <div className="inv-row" key={it.id || idx}>
                   <div>{it.name}</div>
                   <div className="right">{it.qty}</div>
                   <div className="right">Rs {it.price}</div>
@@ -80,7 +86,7 @@ export default function Billing() {
               <div className="sum-row"><span>Discount</span><b>- Rs {discount}</b></div>
               <div className="sum-row total"><span>Grand Total</span><b>Rs {total}</b></div>
 
-              {invoice.paymentType === "Credit" ? (
+              {paymentType === "credit" ? (
                 <div className="credit-note">
                   Credit: You have 2 months to settle the bill. Late payment reduces discounts/bonuses and may restrict purchases.
                 </div>

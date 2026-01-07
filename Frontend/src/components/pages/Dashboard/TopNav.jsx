@@ -1,15 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-    FaBell,
-    FaClock,
-    FaSearch,
-    FaShoppingCart,
-    FaTag,
-    FaTruck,
-    FaUndo,
-    FaUser,
+  FaBell,
+  FaClock,
+  FaSearch,
+  FaShoppingCart,
+  FaTag,
+  FaTruck,
+  FaUndo,
+  FaUser,
+  FaMoon,
+  FaSun,
 } from "react-icons/fa";
 import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 import "./customerDashboard.css";
 
 const demoNotifications = [
@@ -26,15 +29,24 @@ export default function TopNav({
   cartCount = 0,
   onCartClick = () => {},
 }) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [seen, setSeen] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  // ✅ Theme state (persists)
+  const [theme, setTheme] = useState(() => localStorage.getItem("mdp_theme") || "light");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("mdp_theme", theme);
+  }, [theme]);
 
   const badgeCount = useMemo(() => (seen ? 0 : demoNotifications.length), [seen]);
 
   return (
     <header className="mdp-nav">
       <div className="mdp-nav__left">
-    
         <Link to="/customerDashboard" className="brand-pill">
           <span className="brand-icon">✚</span>
           <span className="brand-text">Medistock Pro</span>
@@ -42,7 +54,6 @@ export default function TopNav({
       </div>
 
       <nav className="mdp-nav__center">
-        {/* FIXED: all routes match App.jsx */}
         <NavLink
           to="/customerDashboard"
           className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
@@ -137,8 +148,29 @@ export default function TopNav({
           {cartCount > 0 ? <span className="cart-badge">{cartCount}</span> : null}
         </button>
 
-        <Link className="icon-btn" aria-label="Account" to="/customerDashboard">
-          <FaUser />
+        {/* ✅ Theme toggle */}
+        <button
+          className="icon-btn"
+          aria-label="Toggle theme"
+          onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
+          title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+        >
+          {theme === "light" ? <FaMoon /> : <FaSun />}
+        </button>
+
+        {/* Profile */}
+        <Link className="icon-btn" aria-label="Profile" to="/profile">
+          {user?.profilePicture && !imgError ? (
+            <img 
+              src={user.profilePicture} 
+              alt="Profile" 
+              onError={() => setImgError(true)}
+              onLoad={() => setImgError(false)}
+              style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
+            />
+          ) : (
+            <FaUser />
+          )}
         </Link>
       </div>
     </header>

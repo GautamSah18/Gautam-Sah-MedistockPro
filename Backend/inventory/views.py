@@ -7,7 +7,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from .models import Medicine, Category
-from .serializers import MedicineSerializer, CategorySerializer, StockUpdateSerializer
+from .serializers import MedicineSerializer, CategorySerializer, StockUpdateSerializer, PublicMedicineSerializer
 from .permissions import IsAdmin
 
 class MedicineViewSet(viewsets.ModelViewSet):
@@ -105,6 +105,27 @@ class MedicineViewSet(viewsets.ModelViewSet):
         ).order_by('expiry_date')
         serializer = self.get_serializer(medicines, many=True)
         return Response(serializer.data)
+
+
+class PublicMedicineViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    A viewset for authenticated users to view medicines
+    """
+    queryset = Medicine.objects.filter(is_active=True, stock__gt=0).select_related('category')
+    serializer_class = PublicMedicineSerializer  # Updated to use public serializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'category_type', 'is_active']
+    search_fields = ['name', 'generic_name', 'company', 'batch_no']
+    ordering_fields = ['name', 'stock', 'expiry_date', 'created_at']
+    permission_classes = []  # Will be set to allow authenticated users only
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        from rest_framework.permissions import IsAuthenticated
+        permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
 class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdmin]  # Only admin can access inventory

@@ -42,11 +42,12 @@ urlpatterns = [
     path('api/auth/register/step2/', views.registration_step2, name='registration_step2'),
     path('api/auth/login/', views.user_login, name='login'),
     path('api/auth/logout/', views.logout_view, name='logout'),
+    path('api/auth/profile/', views.user_profile, name='user_profile'),
 
     # Protected endpoints
     path('api/dashboard/', views.dashboard, name='dashboard'),
     path('api/inventory/', include('inventory.urls')),
-    path('inventory/', include('inventory.urls')),  # Also support /inventory/ for frontend compatibility
+    path('inventory/', include('inventory.urls')),
 ]
 
 # Serve media files in development
