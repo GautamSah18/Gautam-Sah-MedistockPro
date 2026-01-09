@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { FaArrowLeft, FaEye, FaEyeSlash, FaShieldAlt } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../../../services/api.js';
+import { useAuth } from '../../../context/AuthContext';
 import './LoginPage.css';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -69,19 +70,22 @@ const Login = () => {
     setErrors(prev => ({ ...prev, general: '' }));
 
     try {
-      const res = await api.post("/api/auth/login/", {
+      // Use the auth context login function
+      const loginData = {
         email: formData.email,
         password: formData.password,
         role: formData.role
-      });
+      };
+      
+      const res = await authLogin(loginData);
 
-      console.log("Login response:", res.data);
+      console.log("Login response:", res);
       
       // Check if registration is incomplete (backend returns warning instead of tokens)
-      if (res.data.warning && res.data.user_id) {
+      if (res.warning && res.user_id) {
         setErrors(prev => ({
           ...prev,
-          general: res.data.warning || 'Please complete your registration by uploading documents.'
+          general: res.warning || 'Please complete your registration by uploading documents.'
         }));
         setIsLoading(false);
         // Optionally redirect to document upload page
@@ -90,39 +94,33 @@ const Login = () => {
       }
       
       // Check for error message
-      if (res.data.error) {
+      if (res.error) {
         setErrors(prev => ({
           ...prev,
-          general: res.data.error
+          general: res.error
         }));
         setIsLoading(false);
         return;
       }
       
       // Verify response has required JWT tokens
-      if (!res.data.access || !res.data.refresh) {
+      if (!res.access || !res.refresh) {
         setErrors(prev => ({
           ...prev,
-          general: res.data.message || 'Login failed. Please contact administrator.'
+          general: res.message || 'Login failed. Please contact administrator.'
         }));
         setIsLoading(false);
         return;
       }
       
-      // Store JWT tokens and user data
-      localStorage.setItem('access_token', res.data.access);
-      localStorage.setItem('refresh_token', res.data.refresh);
-      localStorage.setItem('userRole', res.data.user?.role || formData.role);
-      localStorage.setItem('userEmail', res.data.user?.email || formData.email);
-      
       // Redirect based on role - admin goes to inventory page
-      const userRole = res.data.user?.role || formData.role;
+      const userRole = res.user?.role || formData.role;
       switch(userRole) {
         case 'admin':
           navigate('/inventory');
           break;
         case 'customer':
-          navigate('/customer/dashboard');
+          navigate('/customerDashboard');
           break;
         case 'delivery':
           navigate('/delivery/dashboard');

@@ -8,7 +8,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from Authentication import views
-
+from django.views.generic import RedirectView
 # Swagger schema view
 schema_view = get_schema_view(
     openapi.Info(
@@ -22,7 +22,7 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
-from django.views.generic import RedirectView
+
 
 urlpatterns = [
     path('', RedirectView.as_view(url='admin/', permanent=False)),
@@ -48,6 +48,7 @@ urlpatterns = [
     path('api/dashboard/', views.dashboard, name='dashboard'),
     path('api/inventory/', include('inventory.urls')),
     path('inventory/', include('inventory.urls')),
+    path('api/billing/', include('Billing.urls')),
 ]
 
 # Serve media files in development

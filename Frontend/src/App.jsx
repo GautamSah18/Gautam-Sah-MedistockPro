@@ -1,6 +1,7 @@
 import { useLayoutEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import "./App.css";
 
 // Auth
@@ -15,8 +16,7 @@ import Billing from "./components/pages/Dashboard/Billing";
 import Dashboard from "./components/pages/Dashboard/Dashboard";
 import Inventory from "./components/pages/Inventory/Inventory";
 
-// Customer
-import CustomerCategories from "./components/pages/Dashboard/CustomerCategories";
+
 import CustomerDashboard from "./components/pages/Dashboard/customerDashboard";
 import CustomerPrescriptions from "./components/pages/Dashboard/CustomerPrescriptions";
 import ExpiryReturn from "./components/pages/Dashboard/ExpiryReturn";
@@ -61,18 +61,17 @@ export default function App() {
 
             <Route path="/documents" element={<Document />} />
 
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
-            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
 
-            <Route path="/billing" element={<Billing />} />
+            <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
 
-            <Route path="/customerDashboard" element={<CustomerDashboard />} />
-            <Route path="/customer/categories" element={<CustomerCategories />} />
-            <Route path="/customer/prescriptions" element={<CustomerPrescriptions />} />
-            <Route path="/customer/orders" element={<Orders />} />
-            <Route path="/customer/returns" element={<ExpiryReturn />} />
-            <Route path="/profile" element={<ProfileManagement />} />
+            <Route path="/customerDashboard" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
+            <Route path="/customer/prescriptions" element={<ProtectedRoute><CustomerPrescriptions /></ProtectedRoute>} />
+            <Route path="/customer/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+            <Route path="/customer/returns" element={<ProtectedRoute><ExpiryReturn /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfileManagement /></ProtectedRoute>} />
 
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />

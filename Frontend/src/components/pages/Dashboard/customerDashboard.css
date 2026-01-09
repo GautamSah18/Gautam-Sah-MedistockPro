@@ -33,7 +33,7 @@
   --chip-bg: rgba(32, 180, 106, 0.18);
 }
 
-/* Global reset (kept as you had) */
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -55,12 +55,10 @@ button {
   min-height: 100vh;
 }
 
-/* =========================
-   NAVBAR
-========================= */
+
 .mdp-nav {
   height: 64px;
-  background: var(--nav-bg); /* ✅ theme based */
+  background: var(--nav-bg);
   border-bottom: 1px solid var(--line);
   position: sticky;
   top: 0;
@@ -75,7 +73,7 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #2a6bf3;
+  background: #000000;
   color: #fff;
   padding: 10px 14px;
   border-radius: 10px;
@@ -89,7 +87,7 @@ button {
   display: grid;
   place-items: center;
   font-weight: 800;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(2, 2, 2, 0.18);
   border-radius: 6px;
 }
 
@@ -105,7 +103,7 @@ button {
 
 .nav-link {
   font-size: 14px;
-  color: var(--text); /* ✅ theme based */
+  color: var(--text);
   opacity: 0.88;
   transition: opacity 0.2s, transform 0.2s;
 }
@@ -131,7 +129,7 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--input-bg); /* ✅ theme based */
+  background: var(--input-bg);
   border: 1px solid var(--line);
   height: 40px;
   padding: 0 12px;
@@ -150,16 +148,74 @@ button {
   outline: none;
   background: transparent;
   font-size: 13px;
-  color: var(--text); /* ✅ theme based */
+  color: var(--text);
+}
+
+.search-container {
+  position: relative;
+}
+
+/* Search Suggestions Dropdown */
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(16, 24, 40, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 4px;
+}
+
+.suggestion-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid var(--line);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: var(--input-bg);
+}
+
+.suggestion-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.suggestion-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.suggestion-company {
+  color: var(--muted);
+}
+
+.suggestion-price {
+  font-weight: 600;
+  color: var(--green);
 }
 
 .icon-btn {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  border: 1px solid var(--line); /* ✅ */
-  background: var(--card);       /* ✅ */
-  color: var(--text);            /* ✅ */
+  border: 1px solid var(--line);
+  background: var(--card);       
+  color: var(--text);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -169,6 +225,42 @@ button {
 .icon-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Profile Dropdown */
+.profile-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(16, 24, 40, 0.15);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background: var(--input-bg);
 }
 
 .nav-spacer {
@@ -374,7 +466,7 @@ button {
 
 .product-name {
   font-weight: 900;
-  color: var(--text); /* ✅ */
+  color: var(--text);
   font-size: 13.5px;
   margin-bottom: 6px;
 }
@@ -421,12 +513,10 @@ button {
   transform: translateY(-1px);
 }
 
-/* =========================
-   WINTER SECTION
-========================= */
+
 .winter {
   margin-top: 28px;
-  background: rgba(32, 180, 106, 0.10); /* ✅ works in both modes */
+  background: rgba(32, 180, 106, 0.10);
   border-radius: 18px;
   padding: 18px;
   box-shadow: var(--shadow);
@@ -436,7 +526,7 @@ button {
 .winter-title {
   font-size: 18px;
   font-weight: 950;
-  color: var(--text); /* ✅ */
+  color: var(--text);
   margin-bottom: 14px;
 }
 
@@ -447,10 +537,10 @@ button {
 }
 
 .winter-card {
-  background: var(--card); /* ✅ */
+  background: var(--card);
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid var(--line); /* ✅ */
+  border: 1px solid var(--line);
   box-shadow: var(--shadow);
   transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -472,7 +562,7 @@ button {
 
 .winter-name {
   font-weight: 950;
-  color: var(--text); /* ✅ */
+  color: var(--text);
   margin-bottom: 4px;
 }
 
@@ -490,8 +580,8 @@ button {
   width: 100%;
   margin-top: 10px;
   border: none;
-  background: var(--green);   /* ✅ green */
-  color: #fff;               /* ✅ white text */
+  background: var(--green);
+  color: #fff;
   font-weight: 950;
   padding: 10px 12px;
   border-radius: 12px;
@@ -500,14 +590,12 @@ button {
 }
 
 .winter-add:hover {
-  background: var(--green2); /* ✅ darker green on hover */
+  background: var(--green2);
   transform: translateY(-1px);
 }
 
 
-/* =========================
-   CHAT FAB
-========================= */
+
 .chat-fab {
   position: fixed;
   right: 18px;
@@ -530,9 +618,7 @@ button {
   background: var(--green2);
 }
 
-/* =========================
-   CART BADGE
-========================= */
+
 .cart-btn {
   position: relative;
 }
@@ -550,9 +636,7 @@ button {
   border: 2px solid #fff;
 }
 
-/* =========================
-   DRAWER (CART)
-========================= */
+
 .drawer-backdrop {
   position: fixed;
   inset: 0;
@@ -574,8 +658,8 @@ button {
   right: 0;
   height: 100vh;
   width: 380px;
-  background: var(--card); /* ✅ */
-  border-left: 1px solid var(--line); /* ✅ */
+  background: var(--card);
+  border-left: 1px solid var(--line);
   transform: translateX(100%);
   transition: transform 0.25s ease;
   z-index: 80;
@@ -592,12 +676,12 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  border-bottom: 1px solid var(--line); /* ✅ */
+  border-bottom: 1px solid var(--line);
 }
 
 .drawer-title {
   font-weight: 950;
-  color: var(--text); /* ✅ */
+  color: var(--text);
   font-size: 16px;
 }
 
@@ -611,7 +695,7 @@ button {
   width: 38px;
   height: 38px;
   border-radius: 12px;
-  background: var(--input-bg); /* ✅ */
+  background: var(--input-bg);
   border: 1px solid var(--line);
   cursor: pointer;
   display: grid;
@@ -741,9 +825,6 @@ button {
   box-shadow: none;
 }
 
-/* =========================
-   MODALS
-========================= */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -765,7 +846,7 @@ button {
   left: 50%;
   top: 50%;
   width: min(860px, 92vw);
-  background: var(--card); /* ✅ */
+  background: var(--card);
   border-radius: 18px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
   transform: translate(-50%, -50%) scale(0.96);
@@ -846,8 +927,8 @@ button {
   width: fit-content;
   padding: 6px 10px;
   border-radius: 999px;
-  background: var(--chip-bg); /* ✅ */
-  color: var(--green2);       /* ✅ */
+  background: var(--chip-bg);
+  color: var(--green2);
   font-weight: 950;
   font-size: 12px;
   margin-bottom: 10px;
@@ -885,9 +966,7 @@ button {
   cursor: pointer;
 }
 
-/* =========================
-   CHECKOUT
-========================= */
+
 .checkout {
   width: min(640px, 92vw);
 }
@@ -964,9 +1043,7 @@ button {
   font-weight: 800;
 }
 
-/* =========================
-   PAGES COMMON
-========================= */
+
 .page-wrap {
   max-width: 1120px;
   margin: 0 auto;
@@ -1089,9 +1166,7 @@ button {
   color: var(--text);
 }
 
-/* =========================
-   NOTIFICATIONS
-========================= */
+
 .notif-wrap {
   position: relative;
 }
@@ -1204,9 +1279,6 @@ button {
   margin-top: 2px;
 }
 
-/* =========================
-   ORDERS
-========================= */
 .orders-layout {
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -1344,7 +1416,6 @@ button {
   background: rgba(32, 180, 106, 0.55);
 }
 
-/* Status Pills (kept as you had) */
 .status-pill {
   padding: 6px 10px;
   border-radius: 999px;
@@ -1360,116 +1431,10 @@ button {
 .st-pending { background: rgba(245, 158, 11, 0.16); color: #b45309; border-color: rgba(245, 158, 11, 0.24); }
 .st-rejected { background: rgba(239, 68, 68, 0.14); color: #dc2626; border-color: rgba(239, 68, 68, 0.26); }
 
-/* =========================
-   BILLING
-========================= */
-.bill-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
 
-.print-btn {
-  border: none;
-  background: var(--chip-bg);
-  color: var(--green2);
-  font-weight: 950;
-  padding: 10px 12px;
-  border-radius: 14px;
-  cursor: pointer;
-}
 
-.invoice {
-  margin-top: 12px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--card);
-  box-shadow: var(--shadow2);
-  padding: 14px;
-  color: var(--text);
-}
 
-.inv-top {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
-}
 
-.inv-label {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.inv-value {
-  font-weight: 950;
-  color: var(--text);
-  margin-top: 3px;
-}
-
-.due-pill {
-  margin-left: 8px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(245, 158, 11, 0.16);
-  border: 1px solid rgba(245, 158, 11, 0.24);
-  color: #b45309;
-  font-weight: 950;
-  font-size: 12px;
-}
-
-.inv-table {
-  margin-top: 12px;
-}
-
-.inv-row {
-  display: grid;
-  grid-template-columns: 1fr 120px 140px 140px;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
-  align-items: center;
-}
-
-.inv-headrow {
-  font-weight: 950;
-  color: var(--text);
-  border-bottom: 1px solid var(--line);
-}
-
-.right {
-  text-align: right;
-}
-
-.inv-summary {
-  margin-top: 12px;
-  margin-left: auto;
-  width: min(420px, 100%);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 12px;
-}
-
-.sum-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  color: var(--text);
-}
-
-.sum-row.total {
-  border-top: 1px dashed rgba(0, 0, 0, 0.12);
-  margin-top: 6px;
-  padding-top: 10px;
-  font-size: 16px;
-}
-
-/* =========================
-   RETURNS
-========================= */
 .returns-layout {
   display: grid;
   grid-template-columns: 1fr 1.1fr;
@@ -1508,9 +1473,7 @@ button {
   border-bottom: 1px solid var(--line);
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
+
 @media (max-width: 1050px) {
   .mdp-nav {
     grid-template-columns: 220px 1fr 380px;
@@ -1588,48 +1551,326 @@ button {
   }
 }
 
-/* Print styles to hide unwanted elements */
-@media print {
-  .mdp-nav,
-  .mdp-footer,
-  .chat-fab,
-  .cart-btn,
-  .notif-btn,
-  .icon-btn,
-  .bill-head > div:first-child, /* Hide the left side of bill head, keeping only print button */
-  .page-card > div:not(.invoice) /* Hide everything except invoice */
-  {
-    display: none !important;
+/* Tax Invoice */
+
+.ti-page {
+  background: var(--bg, #f5f7fb);
+  padding: 24px 18px 70px;
+  color: #111;
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+
+.ti-headbar {
+  max-width: 1120px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ti-title {
+  font-size: 26px;
+  font-weight: 950;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.ti-print {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.15);
+  background: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.ti-sheet {
+  max-width: 1120px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.35);
+}
+
+/* Top company block */
+.ti-company {
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.35);
+  text-align: center;
+}
+
+.ti-company__name {
+  font-size: 28px;
+  font-weight: 950;
+  color: #070707; /* bright green like screenshot */
+  margin-bottom: 6px;
+}
+
+.ti-company__addr {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.ti-company__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  font-size: 13px;
+}
+
+.ti-company__meta b {
+  font-weight: 950;
+}
+
+/* Bill-to + meta */
+.ti-two {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  border-bottom: 1px solid rgba(0,0,0,0.35);
+}
+
+.ti-box {
+  padding: 14px 14px 12px;
+  min-height: 140px;
+}
+
+.ti-box + .ti-box {
+  border-left: 1px solid rgba(0,0,0,0.35);
+}
+
+.ti-box__heading {
+  font-weight: 950;
+  margin-bottom: 8px;
+}
+
+.ti-billto__name {
+  font-weight: 950;
+  margin-bottom: 6px;
+}
+
+.ti-billto__line {
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.ti-box--meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ti-metaGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  padding: 0 10px;
+}
+
+.ti-metaLabel {
+  font-weight: 950;
+  text-align: left;
+}
+
+.ti-metaValue {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+/* Table */
+.ti-tableWrap {
+  overflow: auto;
+}
+
+.ti-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.ti-table th,
+.ti-table td {
+  border: 1px solid rgba(0,0,0,0.35);
+  padding: 10px 10px;
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.ti-table thead th {
+  background: #f2f5f3; /* neon green header like screenshot */
+  font-weight: 950;
+}
+
+.ti-th-sr { width: 70px; }
+.ti-th-item { width: 42%; }
+.ti-th-qty { width: 120px; }
+.ti-th-price { width: 140px; }
+.ti-th-tax { width: 140px; }
+.ti-th-amt { width: 140px; text-align: right; }
+
+.ti-td-amt,
+.ti-td-price,
+.ti-td-tax {
+  text-align: right;
+}
+
+.ti-td-sr {
+  text-align: center;
+}
+
+/* filler rows to keep spacing similar */
+.ti-filler td {
+  height: 34px;
+}
+
+/* Discount + summary labels */
+.ti-rightLabel {
+  text-align: center;
+  font-weight: 900;
+}
+
+.ti-discountRow td {
+  background: #fff;
+}
+
+/* Total row (green bar) */
+.ti-totalRow td {
+  background: #fbfcfb;
+  font-weight: 950;
+}
+
+.ti-totalLabel {
+  text-align: center;
+}
+
+.ti-totalQty {
+  text-align: left;
+  font-weight: 950;
+}
+
+.ti-totalTax,
+.ti-totalAmt {
+  text-align: right;
+}
+
+/* Due emphasis */
+.ti-dueLabel {
+  font-weight: 950;
+}
+
+.ti-dueAmt {
+  font-weight: 950;
+}
+
+/* Bottom 3 blocks */
+.ti-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-top: 1px solid rgba(0,0,0,0.35);
+}
+
+.ti-bottomBox {
+  padding: 12px 12px;
+  min-height: 120px;
+}
+
+.ti-bottomBox + .ti-bottomBox {
+  border-left: 1px solid rgba(0,0,0,0.35);
+}
+
+.ti-bottomTitle {
+  font-weight: 950;
+  margin-bottom: 8px;
+}
+
+.ti-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+.ti-sign {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  text-align: center;
+}
+
+.ti-signText {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.ti-signName {
+  font-weight: 950;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .ti-company__meta {
+    grid-template-columns: 1fr;
+    text-align: left;
+    margin-top: 10px;
   }
-  
-  /* Show only the invoice section */
-  .invoice {
-    box-shadow: none;
-    border: none;
-    margin: 0;
-    padding: 0;
+
+  .ti-two {
+    grid-template-columns: 1fr;
   }
-  
-  /* Ensure invoice takes full page */
-  .page-card {
-    box-shadow: none;
-    border: none;
-    padding: 0;
+
+  .ti-box + .ti-box {
+    border-left: none;
+    border-top: 1px solid rgba(0,0,0,0.35);
   }
-  
-  /* Make sure all content is visible */
-  .mdp {
-    background: white;
+
+  .ti-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .ti-bottomBox + .ti-bottomBox {
+    border-left: none;
+    border-top: 1px solid rgba(0,0,0,0.35);
   }
 }
 
-/* =========================
-   FOOTER
-========================= */
+/* Print */
+@media print {
+  .ti-print,
+  .ti-headbar,
+  .mdp-nav,
+  .proceed-payment-btn {
+    display: none !important;
+  }
+  .ti-page {
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  .ti-sheet {
+    border: 1px solid #000 !important;
+  }
+}
+
+/* Billing Page */
+.proceed-payment-btn {
+  background: var(--green);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.proceed-payment-btn:hover {
+  background: var(--green2);
+}
+
+
 .mdp-footer {
   margin-top: 40px;
-  background: var(--green);
-  color: #fff;
+  background: var(--nav-bg);
+  color: var(--text);
 }
 
 .mdp-footer__inner {
@@ -1654,7 +1895,7 @@ button {
 
 .mdp-footer__link {
   display: block;
-  color: #fff;
+  color: var(--text);
   opacity: 0.92;
   font-size: 14px;
   margin-bottom: 8px;
@@ -1666,7 +1907,7 @@ button {
 }
 
 .mdp-footer__bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  border-top: 1px solid var(--line);
   padding: 14px 18px;
   text-align: center;
   font-size: 13px;

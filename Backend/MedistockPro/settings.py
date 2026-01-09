@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'corsheaders',
     'inventory',
+    'Billing',
     'django_filters'
 ]
 

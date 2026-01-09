@@ -138,6 +138,7 @@ export default function CustomerDashboard() {
         onSearchChange={setQ}
         cartCount={cartCount}
         onCartClick={() => setCartOpen(true)}
+        onAddToCart={addToCart}
       />
 
       <main className="container">

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tax Invoice - {{ bill.invoice_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: white;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .company-info h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        .company-info p {
+            margin: 5px 0;
+            color: #7f8c8d;
+        }
+        .invoice-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .bill-to, .invoice-details {
+            width: 45%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .total-row {
+            background-color: #e8f5e8;
+            font-weight: bold;
+        }
+        .summary {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .signature {
+            margin-top: 50px;
+            text-align: right;
+        }
+        .footer-notes {
+            margin-top: 40px;
+            font-size: 12px;
+        }
+        @media print {
+            body {
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            <h1>{{ company.name }}</h1>
+            <p>{{ company.address }}</p>
+            <p>Phone: {{ company.phone }}</p>
+            <p>PAN: {{ company.pan }}</p>
+        </div>
+        <h2 style="margin: 20px 0;">TAX INVOICE</h2>
+    </div>
+
+    <div class="invoice-info">
+        <div class="bill-to">
+            <h3>BILL TO</h3>
+            <p>{{ bill.customer.first_name }} {{ bill.customer.last_name }}</p>
+            <p>Email: {{ bill.customer.email }}</p>
+        </div>
+        <div class="invoice-details">
+            <h3>INVOICE DETAILS</h3>
+            <p><strong>Invoice No:</strong> {{ bill.invoice_number }}</p>
+            <p><strong>Date:</strong> {{ bill.created_at|date:"Y-m-d" }}</p>
+            <p><strong>Payment Type:</strong> {{ bill.payment_type|title }}</p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Sr. No.</th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Price/Unit</th>
+                <th>Tax/Unit</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.qty }}</td>
+                <td>Rs. {{ item.price|floatformat:2 }}</td>
+                <td>Rs. {{ item.tax_per_unit|floatformat:2 }}</td>
+                <td>Rs. {{ item.amount|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="summary">
+        <table style="width: 300px; float: right;">
+            <tr>
+                <td><strong>Total Quantity:</strong></td>
+                <td style="text-align: right;">{{ total_qty }}</td>
+            </tr>
+            <tr>
+                <td><strong>Subtotal:</strong></td>
+                <td style="text-align: right;">Rs. {{ bill.subtotal|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td><strong>Discount:</strong></td>
+                <td style="text-align: right;">Rs. {{ bill.discount|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td><strong>Tax Total:</strong></td>
+                <td style="text-align: right;">Rs. {{ bill.tax_total|floatformat:2 }}</td>
+            </tr>
+            <tr class="total-row">
+                <td><strong>Total Amount:</strong></td>
+                <td style="text-align: right;"><strong>Rs. {{ bill.total_amount|floatformat:2 }}</strong></td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="clear: both;"></div>
+
+    <div class="footer-notes">
+        <h3>Terms & Conditions</h3>
+        <ul>
+            <li>No return deal</li>
+            <li>Pay due amount within 60 days</li>
+            {% if bill.payment_type == "cash" %}
+            <li>Customer will pay the Delivery charges</li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <div class="signature">
+        <p>Authorised Signatory For</p>
+        <p><strong>{{ company.name }}</strong></p>
+    </div>
+
+    <script>
+        // Automatically print when page loads
+        window.onload = function() {
+            window.print();
+        };
+    </script>
+</body>
+</html>

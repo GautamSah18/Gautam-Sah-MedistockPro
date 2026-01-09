@@ -14,14 +14,14 @@ export default function ProfileManagement() {
 
   // Profile picture
   const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(""); // data url or existing url
+  const [avatarPreview, setAvatarPreview] = useState("");
 
   // Profile info
   const [profile, setProfile] = useState({
     fullName: "",
     email: "",
-    phone: "+977-98XXXXXXX",
-    address: "Kathmandu, Nepal",
+    phone: "",
+    address: "",
     bio: "Tell us a bit about yourself…",
   });
 

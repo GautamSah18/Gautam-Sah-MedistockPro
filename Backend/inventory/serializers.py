@@ -45,7 +45,7 @@ class PublicMedicineSerializer(serializers.ModelSerializer):
         model = Medicine
         fields = [
             'id', 'name', 'generic_name', 'company', 'category_type', 'category',
-            'category_name', 'stock', 'unit', 'selling_price', 'mrp', 'status', 
+            'category_name', 'stock', 'unit', 'selling_price', 'mrp', 'status',
             'description', 'created_at', 'updated_at'
         ]
         read_only_fields = ['status', 'created_at', 'updated_at']
