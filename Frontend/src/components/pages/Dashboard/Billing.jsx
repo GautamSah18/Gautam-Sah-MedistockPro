@@ -156,7 +156,7 @@ export default function Billing() {
             </div>
           </div>
 
-          {/* Bill To + Invoice Meta */}
+          
           <div className="ti-two">
             <div className="ti-box">
               <div className="ti-box__heading">BILL TO</div>
@@ -208,7 +208,7 @@ export default function Billing() {
                   <th className="ti-th-item">Items</th>
                   <th className="ti-th-qty">Quantity</th>
                   <th className="ti-th-price">Price / Unit</th>
-                  <th className="ti-th-tax">Tax / Unit</th>
+                  <th className="ti-th-tax">Discount</th>
                   <th className="ti-th-amt">Amount</th>
                 </tr>
               </thead>
@@ -243,7 +243,7 @@ export default function Billing() {
                   <td className="ti-td-amt">Rs. {discount.toFixed(2)}</td>
                 </tr>
 
-                {/* Total Row (Green bar like screenshot) */}
+                
                 <tr className="ti-totalRow">
                   <td />
                   <td className="ti-totalLabel">Total</td>
@@ -273,7 +273,7 @@ export default function Billing() {
             </table>
           </div>
 
-          {/* Bottom Notes + Terms + Signature */}
+          
           <div className="ti-bottom">
             <div className="ti-bottomBox">
               <div className="ti-bottomTitle">Notes</div>

@@ -4,7 +4,6 @@ import "./Inventory.css";
 
 const Inventory = () => {
   const [medicines, setMedicines] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentMedicine, setCurrentMedicine] = useState({
@@ -27,11 +26,12 @@ const Inventory = () => {
     is_active: true,
     description: "",
     storage_conditions: "",
+    image: null,
     created_by: "",
     updated_by: "",
   });
 
-  // ✅ New UI states
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -43,7 +43,7 @@ const Inventory = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        await Promise.all([fetchMedicines(), fetchCategories()]);
+        await fetchMedicines();
       } catch (err) {
         setError("Failed to load data");
         console.error("Error loading data:", err);
@@ -66,16 +66,7 @@ const Inventory = () => {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const response = await api.get("/inventory/categories/");
-      const cats = response.data.results || response.data;
-      setCategories(cats);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      if (error.response?.status === 401) window.location.href = "/login";
-    }
-  };
+
 
   const resetForm = () => {
     setCurrentMedicine({
@@ -98,6 +89,7 @@ const Inventory = () => {
       is_active: true,
       description: "",
       storage_conditions: "",
+      image: null,
       created_by: "",
       updated_by: "",
     });
@@ -109,16 +101,16 @@ const Inventory = () => {
     setIsModalOpen(true);
   };
 
-  // ✅ Fix textarea null + date normalization
   const handleEditMedicine = (medicine) => {
     setIsEditMode(true);
     setCurrentMedicine({
       ...medicine,
-      category: medicine.category || "",
       category_type: medicine.category_type || "Tablet",
       generic_name: medicine.generic_name ?? "",
+      category: medicine.category ?? "",
       description: medicine.description ?? "",
       storage_conditions: medicine.storage_conditions ?? "",
+      image: medicine.image || null,
       created_by: medicine.created_by ?? "",
       updated_by: medicine.updated_by ?? "",
       manufacture_date: (medicine.manufacture_date ?? "").slice(0, 10),
@@ -149,74 +141,83 @@ const Inventory = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const formData = { ...currentMedicine };
+  e.preventDefault();
 
-      if (formData.category === "" || formData.category === null) {
-        formData.category = null;
-      } else {
-        formData.category = parseInt(formData.category) || null;
-      }
+  try {
+    const fd = new FormData();
+    const skip = new Set(["id", "created_at", "updated_at", "status", "created_by", "updated_by"]);
 
-      const numericFields = ["stock", "min_stock", "max_stock", "cost_price", "selling_price", "mrp"];
-      numericFields.forEach((field) => {
-        if (formData[field] !== "" && formData[field] !== null && formData[field] !== undefined) {
-          formData[field] = parseFloat(formData[field]) || 0;
-        } else if (field === "stock" || field === "min_stock" || field === "max_stock") {
-          formData[field] = 0;
-        } else {
-          formData[field] = formData[field] === "" ? null : formData[field];
+    Object.entries(currentMedicine).forEach(([key, value]) => {
+      if (skip.has(key)) return;
+
+      if (key === "image") {
+        // Only add to form data if it's a new file (either when creating or updating)
+        if (value instanceof File) {
+          fd.append("image", value);
         }
-      });
-
-      const optionalTextFields = ["generic_name", "description", "storage_conditions"];
-      optionalTextFields.forEach((field) => {
-        if (formData[field] === "") formData[field] = null;
-      });
-
-      delete formData.id;
-      delete formData.created_at;
-      delete formData.updated_at;
-      delete formData.category_name;
-      delete formData.status; // keep your behavior
-
-      let response;
-      if (isEditMode) {
-        response = await api.put(`/inventory/medicines/${currentMedicine.id}/`, formData);
-        setMedicines(medicines.map((m) => (m.id === currentMedicine.id ? response.data : m)));
-      } else {
-        response = await api.post("/inventory/medicines/", formData);
-        setMedicines([...medicines, response.data]);
+        // For existing images during update, don't include in form data
+        // The backend will preserve the existing image
+        return;
       }
 
-      setIsModalOpen(false);
-      resetForm();
-      setIsEditMode(false);
-
-      await fetchMedicines();
-    } catch (error) {
-      console.error("Error saving medicine:", error);
-
-      if (error.response && error.response.data) {
-        const errorData = error.response.data;
-        let errorMessage = "Failed to save medicine:\n";
-        if (typeof errorData === "object") {
-          Object.keys(errorData).forEach((key) => {
-            const value = errorData[key];
-            if (Array.isArray(value)) errorMessage += `${key}: ${value.join(", ")}\n`;
-            else if (typeof value === "string") errorMessage += `${key}: ${value}\n`;
-            else errorMessage += `${key}: ${JSON.stringify(value)}\n`;
-          });
-        } else {
-          errorMessage += errorData;
-        }
-        alert(errorMessage);
-      } else {
-        alert("Failed to save medicine. Please check the console for details.");
+      if (value === null || value === undefined) return;
+      if (typeof value === "boolean") {
+        fd.append(key, value ? "true" : "false");
+        return;
       }
+
+      fd.append(key, value);
+    });
+    ["stock", "min_stock", "max_stock", "cost_price", "selling_price", "mrp"].forEach((f) => {
+      const v = fd.get(f);
+      if (v === null) return;
+      if (v === "") {
+        if (["stock", "min_stock", "max_stock"].includes(f)) fd.set(f, "0");
+        return;
+      }
+      fd.set(f, String(parseFloat(v) || 0));
+    });
+    // Config for FormData - set Content-Type to undefined to allow browser to set it with boundary
+    const config = {
+      headers: {
+        "Content-Type": undefined,  // This allows browser to set the correct multipart header with boundary
+      },
+    };
+    // Note: Setting Content-Type to undefined overrides the default and allows browser to set multipart/form-data with boundary
+
+    let response;
+    if (isEditMode) {
+      response = await api.put(`/inventory/medicines/${currentMedicine.id}/`, fd, config);
+      setMedicines(medicines.map((m) => (m.id === currentMedicine.id ? response.data : m)));
+    } else {
+      response = await api.post("/inventory/medicines/", fd, config);
+      setMedicines([...medicines, response.data]);
     }
-  };
+
+    setIsModalOpen(false);
+    resetForm();
+    setIsEditMode(false);
+    await fetchMedicines();
+  } catch (error) {
+    console.error("Error saving medicine:", error);
+
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      let msg = "Failed to save medicine:\n";
+      if (typeof errorData === "object") {
+        Object.keys(errorData).forEach((k) => {
+          const v = errorData[k];
+          msg += Array.isArray(v) ? `${k}: ${v.join(", ")}\n` : `${k}: ${v}\n`;
+        });
+      } else {
+        msg += errorData;
+      }
+      alert(msg);
+    } else {
+      alert("Failed to save medicine. Please check console.");
+    }
+  }
+};
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -252,7 +253,6 @@ const Inventory = () => {
   const unitOptions = ["strip", "bottle", "box", "tube", "vial", "pack"];
   const statusOptions = ["In Stock", "Low Stock", "Out of Stock", "Expired"];
 
-  // ✅ New: search + stats
   const filteredMedicines = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return medicines;
@@ -274,7 +274,6 @@ const Inventory = () => {
 
   const navItems = [
     { key: "inv", label: "Inventory", icon: "📦", active: true },
-    { key: "cat", label: "Categories", icon: "🧾", active: false },
     { key: "orders", label: "Orders", icon: "🧺", active: false },
     { key: "delivery", label: "Delivery", icon: "🚚", active: false },
     { key: "settings", label: "Settings", icon: "⚙️", active: false },
@@ -291,7 +290,7 @@ const Inventory = () => {
         onClick={() => setMobileSidebarOpen(false)}
       />
 
-      {/* ✅ New Sidebar (rail → expanded drawer) */}
+
       <aside className={`inv-sidebar ${sidebarOpen ? "open" : "collapsed"} ${mobileSidebarOpen ? "mobile-open" : ""}`}>
         <div className="inv-side-top">
           <div className="inv-brand">
@@ -315,7 +314,7 @@ const Inventory = () => {
               key={it.key}
               className={`inv-nav-item ${it.active ? "active" : ""}`}
               type="button"
-              onClick={() => {}}
+              onClick={() => { }}
             >
               <span className="inv-nav-ic">{it.icon}</span>
               {sidebarOpen ? <span className="inv-nav-text">{it.label}</span> : null}
@@ -345,7 +344,7 @@ const Inventory = () => {
         </div>
       </aside>
 
-      {/* ✅ Main */}
+
       <main className="inv-main">
         {/* Top header */}
         <header className="inv-topbar">
@@ -378,7 +377,6 @@ const Inventory = () => {
           </div>
         </header>
 
-        {/* ✅ Stats cards */}
         <section className="inv-stats">
           <div className="inv-stat">
             <div className="inv-stat__label">Total Medicines</div>
@@ -399,10 +397,12 @@ const Inventory = () => {
           <table className="inventory-table">
             <thead>
               <tr>
+                <th>Image</th>
                 <th>Medicine</th>
                 <th>Company</th>
                 <th>Batch</th>
                 <th>Type</th>
+                <th>Category</th>
                 <th>Stock</th>
                 <th>Unit</th>
                 <th>Price</th>
@@ -415,6 +415,15 @@ const Inventory = () => {
               {filteredMedicines.map((medicine) => (
                 <tr key={medicine.id}>
                   <td>
+                    {medicine.image ? (
+                      <img src={medicine.image} alt={medicine.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
+                    ) : (
+                      <div style={{ width: '50px', height: '50px', backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' }}>
+                        <span style={{ color: '#9ca3af' }}>💊</span>
+                      </div>
+                    )}
+                  </td>
+                  <td>
                     <div className="medicine-info">
                       <strong>{medicine.name}</strong>
                       {medicine.generic_name && <small className="generic-name">{medicine.generic_name}</small>}
@@ -424,6 +433,9 @@ const Inventory = () => {
                   <td>{medicine.batch_no}</td>
                   <td>
                     <span className="category-badge">{medicine.category_type}</span>
+                  </td>
+                  <td>
+                    {medicine.category}
                   </td>
                   <td>
                     <div className="stock-info">
@@ -537,14 +549,13 @@ const Inventory = () => {
 
                     <div className="form-group">
                       <label>Category</label>
-                      <select name="category" value={currentMedicine.category} onChange={handleInputChange}>
-                        <option value="">Select Category</option>
-                        {categories.map((cat) => (
-                          <option key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </option>
-                        ))}
-                      </select>
+                      <input
+                        type="text"
+                        name="category"
+                        value={currentMedicine.category || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter category"
+                      />
                     </div>
                   </div>
                 </div>
@@ -694,6 +705,36 @@ const Inventory = () => {
                       value={currentMedicine.storage_conditions ?? ""}
                       onChange={handleInputChange}
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Medicine Image</label>
+                    <input
+                      type="file"
+                      name="image"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setCurrentMedicine(prev => ({
+                            ...prev,
+                            image: file
+                          }));
+                        }
+                      }}
+                    />
+                    {currentMedicine.image && (
+                      <div className="image-preview">
+                        <img
+                          src={
+                            typeof currentMedicine.image === 'string' ? currentMedicine.image :
+                            currentMedicine.image instanceof File ? URL.createObjectURL(currentMedicine.image) : ''
+                          }
+                          alt="Medicine"
+                          style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '10px' }}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-group checkbox-row">

@@ -16,6 +16,9 @@ import Billing from "./components/pages/Dashboard/Billing";
 import Dashboard from "./components/pages/Dashboard/Dashboard";
 import Inventory from "./components/pages/Inventory/Inventory";
 
+// Customer
+import ProductPage from "./components/pages/Dashboard/ProductPage";
+
 
 import CustomerDashboard from "./components/pages/Dashboard/customerDashboard";
 import CustomerPrescriptions from "./components/pages/Dashboard/CustomerPrescriptions";
@@ -72,6 +75,7 @@ export default function App() {
             <Route path="/customer/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
             <Route path="/customer/returns" element={<ProtectedRoute><ExpiryReturn /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfileManagement /></ProtectedRoute>} />
+            <Route path="/products" element={<ProtectedRoute><ProductPage /></ProtectedRoute>} />
 
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />

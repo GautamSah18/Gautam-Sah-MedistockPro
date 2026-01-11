@@ -7,6 +7,77 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
+  // Function to refresh access token
+  const refreshAccessToken = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await api.post('/api/auth/token/refresh/', {
+        refresh: refreshToken
+      });
+
+      if (response.data.access) {
+        localStorage.setItem('access_token', response.data.access);
+        // Update the API instance with the new token
+        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
+        return response.data.access;
+      } else {
+        throw new Error('No access token in refresh response');
+      }
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      // If refresh fails, log out the user
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      delete api.defaults.headers.common['Authorization'];
+      setUser(null);
+      window.location.href = '/login';
+      return null;
+    }
+  };
+
+  // Interceptor to handle token refresh automatically
+  useEffect(() => {
+    const requestInterceptor = api.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    const responseInterceptor = api.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          const newToken = await refreshAccessToken();
+          if (newToken) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return api(originalRequest);
+          }
+        }
+
+        return Promise.reject(error);
+      }
+    );
+
+    // Clean up interceptors
+    return () => {
+      api.interceptors.request.eject(requestInterceptor);
+      api.interceptors.response.eject(responseInterceptor);
+    };
+  }, []);
+
   // Load user data on app start
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -14,6 +85,9 @@ export const AuthProvider = ({ children }) => {
       // Fetch complete profile data
       const fetchUserProfile = async () => {
         try {
+          // Set the token in the API headers before making the request
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          
           const profileRes = await api.get('/api/auth/profile/');
           const profileData = profileRes.data;
           
@@ -124,6 +198,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('userFullName');
       localStorage.removeItem('userProfilePicture'); // Clear profile picture
       
+      delete api.defaults.headers.common['Authorization'];
       setUser(null);
       window.location.href = '/login';
     }

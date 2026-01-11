@@ -1,13 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, Fragment, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../services/api.js";
 import TopNav from "./TopNav";
-import "./customerDashboard.css";
 
 import {
-  FaCreditCard,
   FaMinus,
-  FaMoneyBillWave,
   FaPlus,
   FaRegStar,
   FaStar,
@@ -15,35 +12,8 @@ import {
   FaTimes,
 } from "react-icons/fa";
 
-const schemes = [
-  { tag: "10% OFF", tagColor: "green", title: "Flat 10% Off on Pain Relief\nMedicines", cta: "Shop Now →", tone: "mint" },
-  { tag: "BOGO", tagColor: "blue", title: "Buy 1 Get 1 on Multivitamins", cta: "Shop Now →", tone: "lavender" },
-  { tag: "SALE", tagColor: "orange", title: "Winter Care Sale Up to 20%\nOff", cta: "Shop Now →", tone: "butter" },
-  { tag: "SPECIAL OFFER", tagColor: "red", title: "Free Delivery on Orders Over\n$50", cta: "Learn More →", tone: "rose" },
-];
 
-function Rating({ value = 4 }) {
-  const stars = useMemo(() => {
-    const full = Math.floor(value);
-    const half = value - full >= 0.5;
-    const empty = 5 - full - (half ? 1 : 0);
-    return { full, half, empty };
-  }, [value]);
-
-  return (
-    <div className="rating">
-      {Array.from({ length: stars.full }).map((_, i) => (
-        <FaStar key={`f-${i}`} />
-      ))}
-      {stars.half ? <FaStarHalfAlt /> : null}
-      {Array.from({ length: stars.empty }).map((_, i) => (
-        <FaRegStar key={`e-${i}`} />
-      ))}
-    </div>
-  );
-}
-
-export default function CustomerDashboard() {
+export default function ProductPage() {
   const navigate = useNavigate();
 
   const [q, setQ] = useState("");
@@ -57,7 +27,16 @@ export default function CustomerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Filter states
+  const [companyFilter, setCompanyFilter] = useState("");
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [expiryDateFilter, setExpiryDateFilter] = useState("");
 
+  // Extract unique values for filter options
+  const uniqueCompanies = [...new Set(medicines.map(m => m.company).filter(Boolean))];
+  const uniqueCategoryTypes = [...new Set(medicines.map(m => m.category_type).filter(Boolean))];
+  const uniqueCategories = [...new Set(medicines.map(m => m.category_name).filter(Boolean))];
 
   useEffect(() => {
     const fetchMedicines = async () => {
@@ -82,9 +61,29 @@ export default function CustomerDashboard() {
 
     const query = q.trim().toLowerCase();
     if (query) result = result.filter((p) => (p.name || "").toLowerCase().includes(query));
+    
+    // Apply company filter
+    if (companyFilter) {
+      result = result.filter(m => m.company && m.company.toLowerCase().includes(companyFilter.toLowerCase()));
+    }
+    
+    // Apply category type filter
+    if (categoryTypeFilter) {
+      result = result.filter(m => m.category_type && m.category_type.toLowerCase().includes(categoryTypeFilter.toLowerCase()));
+    }
+    
+    // Apply category filter
+    if (categoryFilter) {
+      result = result.filter(m => m.category_name && m.category_name.toLowerCase().includes(categoryFilter.toLowerCase()));
+    }
+    
+    // Apply expiry date filter
+    if (expiryDateFilter) {
+      result = result.filter(m => m.expiry_date && new Date(m.expiry_date) >= new Date(expiryDateFilter));
+    }
 
     return result;
-  }, [q, medicines]);
+  }, [q, medicines, companyFilter, categoryTypeFilter, categoryFilter, expiryDateFilter]);
 
   const cartCount = useMemo(() => cart.reduce((acc, it) => acc + it.qty, 0), [cart]);
   const cartTotal = useMemo(() => cart.reduce((acc, it) => acc + it.qty * it.price, 0), [cart]);
@@ -125,8 +124,135 @@ export default function CustomerDashboard() {
     image: medicine.image || medicine.image_url || null,
   });
 
+  function Rating({ value = 4 }) {
+  const stars = useMemo(() => {
+    const full = Math.floor(value);
+    const half = value - full >= 0.5;
+    const empty = 5 - full - (half ? 1 : 0);
+    return { full, half, empty };
+  }, [value]);
+
   return (
-    <div className="mdp">
+    <div className="rating">
+      {Array.from({ length: stars.full }).map((_, i) => (
+        <FaStar key={`f-${i}`} />
+      ))}
+      {stars.half ? <FaStarHalfAlt /> : null}
+      {Array.from({ length: stars.empty }).map((_, i) => (
+        <FaRegStar key={`e-${i}`} />
+      ))}
+    </div>
+  );
+}
+
+  // Internal CSS styles for filters
+  const styles = `
+    .mdp-layout {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .filters {
+      width: 250px;
+      padding: 20px;
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      height: fit-content;
+    }
+    
+    .filters h3 {
+      margin: 0 0 15px 0;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+    }
+    
+    .filter-group {
+      margin-bottom: 15px;
+    }
+    
+    .filter-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+    
+    .filter-group select:focus,
+    .filter-group input:focus {
+      outline: none;
+      border-color: var(--green);
+    }
+    
+    .clear-filters-btn {
+      width: 100%;
+      background: #f3f4f6;
+      color: var(--text);
+      border: 1px solid var(--line);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .clear-filters-btn:hover {
+      background: #e5e7eb;
+    }
+    
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    
+    @media (max-width: 1024px) {
+      .product-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .filters {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+      
+      .mdp-layout {
+        flex-direction: column;
+      }
+      
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .product-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  `;
+
+  return (
+    <Fragment>
+      <style>{styles}</style>
+      <div className="mdp">
       <TopNav
         showSearch
         searchValue={q}
@@ -136,142 +262,91 @@ export default function CustomerDashboard() {
         onAddToCart={addToCart}
       />
 
-      
       <main className="container">
         <div className="mdp-layout">
-          <div className="mdp-content">
-            {loading && (
-              <div className="loading">
-                <div className="loading-text">Loading medicines...</div>
-              </div>
-            )}
-
-            {error && (
-              <div className="error">
-                <div className="error-text">{error}</div>
-              </div>
-            )}
-
-            {/* Hero Banner */}
-            <section className="hero">
-              <div className="hero-overlay" />
-              <div className="hero-content">
-                <h1>Seasonal Health Offers</h1>
-                <p>
-                  Stay healthy this season with our special discounts <br />
-                  on essential medicines and supplements.
-                </p>
-                <button
-                  className="primary-btn"
-                  onClick={() => window.scrollTo({ top: 520, behavior: "smooth" })}
-                >
-                  Explore Offers
-                </button>
-              </div>
-            </section>
-
-            {/* Schemes */}
-            <section className="section">
-              <div className="section-title">Schemes &amp; Discounts</div>
-              <div className="scheme-grid">
-                {schemes.map((s, idx) => (
-                  <div key={idx} className={`scheme-card tone-${s.tone}`}>
-                    <div className={`scheme-tag tag-${s.tagColor}`}>{s.tag}</div>
-                    <div className="scheme-title">{s.title}</div>
-                    <a className="scheme-cta" href="#medicines">
-                      {s.cta}
-                    </a>
-                  </div>
+          <div className="filters">
+            <h3>Filters</h3>
+            <div className="filter-group">
+              <label htmlFor="company-filter">Company Name</label>
+              <select id="company-filter" value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)}>
+                <option value="">All Companies</option>
+                {uniqueCompanies.map(company => (
+                  <option key={company} value={company}>{company}</option>
                 ))}
-              </div>
-            </section>
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label htmlFor="category-type-filter">Category Type</label>
+              <select id="category-type-filter" value={categoryTypeFilter} onChange={(e) => setCategoryTypeFilter(e.target.value)}>
+                <option value="">All Types</option>
+                {uniqueCategoryTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label htmlFor="category-filter">Categories</label>
+              <select id="category-filter" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                <option value="">All Categories</option>
+                {uniqueCategories.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label htmlFor="expiry-date-filter">Expiry Date</label>
+              <input 
+                type="date" 
+                id="expiry-date-filter" 
+                value={expiryDateFilter} 
+                onChange={(e) => setExpiryDateFilter(e.target.value)}
+              />
+            </div>
+            
+            <button 
+              className="clear-filters-btn" 
+              onClick={() => {
+                setCompanyFilter("");
+                setCategoryTypeFilter("");
+                setCategoryFilter("");
+                setExpiryDateFilter("");
+              }}
+            >
+              Clear Filters
+            </button>
+          </div>
+          
+          <div className="mdp-content">
+            <section className="section">
+              <div className="section-title">All Products</div>
+              
+              {loading && (
+                <div className="loading">
+                  <div className="loading-text">Loading medicines...</div>
+                </div>
+              )}
 
-            {/* Medicines */}
-            <section className="section" id="medicines">
-              <div className="section-header">
-                <div className="section-title">Medicines</div>
-                <button className="view-all-btn" onClick={() => navigate('/products')}>View All</button>
-              </div>
-              <div className="product-row">
+              {error && (
+                <div className="error">
+                  <div className="error-text">{error}</div>
+                </div>
+              )}
+
+              {!loading && filteredMedicines.length === 0 && (
+                <div className="no-results">
+                  <p>No medicines found matching your search.</p>
+                </div>
+              )}
+
+              <div className="product-grid">
                 {!loading &&
                   filteredMedicines.map((medicine) => {
                     const fm = formatMedicineForDisplay(medicine);
                     return (
                       <article className="product-card" key={fm.id}>
-                        <button className="product-click" onClick={() => openProduct(fm)} aria-label="Open product">
-                          <div className="product-img" style={fm.image ? { backgroundImage: `url(${fm.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {!fm.image && <span style={{ color: '#9ca3af', fontSize: '24px' }}>💊</span>}
-                          </div>
-                        </button>
-
-                        <div className="product-body">
-                          <div className="product-name">{fm.name}</div>
-                          <div className="product-meta">
-                            <div className="company">{fm.company}</div>
-                          </div>
-                          <div className="product-price">Rs {fm.price}</div>
-                          <button className="add-btn" onClick={() => addToCart(fm, 1)}>
-                            Add to Cart
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
-
-                {!loading && filteredMedicines.length === 0 && (
-                  <div className="no-results">
-                    <p>No medicines found matching your search.</p>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Winter Medicines */}
-            <section className="winter">
-              <div className="winter-title">Winter Medicines</div>
-              <div className="winter-grid">
-                {!loading &&
-                  filteredMedicines.slice(0, 4).map((medicine) => {
-                    const fm = formatMedicineForDisplay(medicine);
-                    return (
-                      <article className="winter-card" key={`winter-${fm.id}`}>
-                        <div className="winter-img" style={fm.image ? { backgroundImage: `url(${fm.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {!fm.image && <span style={{ color: '#9ca3af', fontSize: '24px' }}>💊</span>}</div>
-                        <div className="winter-body">
-                          <div className="winter-name">{fm.name}</div>
-                          <div className="winter-sub">
-                            {fm.desc.substring(0, 50)}
-                            {fm.desc.length > 50 ? "..." : ""}
-                          </div>
-                          <div className="winter-price">Rs {fm.price}</div>
-                          <button
-                            className="winter-add"
-                            onClick={() => addToCart({ id: fm.id, name: fm.name, price: fm.price, mrp: fm.price }, 1)}
-                          >
-                            Add to Cart
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
-
-                {!loading && filteredMedicines.length === 0 && (
-                  <div className="no-results">
-                    <p>No medicines available.</p>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* More Medicines */}
-            <section className="section top-selling-bottom">
-              <div className="section-title">More Medicines</div>
-              <div className="product-row">
-                {!loading &&
-                  filteredMedicines.slice(0, 4).map((medicine) => {
-                    const fm = formatMedicineForDisplay(medicine);
-                    return (
-                      <article className="product-card" key={`bottom-${fm.id}`}>
                         <button className="product-click" onClick={() => openProduct(fm)} aria-label="Open product">
                           <div className="product-img" style={fm.image ? { backgroundImage: `url(${fm.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {!fm.image && <span style={{ color: '#9ca3af', fontSize: '24px' }}>💊</span>}
@@ -423,10 +498,10 @@ export default function CustomerDashboard() {
         <div className="checkout-body">
           <div className="pay-toggle">
             <button className={`pay-opt ${payType === "cash" ? "active" : ""}`} onClick={() => setPayType("cash")}>
-              <FaMoneyBillWave /> Cash
+              Cash
             </button>
             <button className={`pay-opt ${payType === "credit" ? "active" : ""}`} onClick={() => setPayType("credit")}>
-              <FaCreditCard /> Credit (2 months)
+              Credit (2 months)
             </button>
           </div>
 
@@ -467,31 +542,7 @@ export default function CustomerDashboard() {
           </button>
         </div>
       </div>
-
-      {/* FOOTER */}
-      <footer className="mdp-footer">
-        <div className="mdp-footer__inner">
-          <div className="mdp-footer__col">
-            <div className="mdp-footer__title">Medistock Pro</div>
-            <div className="mdp-footer__text">Your trusted partner for medicines and healthcare supplies.</div>
-          </div>
-
-          <div className="mdp-footer__col">
-            <div className="mdp-footer__title">Quick Links</div>
-            <a className="mdp-footer__link" href="#medicines">Medicines</a>
-            <a className="mdp-footer__link" href="#">Orders</a>
-            <a className="mdp-footer__link" href="#">Returns</a>
-          </div>
-
-          <div className="mdp-footer__col">
-            <div className="mdp-footer__title">Contact</div>
-            <div className="mdp-footer__text">Email: support@medistock.com</div>
-            <div className="mdp-footer__text">Phone: 025-561152</div>
-          </div>
-        </div>
-
-        <div className="mdp-footer__bottom">© {new Date().getFullYear()} Medistock Pro. All rights reserved.</div>
-      </footer>
     </div>
+    </Fragment>
   );
 }

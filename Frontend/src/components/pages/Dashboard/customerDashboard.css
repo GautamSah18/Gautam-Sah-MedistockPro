@@ -39,6 +39,7 @@
   margin: 0;
   padding: 0;
   font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  
 }
 
 a {
@@ -54,6 +55,7 @@ button {
   background: var(--bg);
   min-height: 100vh;
 }
+
 
 
 .mdp-nav {
@@ -347,6 +349,28 @@ button {
   margin-bottom: 14px;
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.view-all-btn {
+  background: var(--green);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.view-all-btn:hover {
+  background: var(--green2);
+}
+
 /* =========================
    SCHEMES
 ========================= */
@@ -488,6 +512,15 @@ button {
 .reviews {
   color: var(--muted);
   font-size: 12px;
+}
+
+.company {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .product-price {
@@ -1483,6 +1516,15 @@ button {
   }
   .winter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* UPDATED FILTER RESPONSIVE */
+  .mdp-layout {
+    grid-template-columns: 1fr;
+  }
+  .mdp-filters {
+    position: static;
+    top: auto;
   }
 }
 

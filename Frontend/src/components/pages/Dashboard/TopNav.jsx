@@ -167,6 +167,13 @@ export default function TopNav({
         >
           Expiry Return
         </NavLink>
+
+        <NavLink
+          to="/products"
+          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+        >
+          Products
+        </NavLink>
       </nav>
 
       <div className="mdp-nav__right">

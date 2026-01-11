@@ -10,7 +10,5 @@ class IsAdmin(permissions.BasePermission):
         # Check if user is authenticated
         if not request.user or not request.user.is_authenticated:
             return False
-        
-        # Check if user has admin role
-        return request.user.role == 'admin'
+        return request.user.is_superuser or request.user.is_staff or getattr(request.user, 'role', None) == 'admin'
 

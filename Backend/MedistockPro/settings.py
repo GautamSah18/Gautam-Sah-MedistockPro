@@ -46,7 +46,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'inventory',
     'Billing',
-    'django_filters'
+    'django_filters',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 AUTH_USER_MODEL = "Authentication.CustomUser"
@@ -161,8 +163,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),  # 24 hours for access token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),  # 30 days for refresh token
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
@@ -171,6 +173,25 @@ SIMPLE_JWT = {
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
 }
+
+
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dfei1ajh6',
+    'API_KEY': '249692913898242',
+    'API_SECRET': 'JqhQhgiVUIA0DvzmtLl5ITtrYbQ',
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+import cloudinary
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    secure=True
+)
 
 
 # File upload settings
