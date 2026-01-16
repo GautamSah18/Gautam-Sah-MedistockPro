@@ -74,13 +74,14 @@ export default function Billing() {
       
       const billData = {
         invoice_number: invoiceNo,
-        customer: user.id, // Use the actual customer ID from user context
+        customer: user.id,
         items: formattedItems,
         subtotal: parseFloat(subtotal.toFixed(2)),
         discount: parseFloat(discount.toFixed(2)),
         tax_total: parseFloat(computed.taxTotal.toFixed(2)),
         total_amount: parseFloat(computed.grandTotal.toFixed(2)),
         payment_type: paymentType,
+        payment_status: paymentType === 'cash' ? 'paid' : 'pending',
       };
       
       // Send the bill data to the backend
@@ -88,11 +89,15 @@ export default function Billing() {
       
       console.log('Bill saved successfully:', response.data);
       
-      // Optional: Show success message or redirect
-      alert('Payment processed successfully! Bill saved to admin records.');
+      // Save the bill first
+      console.log('Bill saved successfully:', response.data);
+      console.log('Payment type:', paymentType);
+      console.log('Grand total:', computed.grandTotal.toFixed(2));
       
-      // Navigate back to customer dashboard or another page
-      navigate('/customerDashboard');
+      // Navigate to payment page for all payment types
+      console.log('Navigating to payment page for all payment types');
+      // Navigate to payment page with total amount for all payment types
+      navigate('/payment', { state: { totalAmount: computed.grandTotal.toFixed(2) } });
       
     } catch (error) {
       console.error('Error saving bill:', error);
@@ -305,10 +310,14 @@ export default function Billing() {
         </div>
       </div>
       <div style={{ margin: "20px", textAlign: "center" }}>
-        <button className="proceed-payment-btn" onClick={saveBill}>
+        <button type="button" className="proceed-payment-btn" onClick={saveBill}>
           Proceed to Payment
         </button>
+
       </div>
+
+      
+      
     </div>
   );
 }

@@ -7,6 +7,12 @@ class Bill(models.Model):
         ('cash', 'Cash'),
         ('credit', 'Credit'),
     ]
+    
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('due', 'Due'),
+    ]
 
     invoice_number = models.CharField(max_length=50, unique=True)
     customer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='bills')
@@ -16,6 +22,8 @@ class Bill(models.Model):
     tax_total = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     payment_type = models.CharField(max_length=10, choices=PAYMENT_CHOICES)
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
