@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from '../../../context/AuthContext';
-import TopNav from "./TopNav";
 import api from '../../../services/api';
 import "./customerDashboard.css";
+import TopNav from "./TopNav";
 
 export default function Billing() {
   const location = useLocation();

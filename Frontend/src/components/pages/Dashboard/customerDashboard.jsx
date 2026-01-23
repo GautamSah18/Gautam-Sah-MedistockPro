@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../services/api.js";
 import TopNav from "./TopNav";
+import CartSchemePopup from "../../../components/CartSchemePopup";
 import "./customerDashboard.css";
 
 import {
@@ -56,6 +57,11 @@ export default function CustomerDashboard() {
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Bonus Schemes Popup State
+  const [showSchemePopup, setShowSchemePopup] = useState(false);
+  const [appliedScheme, setAppliedScheme] = useState(null);
+  const SCHEME_THRESHOLD = 10000; // Rs 10,000
 
 
 
@@ -88,6 +94,8 @@ export default function CustomerDashboard() {
 
   const cartCount = useMemo(() => cart.reduce((acc, it) => acc + it.qty, 0), [cart]);
   const cartTotal = useMemo(() => cart.reduce((acc, it) => acc + it.qty * it.price, 0), [cart]);
+  
+
 
   const addToCart = (p, qty = 1) => {
     setCart((prev) => {
@@ -109,7 +117,15 @@ export default function CustomerDashboard() {
 
   const removeItem = (id) => setCart((prev) => prev.filter((x) => x.id !== id));
   const openProduct = (p) => setModalProduct(p);
-
+  
+  // Bonus Schemes Popup Handlers
+  const handleCloseSchemePopup = () => {
+    setShowSchemePopup(false);
+    // Close popup and open checkout modal
+    setCheckoutOpen(true);
+    setCartOpen(false);
+  };
+  
   const formatMedicineForDisplay = (medicine) => ({
     id: medicine.id,
     name: medicine.name,
@@ -134,6 +150,13 @@ export default function CustomerDashboard() {
         cartCount={cartCount}
         onCartClick={() => setCartOpen(true)}
         onAddToCart={addToCart}
+      />
+      
+      {/* Bonus Schemes Popup */}
+      <CartSchemePopup
+        cartTotal={cartTotal}
+        isVisible={showSchemePopup}
+        onClose={handleCloseSchemePopup}
       />
 
       
@@ -351,8 +374,15 @@ export default function CustomerDashboard() {
             className={`checkout-btn ${cart.length === 0 ? "disabled" : ""}`}
             onClick={() => {
               if (cart.length === 0) return;
-              setCheckoutOpen(true);
-              setCartOpen(false);
+              
+              // Check if cart total meets scheme threshold when clicking checkout
+              if (cartTotal >= SCHEME_THRESHOLD && !showSchemePopup) {
+                setShowSchemePopup(true);
+              } else {
+                // Open checkout modal
+                setCheckoutOpen(true);
+                setCartOpen(false);
+              }
             }}
           >
             Checkout
@@ -458,6 +488,7 @@ export default function CustomerDashboard() {
           <button
             className="checkout-btn"
             onClick={() => {
+              // Proceed to billing normally
               navigate("/billing", { state: { cart, paymentType: payType, cartTotal } });
               setCart([]);
               setCheckoutOpen(false);

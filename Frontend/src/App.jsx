@@ -19,12 +19,13 @@ import Inventory from "./components/pages/Inventory/Inventory";
 // Customer
 import ProductPage from "./components/pages/Dashboard/ProductPage";
 import Payment from "./components/pages/Payment/Payment";
+import BonusSchemes from "./components/pages/BonusSchemes/BonusSchemes";
 
 
 import CustomerDashboard from "./components/pages/Dashboard/customerDashboard";
 import CustomerPrescriptions from "./components/pages/Dashboard/CustomerPrescriptions";
 import ExpiryReturn from "./components/pages/Dashboard/ExpiryReturn";
-import Orders from "./components/pages/Dashboard/Orders";
+import Orders from "./components/pages/Inventory/Orders.jsx";
 import ProfileManagement from "./components/pages/Dashboard/ProfileManagement";
 
 function RouteLoader({ children }) {
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="/customer/returns" element={<ProtectedRoute><ExpiryReturn /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfileManagement /></ProtectedRoute>} />
             <Route path="/products" element={<ProtectedRoute><ProductPage /></ProtectedRoute>} />
+            <Route path="/bonus-schemes" element={<ProtectedRoute><BonusSchemes /></ProtectedRoute>} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/paymentsuccess" element={<div>Payment Success</div>} />
             <Route path="/paymentfailure" element={<div>Payment Failed</div>} />

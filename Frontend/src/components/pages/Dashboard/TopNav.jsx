@@ -174,6 +174,13 @@ export default function TopNav({
         >
           Products
         </NavLink>
+
+        <NavLink
+          to="/bonus-schemes"
+          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+        >
+          Bonus & Schemes
+        </NavLink>
       </nav>
 
       <div className="mdp-nav__right">

@@ -49,6 +49,7 @@ urlpatterns = [
     path('api/inventory/', include('inventory.urls')),
     path('inventory/', include('inventory.urls')),
     path('api/billing/', include('Billing.urls')),
+    path('api/bonus-schemes/', include('bonus_schemes.urls')),
 ]
 
 # Serve media files in development

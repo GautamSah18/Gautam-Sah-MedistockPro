@@ -1,0 +1,251 @@
+/* Cart Scheme Popup Styles */
+
+.cart-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.cart-scheme-popup {
+  background: white;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: popupSlideIn 0.3s ease-out;
+}
+
+@keyframes popupSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.popup-header {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  padding: 25px;
+  text-align: center;
+  position: relative;
+}
+
+.header-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.popup-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.close-popup {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: background 0.3s;
+}
+
+.close-popup:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.popup-body {
+  padding: 30px;
+}
+
+.congrats-message {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 25px;
+  color: #333;
+}
+
+.congrats-message strong {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.loading-schemes {
+  text-align: center;
+  padding: 30px 0;
+}
+
+.spinner-small {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+.loading-schemes p {
+  margin: 0;
+  color: #666;
+}
+
+.eligible-schemes-list h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.scheme-preview {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 15px;
+  border-left: 4px solid #3498db;
+}
+
+.scheme-name {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.scheme-details {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.scheme-details span {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.popup-footer {
+  padding: 20px 30px;
+  background: #f8f9fa;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.secondary-btn, .primary-btn {
+  padding: 14px 25px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  flex: 1;
+  max-width: 200px;
+}
+
+.secondary-btn {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.secondary-btn:hover {
+  background: #dee2e6;
+  transform: translateY(-2px);
+}
+
+.primary-btn {
+  background: #3498db;
+  color: white;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+}
+
+.primary-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cart-popup-overlay {
+    padding: 15px;
+  }
+  
+  .cart-scheme-popup {
+    max-width: 100%;
+  }
+  
+  .popup-header {
+    padding: 20px;
+  }
+  
+  .popup-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .popup-body {
+    padding: 20px;
+  }
+  
+  .scheme-details {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .popup-footer {
+    flex-direction: column;
+    padding: 20px;
+  }
+  
+  .secondary-btn, .primary-btn {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-icon {
+    font-size: 2.5rem;
+  }
+  
+  .popup-header h2 {
+    font-size: 1.3rem;
+  }
+  
+  .congrats-message {
+    font-size: 1rem;
+  }
+}

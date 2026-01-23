@@ -5,7 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 
 const Payment = () => {
   const location = useLocation();
-  const totalAmount = location.state?.totalAmount || "10"; // ✅ safe fallback
+  const totalAmount = location.state?.totalAmount || "10";
+  const appliedScheme = location.state?.appliedScheme;
 
   const [hover, setHover] = useState(false);
 
@@ -75,6 +76,20 @@ const Payment = () => {
         }}
       >
         <h2 style={{ margin: "0 0 16px 0" }}>Pay with eSewa</h2>
+
+        {/* Display applied scheme information */}
+        {appliedScheme && (
+          <div style={{ marginBottom: "14px", padding: "12px", backgroundColor: "#e8f5e8", border: "1px solid #4caf50", borderRadius: "6px" }}>
+            <div style={{ fontWeight: "bold", color: "#2e7d32", marginBottom: "4px" }}>Scheme Applied: {appliedScheme.name}</div>
+            <div style={{ fontSize: "14px", color: "#388e3c" }}>Congratulations! Your scheme has been applied to this purchase.</div>
+          </div>
+        )}
+        {!appliedScheme && (
+          <div style={{ marginBottom: "14px", padding: "12px", backgroundColor: "#e3f2fd", border: "1px solid #2196f3", borderRadius: "6px" }}>
+            <div style={{ fontWeight: "bold", color: "#1976d2", marginBottom: "4px" }}>Schemes Available</div>
+            <div style={{ fontSize: "14px", color: "#1565c0" }}>Remember to check Bonus & Schemes page to apply eligible schemes for discounts!</div>
+          </div>
+        )}
 
         <div style={{ marginBottom: "14px" }}>
           <label style={{ display: "block", marginBottom: "6px", fontWeight: 600 }}>

@@ -8,6 +8,7 @@ from django.utils.html import escape
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from .models import Bill
 from .serializers import BillSerializer, BillCreateSerializer
 
@@ -26,7 +27,13 @@ def list_bills(request):
 def get_bill(request, pk):
     """Get a specific bill"""
     try:
-        bill = Bill.objects.get(pk=pk)
+        # First try to find by numerical ID, then by invoice number
+        try:
+            bill = Bill.objects.get(pk=pk)
+        except (ValueError, TypeError):
+            # If pk is not a number, it might be an invoice number
+            bill = Bill.objects.get(invoice_number=pk)
+        
         serializer = BillSerializer(bill)
         return Response(serializer.data)
     except Bill.DoesNotExist:
@@ -62,7 +69,12 @@ def get_customer_bills(request):
 def print_bill(request, pk):
     """Generate a printable version of a specific bill"""
     try:
-        bill = Bill.objects.get(pk=pk)
+        # First try to find by numerical ID, then by invoice number
+        try:
+            bill = Bill.objects.get(pk=pk)
+        except (ValueError, TypeError):
+            # If pk is not a number, it might be an invoice number
+            bill = Bill.objects.get(invoice_number=pk)
         
         # Check if user has permission to view this bill
         # Admins can view all bills, customers can only view their own
@@ -120,7 +132,12 @@ def print_bill(request, pk):
 @staff_member_required
 def admin_print_bill(request, pk):
     """Generate a printable version of a specific bill for admin users"""
-    bill = get_object_or_404(Bill, pk=pk)
+    # First try to find by numerical ID, then by invoice number
+    try:
+        bill = get_object_or_404(Bill, pk=pk)
+    except (ValueError, TypeError):
+        # If pk is not a number, it might be an invoice number
+        bill = get_object_or_404(Bill, invoice_number=pk)
     
     # For admin users, we can access any bill
     # Convert items JSON to a format suitable for template

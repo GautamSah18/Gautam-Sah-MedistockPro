@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext.jsx";
 import api from "../../../services/api.js";
+import BonusManagement from "./BonusManagement";
 import "./Inventory.css";
+import Orders from "./Orders";
+import SchemeManagement from "./SchemeManagement";
 
 const Inventory = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [medicines, setMedicines] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'bonuses', 'schemes', 'orders'
   const [currentMedicine, setCurrentMedicine] = useState({
     name: "",
     generic_name: "",
@@ -29,6 +37,22 @@ const Inventory = () => {
     image: null,
     created_by: "",
     updated_by: "",
+    // Bonus fields
+    bonus_name: "",
+    bonus_buy_quantity: "",
+    bonus_free_quantity: "",
+    bonus_start_date: "",
+    bonus_end_date: "",
+    bonus_is_active: true,
+    // Scheme fields
+    scheme_name: "",
+    scheme_min_bill_amount: "",
+    scheme_gift_value_limit: "",
+    scheme_description: "",
+    scheme_start_date: "",
+    scheme_end_date: "",
+    scheme_is_active: true,
+    scheme_gifts: []
   });
 
 
@@ -92,6 +116,22 @@ const Inventory = () => {
       image: null,
       created_by: "",
       updated_by: "",
+      // Bonus fields
+      bonus_name: "",
+      bonus_buy_quantity: "",
+      bonus_free_quantity: "",
+      bonus_start_date: "",
+      bonus_end_date: "",
+      bonus_is_active: true,
+      // Scheme fields
+      scheme_name: "",
+      scheme_min_bill_amount: "",
+      scheme_gift_value_limit: "",
+      scheme_description: "",
+      scheme_start_date: "",
+      scheme_end_date: "",
+      scheme_is_active: true,
+      scheme_gifts: []
     });
   };
 
@@ -273,10 +313,12 @@ const Inventory = () => {
   }, [medicines]);
 
   const navItems = [
-    { key: "inv", label: "Inventory", icon: "📦", active: true },
-    { key: "orders", label: "Orders", icon: "🧺", active: false },
-    { key: "delivery", label: "Delivery", icon: "🚚", active: false },
-    { key: "settings", label: "Settings", icon: "⚙️", active: false },
+    { key: "inv", label: "Inventory", icon: "📦", active: activeTab === 'inventory' },
+    { key: "bonuses", label: "Bonuses", icon: "🏷️", active: activeTab === 'bonuses' },
+    { key: "schemes", label: "Schemes", icon: "🎁", active: activeTab === 'schemes' },
+    { key: "orders", label: "Orders", icon: "🧺", active: activeTab === 'orders' },
+    { key: "delivery", label: "Delivery", icon: "🚚", active: activeTab === 'delivery' },
+    { key: "settings", label: "Settings", icon: "⚙️", active: activeTab === 'settings' },
   ];
 
   if (loading) return <div className="loading">Loading inventory...</div>;
@@ -314,7 +356,13 @@ const Inventory = () => {
               key={it.key}
               className={`inv-nav-item ${it.active ? "active" : ""}`}
               type="button"
-              onClick={() => { }}
+              onClick={() => {
+                if (['inv', 'bonuses', 'schemes'].includes(it.key)) {
+                  setActiveTab(it.key === 'inv' ? 'inventory' : it.key);
+                } else {
+                  setActiveTab(it.key);
+                }
+              }}
             >
               <span className="inv-nav-ic">{it.icon}</span>
               {sidebarOpen ? <span className="inv-nav-text">{it.label}</span> : null}
@@ -333,6 +381,14 @@ const Inventory = () => {
               </div>
             ) : null}
           </div>
+
+          <button
+            className="inv-logout-btn"
+            type="button"
+            onClick={logout}
+          >
+            {sidebarOpen ? 'Logout' : '🚪'}
+          </button>
 
           <button
             className="inv-mobile-close"
@@ -358,128 +414,156 @@ const Inventory = () => {
           </button>
 
           <div className="inv-title">
-            <h1>Medicine Inventory</h1>
-            <p>Manage medicines, stock, pricing and expiry.</p>
+            <h1>
+              {activeTab === 'inventory' && 'Medicine Inventory'}
+              {activeTab === 'orders' && 'Orders'}
+              {activeTab === 'Bonuses' && 'BonusManagement'}
+              {activeTab === 'Schemes' && 'SchemeManagement'}
+
+            </h1>
+            <p>
+              {activeTab === 'inventory' && 'Manage medicines, stock, pricing and expiry.'}
+              {activeTab === 'orders' && 'View and manage customer orders.'}
+              {activeTab === 'Bonuses' && 'View and manage customer Bonuses.'}
+              {activeTab === 'Schemes' && 'View and manage customer Schemes.'}
+            </p>
           </div>
 
           <div className="inv-actions">
-            <div className="inv-search">
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search medicine / batch / company..."
-              />
-            </div>
+            {activeTab === 'inventory' && (
+              <>
+                <div className="inv-search">
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search medicine / batch / company..."
+                  />
+                </div>
+                <button className="add-medicine-btn" onClick={handleAddMedicine}>
+                  + Add Medicine
+                </button>
+              </>
+            )}
+            
 
-            <button className="add-medicine-btn" onClick={handleAddMedicine}>
-              + Add Medicine
-            </button>
+            
+
           </div>
         </header>
 
-        <section className="inv-stats">
-          <div className="inv-stat">
-            <div className="inv-stat__label">Total Medicines</div>
-            <div className="inv-stat__value">{stats.total}</div>
-          </div>
-          <div className="inv-stat">
-            <div className="inv-stat__label">Low Stock</div>
-            <div className="inv-stat__value">{stats.low}</div>
-          </div>
-          <div className="inv-stat">
-            <div className="inv-stat__label">Expired</div>
-            <div className="inv-stat__value">{stats.expired}</div>
-          </div>
-        </section>
+        {activeTab === 'inventory' && (
+          <section className="inv-stats">
+            <div className="inv-stat">
+              <div className="inv-stat__label">Total Medicines</div>
+              <div className="inv-stat__value">{stats.total}</div>
+            </div>
+            <div className="inv-stat">
+              <div className="inv-stat__label">Low Stock</div>
+              <div className="inv-stat__value">{stats.low}</div>
+            </div>
+            <div className="inv-stat">
+              <div className="inv-stat__label">Expired</div>
+              <div className="inv-stat__value">{stats.expired}</div>
+            </div>
+          </section>
+        )}
 
-        {/* Table */}
-        <div className="inventory-table-container">
-          <table className="inventory-table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Medicine</th>
-                <th>Company</th>
-                <th>Batch</th>
-                <th>Type</th>
-                <th>Category</th>
-                <th>Stock</th>
-                <th>Unit</th>
-                <th>Price</th>
-                <th>Expiry</th>
-                <th>Status</th>
-                <th className="th-actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMedicines.map((medicine) => (
-                <tr key={medicine.id}>
-                  <td>
-                    {medicine.image ? (
-                      <img src={medicine.image} alt={medicine.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
-                    ) : (
-                      <div style={{ width: '50px', height: '50px', backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' }}>
-                        <span style={{ color: '#9ca3af' }}>💊</span>
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    <div className="medicine-info">
-                      <strong>{medicine.name}</strong>
-                      {medicine.generic_name && <small className="generic-name">{medicine.generic_name}</small>}
-                    </div>
-                  </td>
-                  <td>{medicine.company}</td>
-                  <td>{medicine.batch_no}</td>
-                  <td>
-                    <span className="category-badge">{medicine.category_type}</span>
-                  </td>
-                  <td>
-                    {medicine.category}
-                  </td>
-                  <td>
-                    <div className="stock-info">
-                      <span>{medicine.stock}</span>
-                      <div className="stock-range">
-                        <small>Min: {medicine.min_stock}</small>
-                        <small>Max: {medicine.max_stock}</small>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{medicine.unit}</td>
-                  <td>
-                    <div className="price-info">
-                      <span className="selling-price">Rs{medicine.selling_price}</span>
-                      <small className="cost-price">Cost: Rs{medicine.cost_price}</small>
-                    </div>
-                  </td>
-                  <td>{new Date(medicine.expiry_date).toLocaleDateString()}</td>
-                  <td>
-                    <span className="status-badge" style={{ backgroundColor: getStatusColor(medicine.status) }}>
-                      {medicine.status}
-                    </span>
-                  </td>
-                  <td className="td-actions">
-                    <button className="btn-update" onClick={() => handleEditMedicine(medicine)}>
-                      Update
-                    </button>
-                    <button className="btn-delete" onClick={() => handleDeleteMedicine(medicine.id)}>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+        {/* Content based on active tab */}
+        {activeTab === 'inventory' && (
+          <div className="inventory-table-wrapper">
+            <div className="inventory-table-container">
+              <table className="inventory-table">
+                <thead>
+                  <tr>
+                    <th>Image</th>
+                    <th>Medicine</th>
+                    <th>Company</th>
+                    <th>Batch</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Stock</th>
+                    <th>Unit</th>
+                    <th>Price</th>
+                    <th>Expiry</th>
+                    <th>Status</th>
+                    <th className="th-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMedicines.map((medicine) => (
+                    <tr key={medicine.id}>
+                      <td>
+                        {medicine.image ? (
+                          <img src={medicine.image} alt={medicine.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
+                        ) : (
+                          <div style={{ width: '50px', height: '50px', backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' }}>
+                            <span style={{ color: '#9ca3af' }}>💊</span>
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <div className="medicine-info">
+                          <strong>{medicine.name}</strong>
+                          {medicine.generic_name && <small className="generic-name">{medicine.generic_name}</small>}
+                        </div>
+                      </td>
+                      <td>{medicine.company}</td>
+                      <td>{medicine.batch_no}</td>
+                      <td>
+                        <span className="category-badge">{medicine.category_type}</span>
+                      </td>
+                      <td>
+                        {medicine.category}
+                      </td>
+                      <td>
+                        <div className="stock-info">
+                          <span>{medicine.stock}</span>
+                          <div className="stock-range">
+                            <small>Min: {medicine.min_stock}</small>
+                            <small>Max: {medicine.max_stock}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{medicine.unit}</td>
+                      <td>
+                        <div className="price-info">
+                          <span className="selling-price">Rs{medicine.selling_price}</span>
+                          <small className="cost-price">Cost: Rs{medicine.cost_price}</small>
+                        </div>
+                      </td>
+                      <td>{new Date(medicine.expiry_date).toLocaleDateString()}</td>
+                      <td>
+                        <span className="status-badge" style={{ backgroundColor: getStatusColor(medicine.status) }}>
+                          {medicine.status}
+                        </span>
+                      </td>
+                      <td className="td-actions">
+                        <button className="btn-update" onClick={() => handleEditMedicine(medicine)}>
+                          Update
+                        </button>
+                        <button className="btn-delete" onClick={() => handleDeleteMedicine(medicine.id)}>
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
 
-              {filteredMedicines.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="inv-empty">
-                    No medicines found for: <b>{search}</b>
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+                  {filteredMedicines.length === 0 ? (
+                    <tr>
+                      <td colSpan={12} className="inv-empty">
+                        No medicines found for: <b>{search}</b>
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'bonuses' && <BonusManagement />}
+        {activeTab === 'schemes' && <SchemeManagement />}
+        {activeTab === 'orders' && <Orders />}
 
         {/* Modal */}
         {isModalOpen && (
