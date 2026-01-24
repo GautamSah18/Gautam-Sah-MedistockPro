@@ -1,14 +1,16 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 from . import views
 
-router = DefaultRouter()
-router.register(r'bonuses', views.BonusViewSet)
-router.register(r'gifts', views.GiftViewSet)
-router.register(r'bill-schemes', views.BillSchemeViewSet)
-router.register(r'applied-bonuses', views.AppliedBonusViewSet)
-router.register(r'applied-schemes', views.AppliedSchemeViewSet)
-
 urlpatterns = [
-    path('', include(router.urls)),
+    # Bonuses
+    path('bonuses/active/', views.active_bonuses),
+    path('check-bonus/', views.check_bonus),
+    # Bill Schemes
+    path('bill-schemes/', views.bill_schemes),
+
+    # Apply Scheme (creates AppliedScheme in DB)
+    path('apply-scheme/', views.apply_bill_scheme),
+
+    # User applied schemes history
+    path('applied-schemes/me/', views.my_applied_schemes),
 ]

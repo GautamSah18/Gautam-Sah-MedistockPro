@@ -1,159 +1,126 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from inventory.models import Medicine
-from Billing.models import Bill
+from Authentication.models import CustomUser
+
 
 
 class Bonus(models.Model):
-    """Model for item-level bonuses (e.g., Buy 10 get 2 free)"""
-    name = models.CharField(max_length=255, help_text="Name of the bonus scheme")
+    name = models.CharField(max_length=255)
     medicine = models.ForeignKey(
         Medicine,
         on_delete=models.CASCADE,
-        related_name='bonuses',
-        help_text="Medicine this bonus applies to"
+        related_name='bonuses'
     )
-    buy_quantity = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)],
-        help_text="Number of items to buy to qualify for bonus"
-    )
-    free_quantity = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)],
-        help_text="Number of free items given"
-    )
-    start_date = models.DateField(help_text="When the bonus becomes active")
-    end_date = models.DateField(help_text="When the bonus expires")
-    is_active = models.BooleanField(default=True, help_text="Whether the bonus is currently active")
+    buy_quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    free_quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
-        return f"{self.name} - {self.medicine.name}"
-    
+        return f"{self.medicine.name} Buy {self.buy_quantity} Get {self.free_quantity}"
+
     class Meta:
         ordering = ['-created_at']
-        verbose_name = 'Bonus'
-        verbose_name_plural = 'Bonuses'
+        verbose_name = "Bonus"
+        verbose_name_plural = "Bonuses"
+
 
 
 class Gift(models.Model):
-    """Model for gifts that can be awarded in schemes"""
-    name = models.CharField(max_length=255, help_text="Name of the gift")
-    description = models.TextField(blank=True, null=True, help_text="Description of the gift")
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
     value = models.DecimalField(
-        max_digits=10, 
+        max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
-        help_text="Monetary value of the gift"
+        validators=[MinValueValidator(0)]
     )
-    image_url = models.URLField(blank=True, null=True, help_text="Image URL for the gift")
-    is_active = models.BooleanField(default=True, help_text="Whether the gift is available")
+    is_active = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return f"{self.name} (Rs {self.value})"
-    
+
     class Meta:
         ordering = ['-created_at']
-        verbose_name = 'Gift'
-        verbose_name_plural = 'Gifts'
+        verbose_name = "Gift"
+        verbose_name_plural = "Gifts"
 
 
 class BillScheme(models.Model):
-    """Model for bill-level schemes (e.g., spend Rs 1,00,000 get Rs 10,000 worth of gifts)"""
-    name = models.CharField(max_length=255, help_text="Name of the scheme")
-    description = models.TextField(blank=True, null=True, help_text="Description of the scheme")
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
     min_bill_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
-        help_text="Minimum bill amount required to qualify"
+        validators=[MinValueValidator(0)]
     )
-    gift_value_limit = models.DecimalField(
+
+    total_gift_value = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
-        help_text="Maximum value of gifts that can be selected"
+        validators=[MinValueValidator(0)]
     )
-    gifts = models.ManyToManyField(
-        Gift,
-        related_name='schemes',
-        blank=True,
-        help_text="Available gifts for this scheme"
+
+    remaining_gift_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)]
     )
-    start_date = models.DateField(help_text="When the scheme becomes active")
-    end_date = models.DateField(help_text="When the scheme expires")
-    is_active = models.BooleanField(default=True, help_text="Whether the scheme is currently active")
+
+    gifts = models.ManyToManyField(Gift, blank=True, related_name="schemes")
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
+
+    def save(self, *args, **kwargs):
+        # Initializing remaining_gift_value only for new records
+        if self.pk is None:
+            self.remaining_gift_value = self.total_gift_value
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.name} (Min: Rs {self.min_bill_amount})"
-    
+        return f"{self.name} (Remaining Rs {self.remaining_gift_value})"
+
     class Meta:
         ordering = ['-created_at']
-        verbose_name = 'Bill Scheme'
-        verbose_name_plural = 'Bill Schemes'
-
-
-class AppliedBonus(models.Model):
-    """Tracks bonuses applied to bills"""
-    bill = models.ForeignKey(
-        Bill,
-        on_delete=models.CASCADE,
-        related_name='applied_bonuses'
-    )
-    bonus = models.ForeignKey(
-        Bonus,
-        on_delete=models.CASCADE,
-        related_name='applied_to_bills'
-    )
-    quantity_applied = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)],
-        help_text="How many times this bonus was applied"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"Bonus {self.bonus.name} applied to {self.bill.invoice_number}"
-    
-    class Meta:
-        unique_together = ['bill', 'bonus']
-        verbose_name = 'Applied Bonus'
-        verbose_name_plural = 'Applied Bonuses'
+        verbose_name = "Bill Scheme"
+        verbose_name_plural = "Bill Schemes"
 
 
 class AppliedScheme(models.Model):
-    """Tracks schemes applied to bills"""
-    bill = models.ForeignKey(
-        Bill,
+    customer = models.ForeignKey(
+        CustomUser,
         on_delete=models.CASCADE,
         related_name='applied_schemes'
     )
     scheme = models.ForeignKey(
         BillScheme,
         on_delete=models.CASCADE,
-        related_name='applied_to_bills'
+        related_name='applications'
     )
-    selected_gifts = models.ManyToManyField(
-        Gift,
-        related_name='selected_in_applied_schemes',
-        blank=True,
-        help_text="Gifts selected by customer"
-    )
+    selected_gifts = models.ManyToManyField(Gift, blank=True, related_name="applied_schemes")
+
     total_gift_value = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=0.00,
-        help_text="Total value of selected gifts"
+        validators=[MinValueValidator(0)]
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    
+    applied_at = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
-        return f"Scheme {self.scheme.name} applied to {self.bill.invoice_number}"
-    
+        return f"{self.customer.email} → {self.scheme.name} (Rs {self.total_gift_value})"
+
     class Meta:
-        unique_together = ['bill', 'scheme']
-        verbose_name = 'Applied Scheme'
-        verbose_name_plural = 'Applied Schemes'
+        ordering = ['-applied_at']
+        verbose_name = "Applied Scheme"
+        verbose_name_plural = "Applied Schemes"

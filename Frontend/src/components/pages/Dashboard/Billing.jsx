@@ -9,7 +9,7 @@ export default function Billing() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cart, paymentType = "cash", cartTotal } = location.state || {};
+  const { cart, paymentType = "cash", cartTotal, appliedScheme = null } = location.state || {};
 
   const items = useMemo(() => {
     return (
@@ -26,7 +26,17 @@ export default function Billing() {
   }, [cartTotal, items]);
 
 
-  const discount = useMemo(() => Math.round(subtotal * 0.05), [subtotal]);
+  const discount = useMemo(() => {
+    // Base discount calculation
+    let baseDiscount = Math.round(subtotal * 0.05);
+    
+    // Add scheme discount if applicable
+    if (appliedScheme && appliedScheme.totalValue) {
+      baseDiscount += appliedScheme.totalValue;
+    }
+    
+    return baseDiscount;
+  }, [subtotal, appliedScheme]);
 
   const TAX_RATE = 0.05;
 
@@ -86,6 +96,23 @@ export default function Billing() {
       
       // Send the bill data to the backend
       const response = await api.post('/api/billing/create/', billData);
+      
+      // If a scheme was applied, save the applied scheme data
+      if (appliedScheme && response.data && response.data.id) {
+        try {
+          // Apply the scheme to the created bill
+          const schemeResponse = await api.post('/api/bonus-schemes/bill-schemes/apply_scheme/', {
+            bill_id: response.data.id,
+            scheme_id: appliedScheme.scheme.id,
+            selected_gift_ids: appliedScheme.selectedGifts.map(gift => gift.id)
+          });
+          
+          console.log('Scheme applied to bill:', schemeResponse.data);
+        } catch (schemeError) {
+          console.error('Error applying scheme to bill:', schemeError);
+          // Don't fail the whole process if scheme application fails
+        }
+      }
       
       console.log('Bill saved successfully:', response.data);
       

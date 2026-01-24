@@ -1,35 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { FaGift, FaTimes } from 'react-icons/fa';
-import { checkSchemeEligibility } from '../services/bonusSchemesService';
+import { useEffect, useMemo, useState } from "react";
+import { FaGift, FaTimes } from "react-icons/fa";
+import api from "../services/api";
 
-const CartSchemePopup = ({ cartTotal, isVisible, onClose }) => {
-  const [eligibleSchemes, setEligibleSchemes] = useState([]);
+const CartSchemePopup = ({ cartTotal = 0, isVisible, onClose, onApplyScheme }) => {
+  const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
-  useEffect(() => {
-    if (isVisible && cartTotal > 0) {
-      checkEligibility();
-    }
-  }, [isVisible, cartTotal]);
+  const money = (v) => Number(v ?? 0).toLocaleString();
 
-  const checkEligibility = async () => {
-    if (cartTotal <= 0) return;
-    
-    setLoading(true);
-    try {
-      const response = await checkSchemeEligibility(cartTotal);
-      setEligibleSchemes(response.eligible_schemes || []);
-    } catch (error) {
-      console.error('Error checking eligibility:', error);
-      setEligibleSchemes([]);
-    } finally {
-      setLoading(false);
-    }
+  const schemeGiftLimit = (s) =>
+    Number(s?.remaining_gift_value ?? s?.total_gift_value ?? s?.gift_value_limit ?? 0);
+
+  const isActiveToday = (s) => {
+    const now = new Date();
+    const startOk = s?.start_date ? new Date(s.start_date) <= now : true;
+    const endOk = s?.end_date ? new Date(s.end_date) >= now : true;
+    const activeOk = s?.is_active === undefined ? true : Boolean(s.is_active);
+    return startOk && endOk && activeOk;
   };
 
-  if (!isVisible || eligibleSchemes.length === 0) {
-    return null;
-  }
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const run = async () => {
+      setLoading(true);
+      setLoadError("");
+      try {
+        const res = await api.get("/api/bonus-schemes/bill-schemes/");
+        const all = Array.isArray(res.data) ? res.data : res.data?.results || [];
+        setSchemes(all);
+      } catch (e) {
+        console.error("Error loading schemes:", e);
+        setLoadError("Failed to load schemes.");
+        setSchemes([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    run();
+  }, [isVisible]);
+
+  const eligibleSchemes = useMemo(() => {
+    const total = Number(cartTotal || 0);
+    return (schemes || [])
+      .filter(isActiveToday)
+      .filter((s) => total >= Number(s?.min_bill_amount || 0))
+      .sort((a, b) => Number(a.min_bill_amount || 0) - Number(b.min_bill_amount || 0));
+  }, [schemes, cartTotal]);
+
+  const handleApply = (scheme) => {
+    if (typeof onApplyScheme === "function") onApplyScheme(scheme);
+    if (typeof onClose === "function") onClose();
+  };
+
+  if (!isVisible) return null;
 
   return (
     <div className="cart-popup-overlay">
@@ -38,44 +64,50 @@ const CartSchemePopup = ({ cartTotal, isVisible, onClose }) => {
           <div className="header-icon">
             <FaGift />
           </div>
-          <h2>Congratulations!</h2>
+          <h2>Reward Schemes</h2>
           <button className="close-popup" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
-        
+
         <div className="popup-body">
           <p className="congrats-message">
-            Your cart total is <strong>Rs {cartTotal.toLocaleString()}</strong>.
-            You are eligible for exciting reward schemes!
+            Your cart total is <strong>Rs {money(cartTotal)}</strong>.
           </p>
-          
-          <div className="scheme-instruction">
-            <p>Visit the <strong>Bonus & Schemes</strong> page from the navigation menu to apply your eligible schemes and receive rewards.</p>
-          </div>
-          
+
           {loading ? (
-            <div className="loading-schemes">
-              <div className="spinner-small"></div>
-              <p>Checking available schemes...</p>
-            </div>
-          ) : (
-            <div className="eligible-schemes-list">
-              <h3>You qualify for:</h3>
-              {eligibleSchemes.map(scheme => (
-                <div key={scheme.id} className="scheme-preview">
-                  <div className="scheme-name">{scheme.name}</div>
-                  <div className="scheme-details">
-                    <span>Min. Bill: Rs {scheme.min_bill_amount.toLocaleString()}</span>
-                    <span>Gift Limit: Rs {scheme.gift_value_limit.toLocaleString()}</span>
+            <p>Please wait... checking schemes</p>
+          ) : loadError ? (
+            <p>{loadError}</p>
+          ) : eligibleSchemes.length > 0 ? (
+            <div className="schemes-list">
+              <h3>Available Schemes:</h3>
+
+              {eligibleSchemes.map((scheme) => (
+                <div key={scheme.id} className="scheme-item">
+                  <div className="scheme-info">
+                    <div className="scheme-name">{scheme.name}</div>
+                    <div className="scheme-details">
+                      <span>Min. Bill: Rs {money(scheme.min_bill_amount)}</span>
+                      <span>Gift Limit: Rs {money(schemeGiftLimit(scheme))}</span>
+                    </div>
                   </div>
+
+                  <button className="apply-scheme-btn" onClick={() => handleApply(scheme)}>
+                    Apply Scheme
+                  </button>
                 </div>
               ))}
             </div>
+          ) : (
+            <p>No schemes available for this total.</p>
           )}
         </div>
-        
+
         <div className="popup-footer">
+          <button className="secondary-btn" onClick={onClose}>
+            Skip for Now
+          </button>
           <button className="primary-btn" onClick={onClose}>
             Continue to Checkout
           </button>

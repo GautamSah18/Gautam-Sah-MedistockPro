@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../../../services/api.js";
-import TopNav from "./TopNav";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import CartSchemePopup from "../../../components/CartSchemePopup";
+import api from "../../../services/api.js";
 import "./customerDashboard.css";
+import TopNav from "./TopNav";
 
 import {
   FaCreditCard,
@@ -46,6 +46,8 @@ function Rating({ value = 4 }) {
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const cartRef = useRef(null);
 
   const [q, setQ] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
@@ -57,13 +59,90 @@ export default function CustomerDashboard() {
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Bonus Schemes Popup State
+
   const [showSchemePopup, setShowSchemePopup] = useState(false);
   const [appliedScheme, setAppliedScheme] = useState(null);
-  const SCHEME_THRESHOLD = 10000; // Rs 10,000
+  const [checkingSchemes, setCheckingSchemes] = useState(false);
 
+  const handleSchemeApplied = (schemeData) => {
+    setAppliedScheme(schemeData);
+  };
 
+  const calcFreeQty = (qty, buyQty, freeQty) => {
+    const qn = Number(qty ?? 0);
+    const buy = Number(buyQty ?? 0);
+    const free = Number(freeQty ?? 0);
+    if (!buy || !free) return 0;
+    return Math.floor(qn / buy) * free;
+  };
+
+  const addToCart = (p, qty = 1) => {
+    setCart((prev) => {
+      const found = prev.find((x) => x.id === p.id);
+      const buyQ = Number(p.buy_quantity ?? found?.buy_quantity ?? 0);
+      const freeQ = Number(p.free_quantity ?? found?.free_quantity ?? 0);
+
+      if (found) {
+        const newQty = Number(found.qty) + Number(qty || 0);
+        const bonusFree = calcFreeQty(newQty, buyQ, freeQ);
+
+        return prev.map((x) =>
+          x.id === p.id
+            ? {
+                ...x,
+                qty: newQty,
+                buy_quantity: buyQ || x.buy_quantity,
+                free_quantity: freeQ || x.free_quantity,
+                bonus_free_qty: bonusFree,
+              }
+            : x
+        );
+      }
+
+      const price = p.price ?? p.selling_price ?? p.mrp ?? 0;
+      const bonusFree = calcFreeQty(qty, buyQ, freeQ);
+
+      return [
+        ...prev,
+        {
+          id: p.id,
+          name: p.name,
+          price: Number(price) || 0,
+          qty: Number(qty || 1),
+          buy_quantity: buyQ,
+          free_quantity: freeQ,
+          bonus_free_qty: bonusFree,
+        },
+      ];
+    });
+
+    setCartOpen(true);
+  };
+
+  const inc = (id) =>
+    setCart((prev) =>
+      prev.map((x) => {
+        if (x.id !== id) return x;
+        const newQty = x.qty + 1;
+        const bonusFree = calcFreeQty(newQty, x.buy_quantity, x.free_quantity);
+        return { ...x, qty: newQty, bonus_free_qty: bonusFree };
+      })
+    );
+
+  const dec = (id) =>
+    setCart((prev) =>
+      prev
+        .map((x) => {
+          if (x.id !== id) return x;
+          const newQty = Math.max(1, x.qty - 1);
+          const bonusFree = calcFreeQty(newQty, x.buy_quantity, x.free_quantity);
+          return { ...x, qty: newQty, bonus_free_qty: bonusFree };
+        })
+        .filter((x) => x.qty > 0)
+    );
+
+  const removeItem = (id) => setCart((prev) => prev.filter((x) => x.id !== id));
+  const openProduct = (p) => setModalProduct(p);
 
   useEffect(() => {
     const fetchMedicines = async () => {
@@ -73,7 +152,6 @@ export default function CustomerDashboard() {
         setMedicines(response.data.results || response.data);
         setError(null);
       } catch (err) {
-        console.error("Error fetching medicines:", err);
         setError("Failed to load medicines. Please try again later.");
       } finally {
         setLoading(false);
@@ -83,49 +161,44 @@ export default function CustomerDashboard() {
     fetchMedicines();
   }, []);
 
+  useEffect(() => {
+    const bonusAdd = location.state?.bonusAdd;
+    const openCartFlag = location.state?.openCart;
+
+    if (bonusAdd?.id) {
+      addToCart(
+        {
+          id: bonusAdd.id,
+          name: bonusAdd.name,
+          price: bonusAdd.price,
+          buy_quantity: bonusAdd.buy_quantity,
+          free_quantity: bonusAdd.free_quantity,
+        },
+        1
+      );
+
+      navigate(location.pathname, { replace: true, state: {} });
+      setCartOpen(true);
+
+      setTimeout(() => {
+        cartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    } else if (openCartFlag) {
+      setCartOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
+
   const filteredMedicines = useMemo(() => {
     let result = medicines;
-
     const query = q.trim().toLowerCase();
     if (query) result = result.filter((p) => (p.name || "").toLowerCase().includes(query));
-
     return result;
   }, [q, medicines]);
 
   const cartCount = useMemo(() => cart.reduce((acc, it) => acc + it.qty, 0), [cart]);
   const cartTotal = useMemo(() => cart.reduce((acc, it) => acc + it.qty * it.price, 0), [cart]);
-  
 
-
-  const addToCart = (p, qty = 1) => {
-    setCart((prev) => {
-      const found = prev.find((x) => x.id === p.id);
-      if (found) return prev.map((x) => (x.id === p.id ? { ...x, qty: x.qty + qty } : x));
-      const price = p.price || p.selling_price || p.mrp || 0;
-      return [...prev, { id: p.id, name: p.name, price: Number(price) || 0, qty }];
-    });
-    setCartOpen(true);
-  };
-
-  const inc = (id) => setCart((prev) => prev.map((x) => (x.id === id ? { ...x, qty: x.qty + 1 } : x)));
-  const dec = (id) =>
-    setCart((prev) =>
-      prev
-        .map((x) => (x.id === id ? { ...x, qty: Math.max(1, x.qty - 1) } : x))
-        .filter((x) => x.qty > 0)
-    );
-
-  const removeItem = (id) => setCart((prev) => prev.filter((x) => x.id !== id));
-  const openProduct = (p) => setModalProduct(p);
-  
-  // Bonus Schemes Popup Handlers
-  const handleCloseSchemePopup = () => {
-    setShowSchemePopup(false);
-    // Close popup and open checkout modal
-    setCheckoutOpen(true);
-    setCartOpen(false);
-  };
-  
   const formatMedicineForDisplay = (medicine) => ({
     id: medicine.id,
     name: medicine.name,
@@ -141,6 +214,20 @@ export default function CustomerDashboard() {
     image: medicine.image || medicine.image_url || null,
   });
 
+  const fetchEligibleSchemes = async (total) => {
+    const res = await api.get("/api/bonus-schemes/bill-schemes/");
+    const all = Array.isArray(res.data) ? res.data : res.data.results || [];
+    const now = new Date();
+
+    return all.filter((s) => {
+      const minOk = Number(total ?? 0) >= Number(s.min_bill_amount ?? 0);
+      const activeOk = s.is_active === undefined ? true : Boolean(s.is_active);
+      const startOk = s.start_date ? new Date(s.start_date) <= now : true;
+      const endOk = s.end_date ? new Date(s.end_date) >= now : true;
+      return minOk && activeOk && startOk && endOk;
+    });
+  };
+
   return (
     <div className="mdp">
       <TopNav
@@ -151,15 +238,20 @@ export default function CustomerDashboard() {
         onCartClick={() => setCartOpen(true)}
         onAddToCart={addToCart}
       />
-      
-      {/* Bonus Schemes Popup */}
+
       <CartSchemePopup
         cartTotal={cartTotal}
         isVisible={showSchemePopup}
-        onClose={handleCloseSchemePopup}
+        onClose={() => {
+          setShowSchemePopup(false);
+          setCheckoutOpen(true);
+          setCartOpen(false);
+        }}
+        onApplyScheme={(scheme) => {
+          navigate("/bonus-schemes", { state: { cart, cartTotal, selectedScheme: scheme } });
+        }}
       />
 
-      
       <main className="container">
         <div className="mdp-layout">
           <div className="mdp-content">
@@ -175,7 +267,6 @@ export default function CustomerDashboard() {
               </div>
             )}
 
-            {/* Hero Banner */}
             <section className="hero">
               <div className="hero-overlay" />
               <div className="hero-content">
@@ -184,16 +275,12 @@ export default function CustomerDashboard() {
                   Stay healthy this season with our special discounts <br />
                   on essential medicines and supplements.
                 </p>
-                <button
-                  className="primary-btn"
-                  onClick={() => window.scrollTo({ top: 520, behavior: "smooth" })}
-                >
+                <button className="primary-btn" onClick={() => window.scrollTo({ top: 520, behavior: "smooth" })}>
                   Explore Offers
                 </button>
               </div>
             </section>
 
-            {/* Schemes */}
             <section className="section">
               <div className="section-title">Schemes &amp; Discounts</div>
               <div className="scheme-grid">
@@ -209,11 +296,12 @@ export default function CustomerDashboard() {
               </div>
             </section>
 
-            {/* Medicines */}
             <section className="section" id="medicines">
               <div className="section-header">
                 <div className="section-title">Medicines</div>
-                <button className="view-all-btn" onClick={() => navigate('/products')}>View All</button>
+                <button className="view-all-btn" onClick={() => navigate("/products")}>
+                  View All
+                </button>
               </div>
               <div className="product-row">
                 {!loading &&
@@ -222,8 +310,15 @@ export default function CustomerDashboard() {
                     return (
                       <article className="product-card" key={fm.id}>
                         <button className="product-click" onClick={() => openProduct(fm)} aria-label="Open product">
-                          <div className="product-img" style={fm.image ? { backgroundImage: `url(${fm.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {!fm.image && <span style={{ color: '#9ca3af', fontSize: '24px' }}>💊</span>}
+                          <div
+                            className="product-img"
+                            style={
+                              fm.image
+                                ? { backgroundImage: `url(${fm.image})`, backgroundSize: "cover", backgroundPosition: "center" }
+                                : { backgroundColor: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }
+                            }
+                          >
+                            {!fm.image && <span style={{ color: "#9ca3af", fontSize: "24px" }}>💊</span>}
                           </div>
                         </button>
 
@@ -249,7 +344,6 @@ export default function CustomerDashboard() {
               </div>
             </section>
 
-            {/* Winter Medicines */}
             <section className="winter">
               <div className="winter-title">Winter Medicines</div>
               <div className="winter-grid">
@@ -258,8 +352,16 @@ export default function CustomerDashboard() {
                     const fm = formatMedicineForDisplay(medicine);
                     return (
                       <article className="winter-card" key={`winter-${fm.id}`}>
-                        <div className="winter-img" style={fm.image ? { backgroundImage: `url(${fm.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {!fm.image && <span style={{ color: '#9ca3af', fontSize: '24px' }}>💊</span>}</div>
+                        <div
+                          className="winter-img"
+                          style={
+                            fm.image
+                              ? { backgroundImage: `url(${fm.image})`, backgroundSize: "cover", backgroundPosition: "center" }
+                              : { backgroundColor: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }
+                          }
+                        >
+                          {!fm.image && <span style={{ color: "#9ca3af", fontSize: "24px" }}>💊</span>}
+                        </div>
                         <div className="winter-body">
                           <div className="winter-name">{fm.name}</div>
                           <div className="winter-sub">
@@ -267,10 +369,7 @@ export default function CustomerDashboard() {
                             {fm.desc.length > 50 ? "..." : ""}
                           </div>
                           <div className="winter-price">Rs {fm.price}</div>
-                          <button
-                            className="winter-add"
-                            onClick={() => addToCart({ id: fm.id, name: fm.name, price: fm.price, mrp: fm.price }, 1)}
-                          >
+                          <button className="winter-add" onClick={() => addToCart({ id: fm.id, name: fm.name, price: fm.price, mrp: fm.price }, 1)}>
                             Add to Cart
                           </button>
                         </div>
@@ -286,7 +385,6 @@ export default function CustomerDashboard() {
               </div>
             </section>
 
-            {/* More Medicines */}
             <section className="section top-selling-bottom">
               <div className="section-title">More Medicines</div>
               <div className="product-row">
@@ -296,8 +394,15 @@ export default function CustomerDashboard() {
                     return (
                       <article className="product-card" key={`bottom-${fm.id}`}>
                         <button className="product-click" onClick={() => openProduct(fm)} aria-label="Open product">
-                          <div className="product-img" style={fm.image ? { backgroundImage: `url(${fm.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {!fm.image && <span style={{ color: '#9ca3af', fontSize: '24px' }}>💊</span>}
+                          <div
+                            className="product-img"
+                            style={
+                              fm.image
+                                ? { backgroundImage: `url(${fm.image})`, backgroundSize: "cover", backgroundPosition: "center" }
+                                : { backgroundColor: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }
+                            }
+                          >
+                            {!fm.image && <span style={{ color: "#9ca3af", fontSize: "24px" }}>💊</span>}
                           </div>
                         </button>
 
@@ -320,9 +425,8 @@ export default function CustomerDashboard() {
         </div>
       </main>
 
-      {/* CART DRAWER */}
       <div className={`drawer-backdrop ${cartOpen ? "show" : ""}`} onClick={() => setCartOpen(false)} />
-      <aside className={`drawer ${cartOpen ? "open" : ""}`} aria-hidden={!cartOpen}>
+      <aside ref={cartRef} className={`drawer ${cartOpen ? "open" : ""}`} aria-hidden={!cartOpen}>
         <div className="drawer-head">
           <div>
             <div className="drawer-title">Your Cart</div>
@@ -345,6 +449,11 @@ export default function CustomerDashboard() {
                 <div className="cart-item__info">
                   <div className="cart-item__name">{it.name}</div>
                   <div className="cart-item__price">Rs {it.price}</div>
+                  {Number(it.bonus_free_qty || 0) > 0 && (
+                    <div style={{ fontSize: 12, marginTop: 4 }}>
+                      Bonus: {it.qty} + {it.bonus_free_qty} free
+                    </div>
+                  )}
                 </div>
 
                 <div className="cart-item__actions">
@@ -371,26 +480,33 @@ export default function CustomerDashboard() {
           </div>
 
           <button
-            className={`checkout-btn ${cart.length === 0 ? "disabled" : ""}`}
-            onClick={() => {
-              if (cart.length === 0) return;
-              
-              // Check if cart total meets scheme threshold when clicking checkout
-              if (cartTotal >= SCHEME_THRESHOLD && !showSchemePopup) {
-                setShowSchemePopup(true);
-              } else {
-                // Open checkout modal
+            className={`checkout-btn ${cart.length === 0 || checkingSchemes ? "disabled" : ""}`}
+            onClick={async () => {
+              if (cart.length === 0 || checkingSchemes) return;
+
+              try {
+                setCheckingSchemes(true);
+                const eligible = await fetchEligibleSchemes(cartTotal);
+
+                if (eligible.length > 0) {
+                  setShowSchemePopup(true);
+                } else {
+                  setCheckoutOpen(true);
+                  setCartOpen(false);
+                }
+              } catch (e) {
                 setCheckoutOpen(true);
                 setCartOpen(false);
+              } finally {
+                setCheckingSchemes(false);
               }
             }}
           >
-            Checkout
+            {checkingSchemes ? "Checking Schemes..." : "Checkout"}
           </button>
         </div>
       </aside>
 
-      {/* PRODUCT MODAL */}
       <div className={`modal-backdrop ${modalProduct ? "show" : ""}`} onClick={() => setModalProduct(null)} />
       <div className={`modal ${modalProduct ? "open" : ""}`} role="dialog" aria-hidden={!modalProduct}>
         {modalProduct ? (
@@ -403,8 +519,16 @@ export default function CustomerDashboard() {
             </div>
 
             <div className="modal-body">
-              <div className="modal-img" style={modalProduct.image ? { backgroundImage: `url(${modalProduct.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
-                {!modalProduct.image && <span style={{ color: '#9ca3af', fontSize: '48px' }}>💊</span>}</div>
+              <div
+                className="modal-img"
+                style={
+                  modalProduct.image
+                    ? { backgroundImage: `url(${modalProduct.image})`, backgroundSize: "cover", backgroundPosition: "center" }
+                    : { backgroundColor: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "200px" }
+                }
+              >
+                {!modalProduct.image && <span style={{ color: "#9ca3af", fontSize: "48px" }}>💊</span>}
+              </div>
 
               <div className="modal-info">
                 <div className="modal-name">{modalProduct.name}</div>
@@ -440,7 +564,6 @@ export default function CustomerDashboard() {
         ) : null}
       </div>
 
-      {/* CHECKOUT MODAL */}
       <div className={`modal-backdrop ${checkoutOpen ? "show" : ""}`} onClick={() => setCheckoutOpen(false)} />
       <div className={`checkout ${checkoutOpen ? "open" : ""}`} role="dialog" aria-hidden={!checkoutOpen}>
         <div className="modal-head">
@@ -479,17 +602,24 @@ export default function CustomerDashboard() {
                 <div>Bill Total</div>
                 <strong>Rs {cartTotal}</strong>
               </div>
-              <div className="credit-note">
-                If not paid in time: restrict purchase to 40–60% of Indian products, deduction in discount and bonuses.
-              </div>
+              <div className="credit-note">If not paid in time: restrict in bonuses and discount.</div>
             </div>
           )}
 
           <button
             className="checkout-btn"
             onClick={() => {
-              // Proceed to billing normally
-              navigate("/billing", { state: { cart, paymentType: payType, cartTotal } });
+              const selectedSchemeFromStorage = sessionStorage.getItem("selectedScheme");
+              let finalAppliedScheme = appliedScheme;
+
+              if (selectedSchemeFromStorage) {
+                try {
+                  finalAppliedScheme = JSON.parse(selectedSchemeFromStorage);
+                  sessionStorage.removeItem("selectedScheme");
+                } catch (e) {}
+              }
+
+              navigate("/billing", { state: { cart, paymentType: payType, cartTotal, appliedScheme: finalAppliedScheme } });
               setCart([]);
               setCheckoutOpen(false);
             }}
@@ -499,7 +629,6 @@ export default function CustomerDashboard() {
         </div>
       </div>
 
-      {/* FOOTER */}
       <footer className="mdp-footer">
         <div className="mdp-footer__inner">
           <div className="mdp-footer__col">
@@ -509,9 +638,15 @@ export default function CustomerDashboard() {
 
           <div className="mdp-footer__col">
             <div className="mdp-footer__title">Quick Links</div>
-            <a className="mdp-footer__link" href="#medicines">Medicines</a>
-            <a className="mdp-footer__link" href="#">Orders</a>
-            <a className="mdp-footer__link" href="#">Returns</a>
+            <a className="mdp-footer__link" href="#medicines">
+              Medicines
+            </a>
+            <a className="mdp-footer__link" href="#">
+              Orders
+            </a>
+            <a className="mdp-footer__link" href="#">
+              Returns
+            </a>
           </div>
 
           <div className="mdp-footer__col">
