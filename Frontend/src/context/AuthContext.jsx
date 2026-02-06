@@ -1,50 +1,69 @@
 // src/context/AuthContext.js
-import { createContext, useState, useContext, useEffect } from 'react';
-import api from '../services/api';
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import api from "../services/api";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [bootstrapped, setBootstrapped] = useState(false);
 
-  // Function to refresh access token
-  const refreshAccessToken = async () => {
+
+  const clearStorage = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userFullName");
+    localStorage.removeItem("userProfilePicture");
+  };
+
+  const buildUserFromProfile = (profileData) => {
+    const fullName =
+      profileData?.first_name || profileData?.last_name
+        ? `${profileData?.first_name || ""} ${profileData?.last_name || ""}`.trim()
+        : profileData?.email?.split("@")?.[0] || "User";
+
+    return {
+      id: localStorage.getItem("userId") || profileData?.id || null,
+      email: profileData?.email || localStorage.getItem("userEmail") || "",
+      role: profileData?.role || localStorage.getItem("userRole") || "",
+      profilePicture: profileData?.profile_picture || localStorage.getItem("userProfilePicture") || null,
+      fullName: fullName || localStorage.getItem("userFullName") || "User",
+    };
+  };
+
+  const fetchProfile = async () => {
+    const res = await api.get("/api/auth/profile/");
+    return res.data;
+  };
+
+  // ---------- Logout ----------
+  const logout = async () => {
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
+      const refreshToken = localStorage.getItem("refresh_token");
+      if (refreshToken) {
+        // If you don't have this endpoint, it's okay — it will fail and still clear client state.
+        await api.post("/api/auth/logout/", { refresh: refreshToken });
       }
-
-      const response = await api.post('/api/auth/token/refresh/', {
-        refresh: refreshToken
-      });
-
-      if (response.data.access) {
-        localStorage.setItem('access_token', response.data.access);
-        // Update the API instance with the new token
-        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
-        return response.data.access;
-      } else {
-        throw new Error('No access token in refresh response');
-      }
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      // If refresh fails, log out the user
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      delete api.defaults.headers.common['Authorization'];
+    } catch (err) {
+      // ignore
+      console.error("Logout error:", err);
+    } finally {
+      clearStorage();
       setUser(null);
-      window.location.href = '/login';
-      return null;
+      window.location.href = "/login";
     }
   };
 
-  // Interceptor to handle token refresh automatically
+  // ---------- Interceptors (single source of truth for auth headers + refresh) ----------
   useEffect(() => {
     const requestInterceptor = api.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem("access_token");
         if (token) {
+          config.headers = config.headers || {};
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -57,13 +76,38 @@ export const AuthProvider = ({ children }) => {
       async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // If no response (network error), just reject
+        if (!error.response) return Promise.reject(error);
+
+        // Only attempt refresh on 401 for requests that haven't been retried
+        if (error.response.status === 401 && !originalRequest?._retry) {
+          const refreshToken = localStorage.getItem("refresh_token");
+          if (!refreshToken) {
+            // No refresh token => hard logout
+            await logout();
+            return Promise.reject(error);
+          }
+
           originalRequest._retry = true;
-          
-          const newToken = await refreshAccessToken();
-          if (newToken) {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+          try {
+            const refreshRes = await api.post("/api/token/refresh/", {
+              refresh: refreshToken,
+            });
+
+            const newAccess = refreshRes.data?.access;
+            if (!newAccess) throw new Error("No access token in refresh response");
+
+            localStorage.setItem("access_token", newAccess);
+
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+
             return api(originalRequest);
+          } catch (refreshErr) {
+            console.error("Token refresh failed:", refreshErr);
+            await logout();
+            return Promise.reject(refreshErr);
           }
         }
 
@@ -71,157 +115,128 @@ export const AuthProvider = ({ children }) => {
       }
     );
 
-    // Clean up interceptors
     return () => {
       api.interceptors.request.eject(requestInterceptor);
       api.interceptors.response.eject(responseInterceptor);
     };
+
   }, []);
 
-  // Load user data on app start
+
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      // Fetch complete profile data
-      const fetchUserProfile = async () => {
-        try {
-          // Set the token in the API headers before making the request
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          
-          const profileRes = await api.get('/api/auth/profile/');
-          const profileData = profileRes.data;
-          
-          const userData = {
-            id: localStorage.getItem('userId'),
-            email: profileData.email,
-            role: profileData.role,
-            profilePicture: profileData.profile_picture,
-            fullName: profileData.first_name && profileData.last_name 
-              ? `${profileData.first_name} ${profileData.last_name}`
-              : profileData.first_name || profileData.last_name || profileData.email.split('@')[0],
-          };
-          
-          setUser(userData);
-        } catch (error) {
-          console.error('Error fetching profile on app start:', error);
-          // Fallback to basic user data from localStorage
-          const userData = {
-            id: localStorage.getItem('userId'),
-            email: localStorage.getItem('userEmail'),
-            role: localStorage.getItem('userRole'),
-            profilePicture: localStorage.getItem('userProfilePicture'),
-            fullName: localStorage.getItem('userFullName'),
-          };
-          
-          if (userData.email && userData.role) {
-            setUser(userData);
-          }
-        }
-      };
-      
-      fetchUserProfile();
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setBootstrapped(true);
+      return;
     }
+
+    const run = async () => {
+      try {
+        const profileData = await fetchProfile();
+        const u = buildUserFromProfile(profileData);
+
+        // Persist what we know (optional but handy)
+        if (u.id) localStorage.setItem("userId", u.id);
+        if (u.email) localStorage.setItem("userEmail", u.email);
+        if (u.role) localStorage.setItem("userRole", u.role);
+        if (u.fullName) localStorage.setItem("userFullName", u.fullName);
+        if (u.profilePicture) localStorage.setItem("userProfilePicture", u.profilePicture);
+
+        setUser(u);
+      } catch (err) {
+        console.error("Profile load failed:", err);
+
+        // Fallback: if you stored basic user info at login, you can still set it
+        const fallback = {
+          id: localStorage.getItem("userId"),
+          email: localStorage.getItem("userEmail"),
+          role: localStorage.getItem("userRole"),
+          profilePicture: localStorage.getItem("userProfilePicture"),
+          fullName: localStorage.getItem("userFullName"),
+        };
+
+        if (fallback.email && fallback.role) setUser(fallback);
+      } finally {
+        setBootstrapped(true);
+      }
+    };
+
+    run();
   }, []);
 
+  // ---------- Login ----------
   const login = async (credentials) => {
-    try {
-      const res = await api.post('/api/auth/login/', credentials);
-      
-      if (res.data.access && res.data.refresh) {
-        // Store tokens
-        localStorage.setItem('access_token', res.data.access);
-        localStorage.setItem('refresh_token', res.data.refresh);
-        
-        // Store user data
-        const userData = res.data.user;
-        localStorage.setItem('userId', userData.id);
-        localStorage.setItem('userEmail', userData.email);
-        localStorage.setItem('userRole', userData.role);
-        localStorage.setItem('userFullName', userData.fullName || userData.email.split('@')[0]);
-        
-        // Fetch complete profile including profile picture
-        try {
-          const profileRes = await api.get('/api/auth/profile/');
-          const profileData = profileRes.data;
-          
-          if (profileData.profile_picture) {
-            localStorage.setItem('userProfilePicture', profileData.profile_picture);
-          }
-          
-          // Set user in context with profile picture
-          setUser({
-            id: userData.id,
-            email: userData.email,
-            role: userData.role,
-            profilePicture: profileData.profile_picture,
-            fullName: profileData.first_name && profileData.last_name 
-              ? `${profileData.first_name} ${profileData.last_name}`
-              : profileData.first_name || profileData.last_name || userData.email.split('@')[0],
-          });
-        } catch (profileError) {
-          console.error('Error fetching profile:', profileError);
-          // Fallback to basic user data
-          setUser({
-            id: userData.id,
-            email: userData.email,
-            role: userData.role,
-            profilePicture: null,
-            fullName: userData.fullName || userData.email.split('@')[0],
-          });
-        }
-        
-        return res.data;
-      }
-      
-      throw new Error(res.data.error || 'Login failed');
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+    const res = await api.post("/api/auth/login/", credentials);
+
+    if (!res.data?.access || !res.data?.refresh) {
+      throw new Error(res.data?.error || "Login failed");
     }
-  };
-  
-  const logout = async () => {
+
+    // Store tokens
+    localStorage.setItem("access_token", res.data.access);
+    localStorage.setItem("refresh_token", res.data.refresh);
+
+    // Store basic user info from login response (if your backend returns it)
+    const basic = res.data.user || {};
+    if (basic.id) localStorage.setItem("userId", basic.id);
+    if (basic.email) localStorage.setItem("userEmail", basic.email);
+    if (basic.role) localStorage.setItem("userRole", basic.role);
+
+    // Fetch full profile right after login (interceptor will attach token)
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (refreshToken) {
-        await api.post('/api/auth/logout/', { refresh: refreshToken });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Clear all user data
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userFullName');
-      localStorage.removeItem('userProfilePicture'); // Clear profile picture
-      
-      delete api.defaults.headers.common['Authorization'];
-      setUser(null);
-      window.location.href = '/login';
+      const profileData = await fetchProfile();
+      const u = buildUserFromProfile(profileData);
+
+      if (u.id) localStorage.setItem("userId", u.id);
+      if (u.email) localStorage.setItem("userEmail", u.email);
+      if (u.role) localStorage.setItem("userRole", u.role);
+      if (u.fullName) localStorage.setItem("userFullName", u.fullName);
+      if (u.profilePicture) localStorage.setItem("userProfilePicture", u.profilePicture);
+
+      setUser(u);
+    } catch (err) {
+      console.error("Error fetching profile after login:", err);
+
+      // fallback to basic login data
+      const fallback = {
+        id: basic.id || localStorage.getItem("userId"),
+        email: basic.email || localStorage.getItem("userEmail"),
+        role: basic.role || localStorage.getItem("userRole"),
+        profilePicture: localStorage.getItem("userProfilePicture") || null,
+        fullName:
+          basic.fullName ||
+          localStorage.getItem("userFullName") ||
+          (basic.email ? basic.email.split("@")[0] : "User"),
+      };
+      setUser(fallback);
     }
+
+    return res.data;
   };
-  
-  // Function to update user profile picture
+
+  // ---------- Update user in context + localStorage ----------
   const updateUserProfile = (profileData) => {
-    setUser(prev => ({
-      ...prev,
-      ...profileData
-    }));
-    
-    // Update localStorage
-    Object.keys(profileData).forEach(key => {
-      localStorage.setItem(`user${key.charAt(0).toUpperCase() + key.slice(1)}`, profileData[key]);
+    setUser((prev) => ({ ...(prev || {}), ...profileData }));
+
+    // Keep localStorage keys consistent with your old code
+    Object.keys(profileData || {}).forEach((key) => {
+      const storageKey = `user${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+      localStorage.setItem(storageKey, profileData[key]);
     });
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout, updateUserProfile }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      bootstrapped,
+      login,
+      logout,
+      updateUserProfile,
+    }),
+    [user, bootstrapped]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);

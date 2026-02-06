@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Bonus, Gift, BillScheme, AppliedScheme
 from inventory.models import Medicine
+from Authentication.models import CustomUser
 
 
 class MedicineMiniSerializer(serializers.ModelSerializer):
@@ -36,9 +37,16 @@ class BillSchemeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'email', 'first_name', 'last_name']
+
+
 class AppliedSchemeSerializer(serializers.ModelSerializer):
     selected_gifts = GiftSerializer(many=True, read_only=True)
     scheme = BillSchemeSerializer(read_only=True)
+    customer = CustomerSerializer(read_only=True)
 
     class Meta:
         model = AppliedScheme

@@ -1,304 +1,265 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
+
 from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
-from django.core.files.storage import default_storage
-from .models import CustomUser
-from .serializers import UserProfileSerializer
+from django.core.mail import send_mail
+from django.conf import settings
+
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import CustomUser, OTP
+from .serializers import (
+    UserProfileSerializer,
+    OTPVerificationSerializer,
+    ResendOTPSerializer,
+)
 from .forms import RegistrationStep1Form, RegistrationStep2Form, LoginForm
 
+
+
+# Registration Step 1
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def registration_step1(request):
-    """Step 1 registration (API)"""
     form = RegistrationStep1Form(request.data)
 
-    role = request.data.get('role')
-    if role == 'admin':
-        return Response({
-            "error": "Admin role cannot be selected during registration.",
-            "allowed_roles": ["customer", "delivery"]
-        }, status=status.HTTP_400_BAD_REQUEST)
-    
-    if form.is_valid():
-        user = form.save(commit=True)
-        user.is_active = True
-        # Store registration user ID in cache instead of session
-        registration_key = f'registration_{user.id}'
-        cache.set(registration_key, user.id, timeout=3600)
-        return Response({
-            "message": "Account created! Please upload your documents.",
-            "user_id": user.id
-        }, status=status.HTTP_201_CREATED)
-    return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+    if request.data.get('role') == 'admin':
+        return Response({"error": "Admin registration not allowed"}, status=400)
 
+    if not form.is_valid():
+        return Response(form.errors, status=400)
+
+    user = form.save(commit=True)
+    user.is_active = False
+    user.save()
+
+    otp = OTP.generate_otp(user)
+
+    send_mail(
+        "Medistock OTP Verification",
+        f"Your OTP is {otp.code}. It expires in 10 minutes.",
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
+
+    return Response(
+        {
+            "message": "OTP sent to email",
+            "user_id": user.id,
+            "email": user.email,
+        },
+        status=201
+    )
+
+
+
+# Resend OTP
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+def send_otp(request):
+    serializer = ResendOTPSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    user = CustomUser.objects.get(email=serializer.validated_data['email'])
+    otp = OTP.generate_otp(user)
+
+    send_mail(
+        "Medistock OTP",
+        f"Your OTP is {otp.code}. It expires in 10 minutes.",
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
+
+    return Response({"message": "OTP resent"}, status=200)
+
+
+
+# Verify OTP
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_otp(request):
+    serializer = OTPVerificationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    user = serializer.validated_data['user']
+
+    # Activate user
+    user.is_active = True
+    user.save(update_fields=["is_active"])
+
+    # Allow step 2 (upload documents)
+    cache.set(f"registration_{user.id}", user.id, timeout=3600)
+
+    return Response(
+        {
+            "message": "OTP verified successfully",
+            "next_step": "upload_documents",
+            "user_id": user.id,
+        },
+        status=200
+    )
+
+
+
+# Registration Step 2
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@parser_classes([MultiPartParser, FormParser])
 def registration_step2(request):
-    """Step 2: Document upload (API)"""
-    try:
-        
-        print("Request data:", request.data)
-        print("Request FILES:", request.FILES)
-        
-        # Get and validate user_id
-        user_id = request.data.get('user_id')
-        print("Raw user_id from request:", user_id, "Type:", type(user_id))
-        
-        if not user_id:
-            return Response({
-                "error": "User ID is required.",
-                "code": "missing_user_id"
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
-        
-        try:
-            user_id = int(user_id)
-        except (ValueError, TypeError):
-            return Response({
-                "error": "Invalid user ID format. Must be a number.",
-                "code": "invalid_user_id_format"
-            }, status=status.HTTP_400_BAD_REQUEST)
+    user_id = request.data.get("user_id")
 
-        registration_key = f'registration_{user_id}'
-        cached_user_id = cache.get(registration_key)
-        
-        if not cached_user_id:
-            # Check if user exists but session expired
-            if CustomUser.objects.filter(id=user_id).exists():
-                return Response({
-                    "error": "Registration session expired. Please start registration again.",
-                    "code": "session_expired"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                return Response({
-                    "error": "Invalid registration session. Please complete step 1 registration first.",
-                    "code": "invalid_session"
-                }, status=status.HTTP_400_BAD_REQUEST)
+    if not cache.get(f"registration_{user_id}"):
+        return Response({"error": "Session expired"}, status=400)
 
-        try:
-            user = CustomUser.objects.get(id=user_id)
-        except CustomUser.DoesNotExist:
-            # Clear the cache if user doesn't exist
-            cache.delete(registration_key)
-            return Response({
-                "error": "User not found. Please start registration again.",
-                "code": "user_not_found"
-            }, status=status.HTTP_404_NOT_FOUND)
+    user = CustomUser.objects.get(id=user_id)
 
-        if hasattr(user, 'documents'):
-            return Response({
-                "message": "Documents already uploaded. Waiting for admin approval.",
-                "code": "documents_already_uploaded"
-            }, status=status.HTTP_200_OK)
+    if not user.otps.filter(is_verified=True).exists():
+        return Response({"error": "OTP not verified"}, status=400)
 
-        # Check if required files are present in the request
-        required_files = ['pharmacy_license', 'pan_number', 'citizenship']
-        missing_files = [field for field in required_files if field not in request.FILES]
-        if missing_files:
-            return Response({
-                "error": "Missing required documents",
-                "missing_files": missing_files,
-                "details": "Please upload all required documents: Pharmacy License, PAN Card, and Citizenship"
-            }, status=status.HTTP_400_BAD_REQUEST)
+    form = RegistrationStep2Form(request.data, request.FILES)
 
-        # Use both data and files parameters
-        form = RegistrationStep2Form(data=request.data, files=request.FILES)
-        
-        if form.is_valid():
-            try:
-                documents = form.save(commit=False)
-                documents.user = user
-                documents.save()
-                # Mark registration as complete and clear cache
-                user.registration_complete = True
-                user.save()
-                cache.delete(registration_key)
-                return Response({"message": "Documents uploaded successfully. Waiting for admin approval."}, status=status.HTTP_201_CREATED)
-            except Exception as e:
-                return Response({"error": f"Error saving documents: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            # Return form validation errors
-            errors = {field: error[0] for field, error in form.errors.items()}
-            return Response({
-                "error": "Validation error",
-                "details": errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+    if not form.is_valid():
+        return Response(form.errors, status=400)
 
-    except Exception as e:
-        return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    docs = form.save(commit=False)
+    docs.user = user
+    docs.save()
 
+    user.registration_complete = True
+    user.save(update_fields=["registration_complete"])
+
+    cache.delete(f"registration_{user_id}")
+
+    return Response(
+        {"message": "Documents uploaded successfully"},
+        status=201
+    )
+
+
+# Login (JWT)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def user_login(request):
-    "Login API with JWT"
     form = LoginForm(request.data)
 
-    if form.is_valid():
-        
-        email = form.cleaned_data['email']
-        password = form.cleaned_data['password']
-        role = form.cleaned_data['role']
-        user = authenticate(request, username=email, password=password)
+    if not form.is_valid():
+        return Response(form.errors, status=400)
 
-        if not user:
-         return Response(
-            {"error": "Invalid email or password."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-        
-        if user.role != role:
-         return Response(
-            {"error": "Invalid role selected for this account."},
-            status=status.HTTP_403_FORBIDDEN
-        )
-        if user:
-            # Admin users can login without document verification
-            if user.role == 'admin':
-                if user.is_active:
-                    refresh = RefreshToken.for_user(user)
-                    return Response({
-                        "message": f"Welcome, {user.email}!",
-                        "access": str(refresh.access_token),
-                        "refresh": str(refresh),
-                        "user": {
-                            "id": user.id,
-                            "email": user.email,
-                            "role": user.role,
-                            "is_approved": user.is_approved,
-                            "registration_complete": user.registration_complete
-                        }
-                    }, status=status.HTTP_200_OK)
-                else:
-                    return Response({"error": "Account is inactive. Please contact administrator."}, status=status.HTTP_403_FORBIDDEN)
-            
-            # For non-admin users, check registration and approval status
-            if user.can_login():
-                refresh = RefreshToken.for_user(user)
-                return Response({
-                    "message": f"Welcome, {user.email}!",
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                    "user": {
-                        "id": user.id,
-                        "email": user.email,
-                        "role": user.role,
-                        "is_approved": user.is_approved,
-                        "registration_complete": user.registration_complete
-                    }
-                }, status=status.HTTP_200_OK)
-            elif not user.registration_complete:
-                # Store registration user ID in cache
-                registration_key = f'registration_{user.id}'
-                cache.set(registration_key, user.id, timeout=3600)  # 1 hour expiry
-                return Response({
-                    "warning": "Complete registration by uploading documents.",
-                    "user_id": user.id
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({"error": "Account pending admin approval. Cannot log in yet."}, status=status.HTTP_403_FORBIDDEN)
-        return Response({"error": "Invalid email or password."}, status=status.HTTP_400_BAD_REQUEST)
-    return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+    user = authenticate(
+        request,
+        username=form.cleaned_data['email'],
+        password=form.cleaned_data['password']
+    )
 
+    if not user or user.role != form.cleaned_data['role']:
+        return Response({"error": "Invalid credentials"}, status=400)
+
+    if not user.can_login():
+        return Response({"error": "Account not approved"}, status=403)
+
+    refresh = RefreshToken.for_user(user)
+
+    return Response({
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "role": user.role,
+        }
+    })
+
+
+
+# Dashboard
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard(request):
-    user = request.user
+    return Response({
+        "id": request.user.id,
+        "email": request.user.email,
+        "role": request.user.role,
+    })
 
-    base_data = {
-        "id": user.id,
-        "email": user.email,
-        "role": user.role
-    }
 
-    if user.role == "admin":
-        return Response({
-            "dashboard": "admin",
-            "user": base_data,
-        })
 
-    if user.role == "customer":
-        documents = getattr(user, 'documents', None)
-        return Response({
-            "dashboard": "customer",
-            "user": base_data,
-            "documents_uploaded": bool(documents),
-        })
-
-    if user.role == "delivery":
-        return Response({
-            "dashboard": "delivery",
-            "user": base_data,
-        })
-
-    return Response(
-        {"error": "Invalid role"},
-        status=status.HTTP_400_BAD_REQUEST
-    )
-
+# Logout
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
-    """Logout API with JWT token blacklisting"""
-    try:
-        # Get the refresh token from the request
-        refresh_token = request.data.get('refresh')
-        if not refresh_token:
-            return Response({"error": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
-            
-        # Blacklist the refresh token
-        token = RefreshToken(refresh_token)
-        token.blacklist()
-        
-        return Response({"message": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    token = RefreshToken(request.data.get("refresh"))
+    token.blacklist()
+    return Response({"message": "Logged out"}, status=205)
 
 
-@api_view(['GET', 'PUT', 'PATCH'])
+
+# User Profile
+
+@api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def user_profile(request):
-    """Get or update user profile information"""
     user = request.user
-    
+
+    # GET profile
     if request.method == 'GET':
         serializer = UserProfileSerializer(user)
-        profile_data = serializer.data.copy()
-        profile_data['id'] = user.id
-        profile_data['email'] = user.email
-        profile_data['role'] = user.role
-        profile_data['profile_picture'] = request.build_absolute_uri(user.profile_picture.url) if hasattr(user, 'profile_picture') and user.profile_picture else None
-        return Response(profile_data, status=status.HTTP_200_OK)
-    
-    elif request.method in ['PUT', 'PATCH']:
-        # Prepare data for serializer, excluding read-only fields that shouldn't be updated
-        update_data = {}
-        if 'first_name' in request.data:
-            update_data['first_name'] = request.data['first_name']
-        if 'last_name' in request.data:
-            update_data['last_name'] = request.data['last_name']
-        
-        # Handle profile picture separately if in FILES
-        if 'profile_picture' in request.FILES:
-            update_data['profile_picture'] = request.FILES['profile_picture']
-        
-        # Update fields using serializer
-        serializer = UserProfileSerializer(user, data=update_data, partial=request.method == 'PATCH')
-        if serializer.is_valid():
-            serializer.save()
-            profile_data = serializer.data.copy()
-            profile_data['id'] = user.id
-            profile_data['email'] = user.email
-            profile_data['role'] = user.role
-            profile_data['profile_picture'] = request.build_absolute_uri(user.profile_picture.url) if hasattr(user, 'profile_picture') and user.profile_picture else None
-            return Response(profile_data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = serializer.data
+        data['id'] = user.id
+        data['role'] = user.role
+        data['profile_picture'] = (
+            request.build_absolute_uri(user.profile_picture.url)
+            if user.profile_picture else None
+        )
+        return Response(data, status=200)
+
+    # UPDATE profile
+    serializer = UserProfileSerializer(
+        user,
+        data=request.data,
+        partial=True
+    )
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+
+    data = serializer.data
+    data['id'] = user.id
+    data['role'] = user.role
+    data['profile_picture'] = (
+        request.build_absolute_uri(user.profile_picture.url)
+        if user.profile_picture else None
+    )
+
+    return Response(data, status=200)
+
+
+
+# Change Password
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    user = request.user
+
+    if not user.check_password(request.data.get("current_password")):
+        return Response({"error": "Wrong password"}, status=400)
+
+    validate_password(request.data.get("new_password"), user=user)
+    user.set_password(request.data.get("new_password"))
+    user.save()
+
+    return Response({"message": "Password updated"}, status=200)

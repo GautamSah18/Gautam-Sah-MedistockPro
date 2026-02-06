@@ -12,7 +12,8 @@ const SchemeManagement = () => {
     name: '',
     description: '',
     min_bill_amount: '',
-    gift_value_limit: '',
+    total_gift_value: '',
+    remaining_gift_value: '',
     gifts: [],
     start_date: '',
     end_date: '',
@@ -26,15 +27,22 @@ const SchemeManagement = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Fetches schemes and gifts from your Django models
       const [schemesRes, giftsRes] = await Promise.all([
-        api.get('/api/bonus-schemes/bill-schemes/'),
+        api.get('/api/bonus-schemes/bill-schemes/manage/'),
         api.get('/api/bonus-schemes/gifts/')
       ]);
       
+      console.log('Schemes response:', schemesRes.data);
+      console.log('Gifts response:', giftsRes.data);
+      
       setSchemes(schemesRes.data.results || schemesRes.data);
       setGifts(giftsRes.data.results || giftsRes.data);
+      
+      console.log('Processed gifts:', giftsRes.data.results || giftsRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      console.error('Error response:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -69,14 +77,15 @@ const SchemeManagement = () => {
       const payload = {
         ...formData,
         min_bill_amount: parseFloat(formData.min_bill_amount),
-        gift_value_limit: parseFloat(formData.gift_value_limit),
-        gift_ids: formData.gifts.map(id => parseInt(id))
+        total_gift_value: parseFloat(formData.total_gift_value),
+        remaining_gift_value: formData.remaining_gift_value ? parseFloat(formData.remaining_gift_value) : 0,
+        gifts: formData.gifts.map(id => parseInt(id))
       };
 
       if (editingScheme) {
         await api.put(`/api/bonus-schemes/bill-schemes/${editingScheme.id}/`, payload);
       } else {
-        await api.post('/api/bonus-schemes/bill-schemes/', payload);
+        await api.post('/api/bonus-schemes/bill-schemes/manage/', payload);
       }
       
       await fetchData();
@@ -102,11 +111,12 @@ const SchemeManagement = () => {
       name: scheme.name,
       description: scheme.description || '',
       min_bill_amount: scheme.min_bill_amount.toString(),
-      gift_value_limit: scheme.gift_value_limit.toString(),
-      gifts: scheme.gifts.map(g => g.id),
+      total_gift_value: scheme.total_gift_value.toString(),
+      remaining_gift_value: scheme.remaining_gift_value.toString(),
+      gifts: scheme.gifts.map(g => g.id || g),
       start_date: scheme.start_date.split('T')[0],
       end_date: scheme.end_date.split('T')[0],
-      is_active: scheme.is_active
+      is_active: scheme.is_active !== undefined ? scheme.is_active : true
     });
     setShowForm(true);
   };
@@ -128,7 +138,8 @@ const SchemeManagement = () => {
       name: '',
       description: '',
       min_bill_amount: '',
-      gift_value_limit: '',
+      total_gift_value: '',
+      remaining_gift_value: '',
       gifts: [],
       start_date: '',
       end_date: '',
@@ -139,7 +150,8 @@ const SchemeManagement = () => {
   };
 
   const getTotalGiftValue = (schemeGifts) => {
-    return schemeGifts.reduce((sum, gift) => sum + parseFloat(gift.value), 0);
+    if (!schemeGifts || !Array.isArray(schemeGifts)) return 0;
+    return schemeGifts.reduce((sum, gift) => sum + parseFloat(gift.value || 0), 0);
   };
 
   if (loading) {
@@ -189,15 +201,28 @@ const SchemeManagement = () => {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Gift Value Limit (Rs) *</label>
+                <label>Total Gift Value (Rs) *</label>
                 <input
                   type="number"
-                  name="gift_value_limit"
-                  value={formData.gift_value_limit}
+                  name="total_gift_value"
+                  value={formData.total_gift_value}
                   onChange={handleInputChange}
                   min="0"
                   step="0.01"
                   required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Remaining Gift Value (Rs)</label>
+                <input
+                  type="number"
+                  name="remaining_gift_value"
+                  value={formData.remaining_gift_value}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="0.01"
+                  placeholder="Defaults to 0 if left blank"
                 />
               </div>
               
@@ -226,36 +251,34 @@ const SchemeManagement = () => {
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows="3"
-                placeholder="Describe the scheme..."
-              />
-            </div>
+
+
+
 
             <div className="form-group">
               <label>Available Gifts</label>
               <div className="gifts-selection">
-                {gifts.map(gift => {
-                  const isSelected = formData.gifts.includes(gift.id);
-                  return (
-                    <div 
-                      key={gift.id} 
-                      className={`gift-option ${isSelected ? 'selected' : ''}`}
-                      onClick={() => handleGiftToggle(gift.id)}
-                    >
-                      <div className="gift-info">
-                        <strong>{gift.name}</strong>
-                        <span>Rs{gift.value}</span>
+                {gifts.length === 0 ? (
+                  <div className="no-gifts">No gifts available. Please create some gifts first.</div>
+                ) : (
+                  gifts.map(gift => {
+                    const isSelected = formData.gifts.includes(gift.id);
+                    return (
+                      <div 
+                        key={gift.id} 
+                        className={`gift-option ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleGiftToggle(gift.id)}
+                        style={{ cursor: 'pointer', padding: '10px', border: isSelected ? '2px solid blue' : '1px solid #ccc' }}
+                      >
+                        <div className="gift-info">
+                          <strong>{gift.name}</strong>
+                          <span> - Rs{gift.value}</span>
+                        </div>
+                        <div className="gift-desc">{gift.description}</div>
                       </div>
-                      <div className="gift-desc">{gift.description}</div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
 
@@ -290,9 +313,10 @@ const SchemeManagement = () => {
             <tr>
               <th>Name</th>
               <th>Min Bill (Rs)</th>
-              <th>Gift Limit (Rs)</th>
+              <th>Total Gift Value (Rs)</th>
+              <th>Remaining Value (Rs)</th>
               <th>Gifts</th>
-              <th>Total Gift Value</th>
+              <th>Assigned Gifts Value</th>
               <th>Start Date</th>
               <th>End Date</th>
               <th>Status</th>
@@ -303,15 +327,16 @@ const SchemeManagement = () => {
             {schemes.map(scheme => (
               <tr key={scheme.id}>
                 <td>{scheme.name}</td>
-                <td>Rs{scheme.min_bill_amount.toLocaleString()}</td>
-                <td>Rs{scheme.gift_value_limit.toLocaleString()}</td>
+                <td>Rs{(scheme.min_bill_amount || 0).toLocaleString()}</td>
+                <td>Rs{(scheme.total_gift_value || 0).toLocaleString()}</td>
+                <td>Rs{(scheme.remaining_gift_value || 0).toLocaleString()}</td>
                 <td>{scheme.gifts.length} gifts</td>
-                <td>Rs{getTotalGiftValue(scheme.gifts).toLocaleString()}</td>
+                <td>Rs{getTotalGiftValue(scheme.gifts || []).toLocaleString()}</td>
                 <td>{new Date(scheme.start_date).toLocaleDateString()}</td>
                 <td>{new Date(scheme.end_date).toLocaleDateString()}</td>
                 <td>
                   <span className={`status-badge ${scheme.is_active ? 'active' : 'inactive'}`}>
-                    {scheme.is_active ? 'Active' : 'Inactive'}
+                    {scheme.is_active === false ? 'Inactive' : 'Active'}
                   </span>
                 </td>
                 <td>
@@ -333,7 +358,7 @@ const SchemeManagement = () => {
             
             {schemes.length === 0 && (
               <tr>
-                <td colSpan="9" className="empty-row">
+                <td colSpan="10" className="empty-row">
                   No schemes found. Create your first scheme above.
                 </td>
               </tr>

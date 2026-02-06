@@ -6,7 +6,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Sum, F
 from django.utils import timezone
 from datetime import timedelta
-
 from .models import Medicine, Category
 from .serializers import (
     MedicineSerializer,

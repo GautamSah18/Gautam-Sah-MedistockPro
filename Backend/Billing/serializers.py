@@ -16,7 +16,6 @@ class BillCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
     
     def validate(self, attrs):
-        # Set payment_status based on payment_type if not provided
         if 'payment_status' not in attrs:
             payment_type = attrs.get('payment_type', '')
             if payment_type == 'cash':

@@ -121,10 +121,13 @@ export default function Billing() {
       console.log('Payment type:', paymentType);
       console.log('Grand total:', computed.grandTotal.toFixed(2));
       
-      // Navigate to payment page for all payment types
-      console.log('Navigating to payment page for all payment types');
-      // Navigate to payment page with total amount for all payment types
-      navigate('/payment', { state: { totalAmount: computed.grandTotal.toFixed(2) } });
+      if (paymentType === 'credit') {
+        // For credit purchases, go back to dashboard
+        navigate('/customerDashboard');
+      } else {
+        // For cash purchases, go to payment page
+        navigate('/payment', { state: { totalAmount: computed.grandTotal.toFixed(2) } });
+      }
       
     } catch (error) {
       console.error('Error saving bill:', error);
@@ -338,7 +341,7 @@ export default function Billing() {
       </div>
       <div style={{ margin: "20px", textAlign: "center" }}>
         <button type="button" className="proceed-payment-btn" onClick={saveBill}>
-          Proceed to Payment
+          {paymentType === 'credit' ? 'Continue to Dashboard' : 'Proceed to Payment'}
         </button>
 
       </div>

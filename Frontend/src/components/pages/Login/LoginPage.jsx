@@ -88,8 +88,6 @@ const Login = () => {
           general: res.warning || 'Please complete your registration by uploading documents.'
         }));
         setIsLoading(false);
-        // Optionally redirect to document upload page
-        // navigate('/documents');
         return;
       }
       
@@ -161,7 +159,7 @@ const Login = () => {
   };
 
   const handleGoBack = () => {
-    navigate(-1); // Go back to previous page
+    navigate(-1);
   };
 
   return (

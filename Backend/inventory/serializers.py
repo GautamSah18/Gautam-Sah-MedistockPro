@@ -15,17 +15,14 @@ class MedicineSerializer(serializers.ModelSerializer):
         allow_null=True
     )
 
-    image = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Medicine
         fields = '__all__'
         read_only_fields = ['status', 'created_at', 'updated_at']
 
-    def get_image(self, obj):
-        if obj.image:
-            return obj.image.url
-        return None
+
 
     def validate(self, data):
         expiry_date = data.get(
@@ -60,17 +57,14 @@ class PublicMedicineSerializer(serializers.ModelSerializer):
         allow_null=True
     )
 
-    image = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Medicine
         fields = '__all__'
         read_only_fields = ['status', 'created_at', 'updated_at']
 
-    def get_image(self, obj):
-        if obj.image:
-            return obj.image.url
-        return None
+
 
 
 class StockUpdateSerializer(serializers.Serializer):

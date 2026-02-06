@@ -27,7 +27,7 @@ class BillAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('created_at', 'updated_at')
     
-    # Make fields read-only after creation to prevent accidental changes
+    # Making fields read-only after creation to prevent accidental changes
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing an existing object
             return self.readonly_fields + ('invoice_number', 'customer', 'items', 'subtotal', 'discount', 'tax_total', 'total_amount', 'payment_type')
@@ -54,8 +54,7 @@ class BillAdmin(admin.ModelAdmin):
     
     display_items.short_description = 'Items'
     
-    # Override list display to include print button
+
     def get_list_display(self, request):
         list_display = super().get_list_display(request)
-        # Add print button to the list display
         return list_display + ('print_button',)

@@ -38,11 +38,7 @@ urlpatterns = [
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 
     # Authentication endpoints
-    path('api/auth/register/step1/', views.registration_step1, name='registration_step1'),
-    path('api/auth/register/step2/', views.registration_step2, name='registration_step2'),
-    path('api/auth/login/', views.user_login, name='login'),
-    path('api/auth/logout/', views.logout_view, name='logout'),
-    path('api/auth/profile/', views.user_profile, name='user_profile'),
+    path('api/auth/', include('Authentication.urls')),
 
     # Protected endpoints
     path('api/dashboard/', views.dashboard, name='dashboard'),

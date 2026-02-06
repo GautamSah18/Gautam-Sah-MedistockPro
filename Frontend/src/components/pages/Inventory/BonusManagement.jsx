@@ -25,15 +25,25 @@ const BonusManagement = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      console.log('Fetching bonus data...');
+      
       const [bonusesRes, medicinesRes] = await Promise.all([
         api.get('/api/bonus-schemes/bonuses/'),
         api.get('/api/inventory/medicines/')
       ]);
       
-      setBonuses(bonusesRes.data.results || bonusesRes.data);
-      setMedicines(medicinesRes.data.results || medicinesRes.data);
+      console.log('Bonuses response:', bonusesRes.data);
+      console.log('Medicines response:', medicinesRes.data);
+      
+      setBonuses(bonusesRes.data.results || bonusesRes.data || []);
+      setMedicines(medicinesRes.data.results || medicinesRes.data || []);
+      
+      console.log('Processed bonuses:', bonusesRes.data.results || bonusesRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      console.error('Error response:', error.response?.data);
+      // Show user-friendly error message
+      alert('Failed to load bonuses. Please check console for details.');
     } finally {
       setLoading(false);
     }
@@ -45,17 +55,39 @@ const BonusManagement = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    
+    // Log the change for debugging
+    console.log(`Field ${name} changed to:`, value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.medicine) {
+      alert('Please select a medicine');
+      return;
+    }
+    
+    if (!formData.buy_quantity || parseInt(formData.buy_quantity) < 1) {
+      alert('Buy quantity must be at least 1');
+      return;
+    }
+    
+    if (!formData.free_quantity || parseInt(formData.free_quantity) < 1) {
+      alert('Free quantity must be at least 1');
+      return;
+    }
+    
     try {
       const payload = {
         ...formData,
-        medicine: parseInt(formData.medicine),
+        medicine_id: parseInt(formData.medicine),
         buy_quantity: parseInt(formData.buy_quantity),
         free_quantity: parseInt(formData.free_quantity)
       };
+
+      console.log('Submitting bonus:', payload);
 
       if (editingBonus) {
         await api.put(`/api/bonus-schemes/bonuses/${editingBonus.id}/`, payload);
@@ -65,9 +97,18 @@ const BonusManagement = () => {
       
       await fetchData();
       resetForm();
+      alert(editingBonus ? 'Bonus updated successfully!' : 'Bonus created successfully!');
     } catch (error) {
       console.error('Error saving bonus:', error);
-      alert('Failed to save bonus');
+      console.error('Error response:', error.response?.data);
+      if (error.response && error.response.data) {
+        const errorMessages = Object.entries(error.response.data)
+          .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+          .join('\n');
+        alert(`Failed to save bonus:\n${errorMessages}`);
+      } else {
+        alert('Failed to save bonus. Please check the console for details.');
+      }
     }
   };
 
@@ -75,12 +116,12 @@ const BonusManagement = () => {
     setEditingBonus(bonus);
     setFormData({
       name: bonus.name,
-      medicine: bonus.medicine.id.toString(),
+      medicine: bonus.medicine?.id?.toString() || '',
       buy_quantity: bonus.buy_quantity.toString(),
       free_quantity: bonus.free_quantity.toString(),
-      start_date: bonus.start_date.split('T')[0],
-      end_date: bonus.end_date.split('T')[0],
-      is_active: bonus.is_active
+      start_date: bonus.start_date?.split('T')[0] || '',
+      end_date: bonus.end_date?.split('T')[0] || '',
+      is_active: bonus.is_active !== undefined ? bonus.is_active : true
     });
     setShowForm(true);
   };
@@ -153,7 +194,7 @@ const BonusManagement = () => {
                   <option value="">Select Medicine</option>
                   {medicines.map(med => (
                     <option key={med.id} value={med.id}>
-                      {med.name} - {med.company}
+                      {med.name} {med.company ? `- ${med.company}` : ''}
                     </option>
                   ))}
                 </select>
@@ -169,6 +210,7 @@ const BonusManagement = () => {
                   value={formData.buy_quantity}
                   onChange={handleInputChange}
                   min="1"
+                  step="1"
                   required
                 />
               </div>
@@ -181,6 +223,7 @@ const BonusManagement = () => {
                   value={formData.free_quantity}
                   onChange={handleInputChange}
                   min="1"
+                  step="1"
                   required
                 />
               </div>
@@ -252,15 +295,15 @@ const BonusManagement = () => {
           <tbody>
             {bonuses.map(bonus => (
               <tr key={bonus.id}>
-                <td>{bonus.name}</td>
-                <td>{bonus.medicine.name}</td>
-                <td>{bonus.buy_quantity}</td>
-                <td>{bonus.free_quantity}</td>
-                <td>{new Date(bonus.start_date).toLocaleDateString()}</td>
-                <td>{new Date(bonus.end_date).toLocaleDateString()}</td>
+                <td>{bonus.name || 'N/A'}</td>
+                <td>{bonus.medicine?.name || 'Unknown Medicine'}</td>
+                <td>{bonus.buy_quantity || 0}</td>
+                <td>{bonus.free_quantity || 0}</td>
+                <td>{bonus.start_date ? new Date(bonus.start_date).toLocaleDateString() : 'N/A'}</td>
+                <td>{bonus.end_date ? new Date(bonus.end_date).toLocaleDateString() : 'N/A'}</td>
                 <td>
                   <span className={`status-badge ${bonus.is_active ? 'active' : 'inactive'}`}>
-                    {bonus.is_active ? 'Active' : 'Inactive'}
+                    {bonus.is_active === false ? 'Inactive' : 'Active'}
                   </span>
                 </td>
                 <td>
@@ -283,7 +326,7 @@ const BonusManagement = () => {
             {bonuses.length === 0 && (
               <tr>
                 <td colSpan="8" className="empty-row">
-                  No bonuses found. Create your first bonus above.
+                  {loading ? 'Loading...' : 'No bonuses found. Create your first bonus above.'}
                 </td>
               </tr>
             )}

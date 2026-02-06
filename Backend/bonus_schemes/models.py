@@ -52,6 +52,7 @@ class Gift(models.Model):
 
 
 class BillScheme(models.Model):
+    
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 

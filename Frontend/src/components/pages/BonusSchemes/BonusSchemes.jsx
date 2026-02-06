@@ -30,7 +30,11 @@ const BonusSchemes = () => {
   const schemeLimit = (scheme) =>
     num(scheme?.remaining_gift_value ?? scheme?.total_gift_value ?? scheme?.gift_value_limit ?? 0);
 
-  const isEligibleForScheme = (scheme) => num(cartTotal) >= num(scheme?.min_bill_amount);
+  const isEligibleForScheme = (scheme) => {
+    // Check if scheme is unlocked based on customer's purchase history
+    const isUnlocked = scheme?.unlocked !== undefined ? scheme.unlocked : true;
+    return isUnlocked;
+  };
 
   const getTotalSelectedValue = () =>
     selectedGifts.reduce((sum, gift) => sum + num(gift?.value), 0);
@@ -255,7 +259,8 @@ const BonusSchemes = () => {
               <div className="schemes-grid">
                 {(schemes || []).map((scheme) => {
                   const eligible = isEligibleForScheme(scheme);
-                  const remaining = Math.max(0, num(scheme?.min_bill_amount) - num(cartTotal));
+                  const remaining = Math.max(0, num(scheme?.remaining_to_unlock || 0));
+                  const customerTotal = num(scheme?.customer_total_purchase || 0);
 
                   return (
                     <div key={scheme.id} className="scheme-ticket">
@@ -294,7 +299,7 @@ const BonusSchemes = () => {
                             Apply Scheme
                           </button>
                         ) : (
-                          <div className="not-eligible-text">Add Rs {money(remaining)} more to unlock</div>
+                          <div className="not-eligible-text">Add Rs {money(remaining)} more to unlock (Current: Rs {money(customerTotal)})</div>
                         )}
 
                         <div className="valid-dates">

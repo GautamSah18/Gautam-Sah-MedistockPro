@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FaBell,
   FaClock,
@@ -155,13 +155,6 @@ export default function TopNav({
         </NavLink>
 
         <NavLink
-          to="/customer/orders"
-          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-        >
-          Orders
-        </NavLink>
-
-        <NavLink
           to="/customer/returns"
           className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
         >
@@ -180,6 +173,13 @@ export default function TopNav({
           className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
         >
           Bonus & Schemes
+        </NavLink>
+
+        <NavLink
+          to="/orders"
+          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+        >
+          Orders
         </NavLink>
       </nav>
 
@@ -289,7 +289,7 @@ export default function TopNav({
           
           {/* Dropdown menu */}
           {dropdownOpen && (
-            <div 
+            <div
               className="profile-dropdown"
               onMouseEnter={() => {
                 clearTimeout(timeoutRef.current);

@@ -220,11 +220,12 @@ export default function CustomerDashboard() {
     const now = new Date();
 
     return all.filter((s) => {
-      const minOk = Number(total ?? 0) >= Number(s.min_bill_amount ?? 0);
+      // Check if scheme is unlocked based on customer's purchase history
+      const unlocked = s.unlocked === undefined ? true : Boolean(s.unlocked);
       const activeOk = s.is_active === undefined ? true : Boolean(s.is_active);
       const startOk = s.start_date ? new Date(s.start_date) <= now : true;
       const endOk = s.end_date ? new Date(s.end_date) >= now : true;
-      return minOk && activeOk && startOk && endOk;
+      return unlocked && activeOk && startOk && endOk;
     });
   };
 

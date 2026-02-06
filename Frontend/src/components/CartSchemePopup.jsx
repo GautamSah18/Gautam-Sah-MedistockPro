@@ -43,12 +43,11 @@ const CartSchemePopup = ({ cartTotal = 0, isVisible, onClose, onApplyScheme }) =
   }, [isVisible]);
 
   const eligibleSchemes = useMemo(() => {
-    const total = Number(cartTotal || 0);
     return (schemes || [])
       .filter(isActiveToday)
-      .filter((s) => total >= Number(s?.min_bill_amount || 0))
+      .filter((s) => s?.unlocked === true)
       .sort((a, b) => Number(a.min_bill_amount || 0) - Number(b.min_bill_amount || 0));
-  }, [schemes, cartTotal]);
+  }, [schemes]);
 
   const handleApply = (scheme) => {
     if (typeof onApplyScheme === "function") onApplyScheme(scheme);

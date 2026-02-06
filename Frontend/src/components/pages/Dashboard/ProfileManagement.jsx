@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { FaCamera, FaKey, FaMoon, FaSun, FaUserCircle } from "react-icons/fa";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import api from "../../../services/api";
 import TopNav from "./TopNav";
 import "./profileManagement.css";
-import { FaCamera, FaKey, FaMoon, FaSun, FaUserCircle } from "react-icons/fa";
 
 export default function ProfileManagement() {
   const { user, updateUserProfile } = useAuth();
@@ -43,9 +43,9 @@ export default function ProfileManagement() {
         setProfile({
           fullName: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || user?.email?.split('@')[0] || 'User',
           email: userData.email || user?.email || '',
-          phone: profile.phone, // Keep existing phone number
-          address: profile.address, // Keep existing address
-          bio: profile.bio, // Keep existing bio
+          phone: userData.phone || "",
+          address: userData.address || "",
+          bio: userData.bio || "Tell us a bit about yourself…",
         });
         
         // Set avatar preview if profile picture exists
@@ -115,13 +115,14 @@ export default function ProfileManagement() {
     e.preventDefault();
     
     try {
-      // Prepare form data for API call
       const formData = new FormData();
       
       // Add profile info fields
       formData.append('first_name', profile.fullName.split(' ')[0] || '');
       formData.append('last_name', profile.fullName.split(' ').slice(1).join(' ') || '');
-      
+      formData.append("phone", profile.phone || "");
+      formData.append("address", profile.address || "");
+      formData.append("bio", profile.bio || "");
       // Add avatar file if it exists
       if (avatarFile) {
         formData.append('profile_picture', avatarFile);
@@ -133,8 +134,6 @@ export default function ProfileManagement() {
           'Content-Type': 'multipart/form-data',
         },
       });
-      
-      // Update the profile picture in the auth context with the URL from the backend
       if (response.data.profile_picture) {
         updateUserProfile({ profilePicture: response.data.profile_picture });
       }
@@ -146,27 +145,41 @@ export default function ProfileManagement() {
     }
   };
 
-  const onChangePassword = (e) => {
-    e.preventDefault();
+const onChangePassword = async (e) => {
+  e.preventDefault();
 
-    if (!pwd.current || !pwd.next || !pwd.confirm) {
-      alert("Please fill all password fields.");
-      return;
-    }
-    if (pwd.next.length < 6) {
-      alert("New password should be at least 6 characters.");
-      return;
-    }
-    if (pwd.next !== pwd.confirm) {
-      alert("New password and confirm password do not match.");
-      return;
-    }
+  if (!pwd.current || !pwd.next || !pwd.confirm) {
+    alert("Please fill all password fields.");
+    return;
+  }
+  if (pwd.next.length < 6) {
+    alert("New password should be at least 6 characters.");
+    return;
+  }
+  if (pwd.next !== pwd.confirm) {
+    alert("New password and confirm password do not match.");
+    return;
+  }
 
-    // TODO: call backend API
-    // await api.post("/change-password", { current: pwd.current, next: pwd.next })
+  try {
+    await api.post("/api/auth/change-password/", {
+      current_password: pwd.current,
+      new_password: pwd.next,
+    });
+
     setPwd({ current: "", next: "", confirm: "" });
-    alert("Password updated (frontend only). Hook your API here.");
-  };
+    alert("Password updated successfully!");
+  } catch (error) {
+    console.error("Password change error:", error);
+    alert(
+      error.response?.data?.error?.[0] ||
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to update password"
+    );
+  }
+};
+
 
   return (
     <div className="pm-root">
@@ -231,7 +244,6 @@ export default function ProfileManagement() {
                 </button>
 
                 <div className="pm-hint">
-                  JPG/PNG recommended. Square images look best.
                 </div>
               </div>
             </div>

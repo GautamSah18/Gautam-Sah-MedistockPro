@@ -48,7 +48,6 @@ const Payment = () => {
       ...prev,
       signature,
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.total_amount, formData.transaction_uuid, formData.product_code]);
 
   return (

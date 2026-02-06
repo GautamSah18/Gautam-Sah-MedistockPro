@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import api from "../../../services/api.js";
+import AppliedSchemes from "./AppliedSchemes";
 import BonusManagement from "./BonusManagement";
 import "./Inventory.css";
 import Orders from "./Orders";
@@ -13,7 +14,7 @@ const Inventory = () => {
   const [medicines, setMedicines] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'bonuses', 'schemes', 'orders'
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'bonuses', 'schemes', 'orders', 'applied-schemes'
   const [currentMedicine, setCurrentMedicine] = useState({
     name: "",
     generic_name: "",
@@ -181,83 +182,116 @@ const Inventory = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const fd = new FormData();
-    const skip = new Set(["id", "created_at", "updated_at", "status", "created_by", "updated_by"]);
+    // Validate required fields including image
+    if (!currentMedicine.name.trim()) {
+      alert('Medicine name is required');
+      return;
+    }
 
-    Object.entries(currentMedicine).forEach(([key, value]) => {
-      if (skip.has(key)) return;
+    if (!currentMedicine.company.trim()) {
+      alert('Company name is required');
+      return;
+    }
 
-      if (key === "image") {
-        // Only add to form data if it's a new file (either when creating or updating)
-        if (value instanceof File) {
-          fd.append("image", value);
+    if (!currentMedicine.batch_no.trim()) {
+      alert('Batch number is required');
+      return;
+    }
+
+    try {
+      const fd = new FormData();
+      const skip = new Set(["id", "created_at", "updated_at", "status", "created_by", "updated_by"]);
+
+      Object.entries(currentMedicine).forEach(([key, value]) => {
+        if (skip.has(key)) return;
+
+        if (key === "image") {
+          // Handle image upload
+          if (value instanceof File) {
+            // New image file selected
+            fd.append("image", value);
+            console.log('Adding new image file:', value.name);
+          } else if (typeof value === 'string' && value) {
+            // Existing image URL - don't send it back, let backend preserve it
+            console.log('Preserving existing image');
+          } else if (!value && isEditMode) {
+            // No image selected during edit - preserve existing
+            console.log('No new image selected, preserving existing');
+          } else if (!value && !isEditMode) {
+            // No image selected during creation - this is allowed
+            console.log('No image selected for new medicine');
+          }
+          return;
         }
-        // For existing images during update, don't include in form data
-        // The backend will preserve the existing image
-        return;
+
+        if (value === null || value === undefined) return;
+        if (typeof value === "boolean") {
+          fd.append(key, value ? "true" : "false");
+          return;
+        }
+
+        fd.append(key, value);
+      });
+      ["stock", "min_stock", "max_stock", "cost_price", "selling_price", "mrp"].forEach((f) => {
+        const v = fd.get(f);
+        if (v === null) return;
+        if (v === "") {
+          if (["stock", "min_stock", "max_stock"].includes(f)) fd.set(f, "0");
+          return;
+        }
+        fd.set(f, String(parseFloat(v) || 0));
+      });
+      // Config for FormData - set Content-Type to undefined to allow browser to set it with boundary
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      };
+
+      // Log FormData contents for debugging
+      console.log('FormData contents:');
+      for (let [key, value] of fd.entries()) {
+        console.log(key, value);
       }
 
-      if (value === null || value === undefined) return;
-      if (typeof value === "boolean") {
-        fd.append(key, value ? "true" : "false");
-        return;
-      }
-
-      fd.append(key, value);
-    });
-    ["stock", "min_stock", "max_stock", "cost_price", "selling_price", "mrp"].forEach((f) => {
-      const v = fd.get(f);
-      if (v === null) return;
-      if (v === "") {
-        if (["stock", "min_stock", "max_stock"].includes(f)) fd.set(f, "0");
-        return;
-      }
-      fd.set(f, String(parseFloat(v) || 0));
-    });
-    // Config for FormData - set Content-Type to undefined to allow browser to set it with boundary
-    const config = {
-      headers: {
-        "Content-Type": undefined,  // This allows browser to set the correct multipart header with boundary
-      },
-    };
-    // Note: Setting Content-Type to undefined overrides the default and allows browser to set multipart/form-data with boundary
-
-    let response;
-    if (isEditMode) {
-      response = await api.put(`/inventory/medicines/${currentMedicine.id}/`, fd, config);
-      setMedicines(medicines.map((m) => (m.id === currentMedicine.id ? response.data : m)));
-    } else {
-      response = await api.post("/inventory/medicines/", fd, config);
-      setMedicines([...medicines, response.data]);
-    }
-
-    setIsModalOpen(false);
-    resetForm();
-    setIsEditMode(false);
-    await fetchMedicines();
-  } catch (error) {
-    console.error("Error saving medicine:", error);
-
-    if (error.response?.data) {
-      const errorData = error.response.data;
-      let msg = "Failed to save medicine:\n";
-      if (typeof errorData === "object") {
-        Object.keys(errorData).forEach((k) => {
-          const v = errorData[k];
-          msg += Array.isArray(v) ? `${k}: ${v.join(", ")}\n` : `${k}: ${v}\n`;
-        });
+      let response;
+      if (isEditMode) {
+        response = await api.patch(`/inventory/medicines/${currentMedicine.id}/`, fd, config);
+        setMedicines(medicines.map((m) => (m.id === currentMedicine.id ? response.data : m)));
+        alert('Medicine updated successfully!');
       } else {
-        msg += errorData;
+        response = await api.post("/inventory/medicines/", fd, config);
+        setMedicines([...medicines, response.data]);
+        alert('Medicine added successfully!');
       }
-      alert(msg);
-    } else {
-      alert("Failed to save medicine. Please check console.");
+
+      setIsModalOpen(false);
+      resetForm();
+      setIsEditMode(false);
+      await fetchMedicines();
+    } catch (error) {
+      console.error("Error saving medicine:", error);
+      console.error("Error response:", error.response?.data);
+
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        let msg = "Failed to save medicine:\n";
+        if (typeof errorData === "object") {
+          Object.keys(errorData).forEach((k) => {
+            const v = errorData[k];
+            msg += Array.isArray(v) ? `${k}: ${v.join(", ")}\n` : `${k}: ${v}\n`;
+          });
+        } else {
+          msg += errorData;
+        }
+        alert(msg);
+      } else {
+        alert("Failed to save medicine. Please check console for details.");
+      }
     }
-  }
-};
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -316,6 +350,7 @@ const Inventory = () => {
     { key: "inv", label: "Inventory", icon: "📦", active: activeTab === 'inventory' },
     { key: "bonuses", label: "Bonuses", icon: "🏷️", active: activeTab === 'bonuses' },
     { key: "schemes", label: "Schemes", icon: "🎁", active: activeTab === 'schemes' },
+    { key: "applied-schemes", label: "Applied Schemes", icon: "✅", active: activeTab === 'applied-schemes' },
     { key: "orders", label: "Orders", icon: "🧺", active: activeTab === 'orders' },
     { key: "delivery", label: "Delivery", icon: "🚚", active: activeTab === 'delivery' },
     { key: "settings", label: "Settings", icon: "⚙️", active: activeTab === 'settings' },
@@ -357,7 +392,7 @@ const Inventory = () => {
               className={`inv-nav-item ${it.active ? "active" : ""}`}
               type="button"
               onClick={() => {
-                if (['inv', 'bonuses', 'schemes'].includes(it.key)) {
+                if (['inv', 'bonuses', 'schemes', 'applied-schemes'].includes(it.key)) {
                   setActiveTab(it.key === 'inv' ? 'inventory' : it.key);
                 } else {
                   setActiveTab(it.key);
@@ -419,6 +454,7 @@ const Inventory = () => {
               {activeTab === 'orders' && 'Orders'}
               {activeTab === 'Bonuses' && 'BonusManagement'}
               {activeTab === 'Schemes' && 'SchemeManagement'}
+              {activeTab === 'applied-schemes' && 'Applied Schemes'}
 
             </h1>
             <p>
@@ -426,6 +462,7 @@ const Inventory = () => {
               {activeTab === 'orders' && 'View and manage customer orders.'}
               {activeTab === 'Bonuses' && 'View and manage customer Bonuses.'}
               {activeTab === 'Schemes' && 'View and manage customer Schemes.'}
+              {activeTab === 'applied-schemes' && 'View all schemes applied by customers.'}
             </p>
           </div>
 
@@ -444,9 +481,9 @@ const Inventory = () => {
                 </button>
               </>
             )}
-            
 
-            
+
+
 
           </div>
         </header>
@@ -563,6 +600,7 @@ const Inventory = () => {
 
         {activeTab === 'bonuses' && <BonusManagement />}
         {activeTab === 'schemes' && <SchemeManagement />}
+        {activeTab === 'applied-schemes' && <AppliedSchemes />}
         {activeTab === 'orders' && <Orders />}
 
         {/* Modal */}
@@ -800,23 +838,53 @@ const Inventory = () => {
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
+                          // Validate file size (max 5MB)
+                          if (file.size > 5 * 1024 * 1024) {
+                            alert('Image size should be less than 5MB');
+                            e.target.value = ''; // Clear the input
+                            return;
+                          }
+
+                          // Validate file type
+                          if (!file.type.startsWith('image/')) {
+                            alert('Please select a valid image file');
+                            e.target.value = ''; // Clear the input
+                            return;
+                          }
+
                           setCurrentMedicine(prev => ({
                             ...prev,
                             image: file
                           }));
+                          console.log('Image file selected:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+                        } else {
+                          // File selection was cancelled
+                          setCurrentMedicine(prev => ({
+                            ...prev,
+                            image: isEditMode ? prev.image : null
+                          }));
                         }
                       }}
                     />
+                    <small style={{ color: '#6b7280', display: 'block', marginTop: '4px' }}>
+                      JPG, PNG, GIF supported. Maximum 5MB.
+                    </small>
                     {currentMedicine.image && (
-                      <div className="image-preview">
+                      <div className="image-preview" style={{ marginTop: '10px' }}>
                         <img
                           src={
                             typeof currentMedicine.image === 'string' ? currentMedicine.image :
-                            currentMedicine.image instanceof File ? URL.createObjectURL(currentMedicine.image) : ''
+                              currentMedicine.image instanceof File ? URL.createObjectURL(currentMedicine.image) : ''
                           }
-                          alt="Medicine"
-                          style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '10px' }}
+                          alt="Medicine Preview"
+                          style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                         />
+                        <div style={{ marginTop: '8px', fontSize: '14px', color: '#6b7280' }}>
+                          {currentMedicine.image instanceof File
+                            ? `Selected: ${currentMedicine.image.name} (${(currentMedicine.image.size / 1024 / 1024).toFixed(2)} MB)`
+                            : 'Existing image will be preserved'
+                          }
+                        </div>
                       </div>
                     )}
                   </div>

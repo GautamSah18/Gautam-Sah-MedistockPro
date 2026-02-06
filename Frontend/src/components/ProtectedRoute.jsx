@@ -1,12 +1,13 @@
-import { useAuth } from "../context/AuthContext";
 import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const ProtectedRoute = ({ children }) => {
-  const { user, authLoading } = useAuth();
+  const { user, bootstrapped } = useAuth();
   const location = useLocation();
+  console.log("Checking ProtectedRoute", { user, bootstrapped });
 
-  if (authLoading) {
-    return <div style={{ padding: 20 }}>Loading...</div>;
+  if (!bootstrapped) {
+    return <div style={{ padding: 20 }}>Checking authentication...</div>;
   }
 
   if (!user) {

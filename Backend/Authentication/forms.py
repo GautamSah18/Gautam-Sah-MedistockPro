@@ -2,48 +2,44 @@ from django import forms
 from .models import CustomUser, PharmacyDocument
 
 
+# Registration Step 1
+
 class RegistrationStep1Form(forms.ModelForm):
-    """Step 1: Email, password, and role registration"""
+    # Allowed roles during registration
     ROLE_CHOICES = (
         ('customer', 'Customer'),
         ('delivery', 'Delivery Person'),
     )
 
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter your password'}),
-        min_length=8,
-        help_text='Password must be at least 8 characters long.'
+        widget=forms.PasswordInput(),
+        min_length=8
     )
     password_confirm = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm your password'}),
-        label='Confirm Password'
+        widget=forms.PasswordInput(),
+        label="Confirm Password"
     )
-    role = forms.ChoiceField(
-        choices=ROLE_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Select Role'
-    )
+    role = forms.ChoiceField(choices=ROLE_CHOICES)
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'role']
-        widgets = {
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter your email'}),
-        }
+        fields = ['email', 'role']
 
+    # Ensure email is unique
     def clean_email(self):
-        email = self.cleaned_data.get('email')
+        email = self.cleaned_data['email']
         if CustomUser.objects.filter(email=email).exists():
-            raise forms.ValidationError('A user with this email already exists.')
+            raise forms.ValidationError("Email already registered")
         return email
 
-    def clean_password_confirm(self):
-        password = self.cleaned_data.get('password')
-        password_confirm = self.cleaned_data.get('password_confirm')
-        if password and password_confirm and password != password_confirm:
-            raise forms.ValidationError("Passwords don't match.")
-        return password_confirm
+    # Ensure passwords match
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('password') != cleaned_data.get('password_confirm'):
+            raise forms.ValidationError("Passwords do not match")
+        return cleaned_data
 
+    # Create user with hashed password
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
@@ -53,27 +49,16 @@ class RegistrationStep1Form(forms.ModelForm):
         return user
 
 
+# Registration Step 2
+
 class RegistrationStep2Form(forms.ModelForm):
-    """Step 2: Document upload"""
     class Meta:
         model = PharmacyDocument
         fields = ['pharmacy_license', 'pan_number', 'citizenship']
-        widgets = {
-            'pharmacy_license': forms.FileInput(attrs={'class': 'form-control', 'accept': '.jpg,.jpeg,.png'}),
-            'pan_number': forms.FileInput(attrs={'class': 'form-control', 'accept': '.jpg,.jpeg,.png'}),
-            'citizenship': forms.FileInput(attrs={'class': 'form-control', 'accept': '.jpg,.jpeg,.png'}),
-        }
-        labels = {
-            'pharmacy_license': 'Pharmacy License Document',
-            'pan_number': 'PAN Card Document',
-            'citizenship': 'Citizenship Document',
-        }
-        help_texts = {
-            'pharmacy_license': 'Upload a valid pharmacy license document (JPG, PNG)',
-            'pan_number': 'Upload your PAN card document (JPG, PNG)',
-            'citizenship': 'Upload your citizenship document (JPG, PNG)',
-        }
 
+
+
+# Login Form
 
 class LoginForm(forms.Form):
     ROLE_CHOICES = (
@@ -82,6 +67,6 @@ class LoginForm(forms.Form):
         ('delivery', 'Delivery Person'),
     )
 
-    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter your email'}))
-    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter your password'}))
-    role = forms.ChoiceField(choices=ROLE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}), label='Select Role')
+    email = forms.EmailField()
+    password = forms.CharField(widget=forms.PasswordInput())
+    role = forms.ChoiceField(choices=ROLE_CHOICES)
