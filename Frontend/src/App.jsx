@@ -19,13 +19,14 @@ import Inventory from "./components/pages/Inventory/Inventory";
 
 // Customer
 import BonusSchemes from "./components/pages/BonusSchemes/BonusSchemes";
+import CustomerComplaints from "./components/pages/Dashboard/CustomerComplaints";
 import CustomerDashboard from "./components/pages/Dashboard/customerDashboard";
 import CustomerPrescriptions from "./components/pages/Dashboard/CustomerPrescriptions";
 import ExpiryReturn from "./components/pages/Dashboard/ExpiryReturn";
+import CustomerOrders from "./components/pages/Dashboard/Orders";
 import ProductPage from "./components/pages/Dashboard/ProductPage";
 import ProfileManagement from "./components/pages/Dashboard/ProfileManagement";
 import Orders from "./components/pages/Inventory/Orders.jsx";
-import CustomerOrders from "./components/pages/Dashboard/Orders";
 import Payment from "./components/pages/Payment/Payment";
 
 function RouteLoader({ children }) {
@@ -134,6 +135,15 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <CustomerOrders />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/customer/complaints"
+              element={
+                <ProtectedRoute>
+                  <CustomerComplaints />
                 </ProtectedRoute>
               }
             />

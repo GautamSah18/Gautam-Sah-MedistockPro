@@ -59,9 +59,6 @@ def registration_step1(request):
     )
 
 
-
-# Resend OTP
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def send_otp(request):
@@ -78,10 +75,7 @@ def send_otp(request):
         [user.email],
         fail_silently=False,
     )
-
     return Response({"message": "OTP resent"}, status=200)
-
-
 
 # Verify OTP
 
@@ -109,10 +103,7 @@ def verify_otp(request):
         status=200
     )
 
-
-
 # Registration Step 2
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @parser_classes([MultiPartParser, FormParser])

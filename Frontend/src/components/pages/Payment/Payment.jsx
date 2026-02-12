@@ -128,7 +128,7 @@ const Payment = () => {
         <input type="hidden" id="signed_field_names" name="signed_field_names" value={formData.signed_field_names} />
         <input type="hidden" id="signature" name="signature" value={formData.signature} />
 
-        {/* success / failure URLs (hidden) */}
+        {/* success / failure URLs*/}
         <input type="hidden" id="success_url" name="success_url" value={formData.success_url} />
         <input type="hidden" id="failure_url" name="failure_url" value={formData.failure_url} />
 

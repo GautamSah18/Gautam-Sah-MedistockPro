@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'django_filters',
     'cloudinary',
     'cloudinary_storage',
+    'ExpiryReturn',
+    'Complaints',
 ]
 
 AUTH_USER_MODEL = "Authentication.CustomUser"

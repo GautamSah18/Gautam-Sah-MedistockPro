@@ -4,6 +4,8 @@ import { useAuth } from "../../../context/AuthContext.jsx";
 import api from "../../../services/api.js";
 import AppliedSchemes from "./AppliedSchemes";
 import BonusManagement from "./BonusManagement";
+import ComplaintsRequests from "./ComplaintsRequests";
+import ExpiryReturnRequests from "./ExpiryReturnRequests";
 import "./Inventory.css";
 import Orders from "./Orders";
 import SchemeManagement from "./SchemeManagement";
@@ -14,7 +16,7 @@ const Inventory = () => {
   const [medicines, setMedicines] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'bonuses', 'schemes', 'orders', 'applied-schemes'
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'bonuses', 'schemes', 'orders', 'applied-schemes', 'expiry-return', 'complaints'
   const [currentMedicine, setCurrentMedicine] = useState({
     name: "",
     generic_name: "",
@@ -352,6 +354,8 @@ const Inventory = () => {
     { key: "schemes", label: "Schemes", icon: "🎁", active: activeTab === 'schemes' },
     { key: "applied-schemes", label: "Applied Schemes", icon: "✅", active: activeTab === 'applied-schemes' },
     { key: "orders", label: "Orders", icon: "🧺", active: activeTab === 'orders' },
+    { key: "expiry-return", label: "Expiry Return", icon: "🔄", active: activeTab === 'expiry-return' },
+    { key: "complaints", label: "Complaints", icon: "📢", active: activeTab === 'complaints' },
     { key: "delivery", label: "Delivery", icon: "🚚", active: activeTab === 'delivery' },
     { key: "settings", label: "Settings", icon: "⚙️", active: activeTab === 'settings' },
   ];
@@ -452,17 +456,20 @@ const Inventory = () => {
             <h1>
               {activeTab === 'inventory' && 'Medicine Inventory'}
               {activeTab === 'orders' && 'Orders'}
-              {activeTab === 'Bonuses' && 'BonusManagement'}
-              {activeTab === 'Schemes' && 'SchemeManagement'}
+              {activeTab === 'bonuses' && 'Bonus Management'}
+              {activeTab === 'schemes' && 'Scheme Management'}
               {activeTab === 'applied-schemes' && 'Applied Schemes'}
-
+              {activeTab === 'expiry-return' && 'Expiry Return Requests'}
+              {activeTab === 'complaints' && 'Complaint issues'}
             </h1>
             <p>
               {activeTab === 'inventory' && 'Manage medicines, stock, pricing and expiry.'}
               {activeTab === 'orders' && 'View and manage customer orders.'}
-              {activeTab === 'Bonuses' && 'View and manage customer Bonuses.'}
-              {activeTab === 'Schemes' && 'View and manage customer Schemes.'}
+              {activeTab === 'bonuses' && 'View and manage customer Bonuses.'}
+              {activeTab === 'schemes' && 'View and manage customer Schemes.'}
               {activeTab === 'applied-schemes' && 'View all schemes applied by customers.'}
+              {activeTab === 'expiry-return' && 'View and manage medicine expiry return requests from customers.'}
+              {activeTab === 'complaints' && 'Review and manage customer complaints regarding medicines or service.'}
             </p>
           </div>
 
@@ -602,6 +609,8 @@ const Inventory = () => {
         {activeTab === 'schemes' && <SchemeManagement />}
         {activeTab === 'applied-schemes' && <AppliedSchemes />}
         {activeTab === 'orders' && <Orders />}
+        {activeTab === 'expiry-return' && <ExpiryReturnRequests />}
+        {activeTab === 'complaints' && <ComplaintsRequests />}
 
         {/* Modal */}
         {isModalOpen && (

@@ -23,11 +23,11 @@ const demoNotifications = [
 
 export default function TopNav({
   searchValue = "",
-  onSearchChange = () => {},
+  onSearchChange = () => { },
   showSearch = true,
   cartCount = 0,
-  onCartClick = () => {},
-  onAddToCart = () => {}, // Function to add item to cart
+  onCartClick = () => { },
+  onAddToCart = () => { }, // Function to add item to cart
 }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -38,51 +38,51 @@ export default function TopNav({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem("mdp_theme") || "light");
   const timeoutRef = useRef(null);
-  
+
   // Reset imgError when user object changes
   useEffect(() => {
     setImgError(false);
   }, [user]);
-    
+
   // Update theme in localStorage and document
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("mdp_theme", theme);
   }, [theme]);
-    
+
   // Function to handle dropdown timeout
   const setDropdownTimeout = () => {
     timeoutRef.current = setTimeout(() => {
       setDropdownOpen(false);
     }, 300); // 300ms delay before closing
   };
-    
+
   // Function to toggle theme
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
   };
-    
+
   // Function to handle logout
   const { logout: authLogout } = useAuth();
   const handleLogout = () => {
     // Close dropdown before logout
     setDropdownOpen(false);
-      
+
     // Call logout from auth context
     authLogout();
   };
-    
+
   // Handle search input changes
   const handleSearchChange = async (value) => {
     onSearchChange(value);
-    
+
     if (value.trim() === '') {
       setSearchResults([]);
       setShowSuggestions(false);
       return;
     }
-    
+
     try {
       // Fetch search results from API
       const response = await api.get(`/api/inventory/public/medicines/?search=${encodeURIComponent(value)}`);
@@ -95,7 +95,7 @@ export default function TopNav({
       setShowSuggestions(false);
     }
   };
-  
+
   // Format medicine for display
   const formatMedicineForDisplay = (medicine) => ({
     id: medicine.id,
@@ -105,7 +105,7 @@ export default function TopNav({
     category: medicine.category_name || medicine.category_type || "General",
     stock: medicine.stock,
   });
-  
+
   // Handle adding item to cart from search results
   const handleAddToCart = (medicine) => {
     const formattedMedicine = formatMedicineForDisplay(medicine);
@@ -113,7 +113,7 @@ export default function TopNav({
     setSearchResults([]);
     setShowSuggestions(false);
   };
-  
+
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -122,7 +122,7 @@ export default function TopNav({
         setShowSuggestions(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -162,6 +162,13 @@ export default function TopNav({
         </NavLink>
 
         <NavLink
+          to="/customer/complaints"
+          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+        >
+          Complaint issues
+        </NavLink>
+
+        <NavLink
           to="/products"
           className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
         >
@@ -195,13 +202,13 @@ export default function TopNav({
                 placeholder="Search for medicines..."
               />
             </div>
-            
+
             {/* Search Suggestions Dropdown */}
             {showSuggestions && searchResults.length > 0 && (
               <div className="search-suggestions">
                 {searchResults.map((medicine) => (
-                  <div 
-                    key={medicine.id} 
+                  <div
+                    key={medicine.id}
                     className="suggestion-item"
                     onClick={() => handleAddToCart(medicine)}
                   >
@@ -267,7 +274,7 @@ export default function TopNav({
 
         {/* Profile with dropdown */}
         <div className="profile-dropdown-container">
-          <Link 
+          <Link
             className="icon-btn"
             aria-label="Profile"
             to="/profile"
@@ -275,9 +282,9 @@ export default function TopNav({
             onMouseLeave={() => setDropdownTimeout()}
           >
             {user?.profilePicture && !imgError ? (
-              <img 
-                src={user.profilePicture} 
-                alt="Profile" 
+              <img
+                src={user.profilePicture}
+                alt="Profile"
                 onError={() => setImgError(true)}
                 onLoad={() => setImgError(false)}
                 style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
@@ -286,7 +293,7 @@ export default function TopNav({
               <FaUser />
             )}
           </Link>
-          
+
           {/* Dropdown menu */}
           {dropdownOpen && (
             <div
@@ -297,8 +304,8 @@ export default function TopNav({
               }}
               onMouseLeave={() => setDropdownTimeout()}
             >
-              <Link 
-                className="dropdown-item" 
+              <Link
+                className="dropdown-item"
                 to="/profile"
                 onClick={() => setDropdownOpen(false)}
               >
