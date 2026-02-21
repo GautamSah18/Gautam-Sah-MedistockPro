@@ -37,6 +37,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,6 +58,7 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'ExpiryReturn',
     'Complaints',
+    'notifications',
 ]
 
 AUTH_USER_MODEL = "Authentication.CustomUser"
@@ -108,6 +111,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'MedistockPro.wsgi.application'
 
+ASGI_APPLICATION = "MedistockPro.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -247,6 +260,9 @@ cloudinary.config(
 # File upload settings
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Login URL for redirections
+LOGIN_URL = '/api/auth/login/'
 
 # Email Configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

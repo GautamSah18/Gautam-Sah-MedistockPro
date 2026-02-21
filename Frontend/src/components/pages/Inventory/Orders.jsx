@@ -14,7 +14,7 @@ export default function Orders() {
       try {
         const response = await api.get('/api/billing/');
         const bills = response.data;
-        
+
         // Transform bills data to match the orders format
         const transformedOrders = bills.map(bill => ({
           id: bill.invoice_number,
@@ -31,7 +31,7 @@ export default function Orders() {
           discount: bill.discount,
           tax_total: bill.tax_total
         }));
-        
+
         setOrders(transformedOrders);
         if (transformedOrders.length > 0) {
           setSelected(transformedOrders[0]);
@@ -45,7 +45,7 @@ export default function Orders() {
         setLoading(false);
       }
     };
-    
+
     fetchOrders();
   }, []);
 
@@ -54,8 +54,9 @@ export default function Orders() {
   // Function to download a bill
   const downloadBill = async (billId) => {
     try {
-      // Open the bill in a new window/tab for printing/download
-      window.open(`${api.defaults.baseURL}/api/billing/admin/${billId}/print/`, '_blank');
+      const token = localStorage.getItem('access_token');
+      // Open the bill in a new window/tab for printing/download with auth token
+      window.open(`${api.defaults.baseURL}/api/billing/admin/${billId}/print/?token=${token}`, '_blank');
     } catch (error) {
       console.error('Error downloading bill:', error);
       alert('Error downloading bill');
@@ -110,7 +111,7 @@ export default function Orders() {
                             </span>
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm">
-                            <button 
+                            <button
                               className="!bg-green-500 !text-white border-none rounded-md px-2.5 py-1.5 cursor-pointer text-sm transition-colors hover:!bg-green-600 hover:shadow-md"
                               onClick={() => downloadBill(bill.id)}
                               title="Download Bill"

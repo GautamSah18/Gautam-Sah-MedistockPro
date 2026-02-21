@@ -64,6 +64,7 @@ export default function CustomerDashboard() {
   const [appliedScheme, setAppliedScheme] = useState(null);
   const [checkingSchemes, setCheckingSchemes] = useState(false);
 
+
   const handleSchemeApplied = (schemeData) => {
     setAppliedScheme(schemeData);
   };
@@ -89,12 +90,12 @@ export default function CustomerDashboard() {
         return prev.map((x) =>
           x.id === p.id
             ? {
-                ...x,
-                qty: newQty,
-                buy_quantity: buyQ || x.buy_quantity,
-                free_quantity: freeQ || x.free_quantity,
-                bonus_free_qty: bonusFree,
-              }
+              ...x,
+              qty: newQty,
+              buy_quantity: buyQ || x.buy_quantity,
+              free_quantity: freeQ || x.free_quantity,
+              bonus_free_qty: bonusFree,
+            }
             : x
         );
       }
@@ -617,7 +618,7 @@ export default function CustomerDashboard() {
                 try {
                   finalAppliedScheme = JSON.parse(selectedSchemeFromStorage);
                   sessionStorage.removeItem("selectedScheme");
-                } catch (e) {}
+                } catch (e) { }
               }
 
               navigate("/billing", { state: { cart, paymentType: payType, cartTotal, appliedScheme: finalAppliedScheme } });

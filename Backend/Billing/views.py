@@ -1,6 +1,8 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework.response import Response
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -310,10 +312,27 @@ def print_bill(request, pk):
 
 
 # Django view for admin print functionality
-@login_required
-@staff_member_required
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def admin_print_bill(request, pk):
     """Generate a printable version of a specific bill for admin users"""
+    
+    # Support token in query parameter for window.open
+    token = request.query_params.get('token')
+    if token:
+        try:
+            jwt_auth = JWTAuthentication()
+            validated_token = jwt_auth.get_validated_token(token)
+            user = jwt_auth.get_user(validated_token)
+            request.user = user
+        except (InvalidToken, TokenError):
+            return Response({'error': 'Invalid or expired token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if not request.user.is_authenticated:
+        return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+    if request.user.role != 'admin':
+        return Response({'error': 'Only admins can access this page'}, status=status.HTTP_403_FORBIDDEN)
     # First try to find by numerical ID, then by invoice number
     try:
         bill = get_object_or_404(Bill, pk=pk)

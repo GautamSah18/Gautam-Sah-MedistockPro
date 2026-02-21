@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { FaBell } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import api from "../../../services/api.js";
@@ -13,11 +14,16 @@ import SchemeManagement from "./SchemeManagement";
 const Inventory = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [medicines, setMedicines] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'bonuses', 'schemes', 'orders', 'applied-schemes', 'expiry-return', 'complaints'
   const [currentMedicine, setCurrentMedicine] = useState({
+
+
     name: "",
     generic_name: "",
     company: "",
@@ -58,6 +64,84 @@ const Inventory = () => {
     scheme_gifts: []
   });
 
+  const getNotifTitle = (type) => {
+    switch (type) {
+      case "medicine": return "New Medicine";
+      case "bonus": return "New Bonus";
+      case "scheme": return "New Scheme";
+      case "expiry": return "Expiry Request";
+      case "complaint": return "Complaint Issue";
+      default: return "Notification";
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await api.get("/api/notifications/");
+      const data = response.data.results || response.data;
+      setNotifications(data.map(n => ({
+        title: getNotifTitle(n.notification_type),
+        message: n.message,
+        type: n.notification_type,
+        time: new Date(n.created_at).toLocaleTimeString(),
+        isRead: n.is_read
+      })));
+      setUnreadCount(data.filter(n => !n.is_read).length);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    }
+  };
+
+  const markAsRead = async () => {
+    try {
+      if (unreadCount === 0) return;
+      await api.post("/api/notifications/mark-read/");
+      setUnreadCount(0);
+      setNotifications([]); // Clear notifications once they are seen
+    } catch (err) {
+      console.error("Error marking notifications as read:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/notifications/?token=${token}`);
+
+    socket.onopen = () => {
+      console.log("Admin connected to notification socket");
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      setNotifications((prev) => [
+        {
+          title: getNotifTitle(data.notification_type),
+          message: data.message,
+          type: data.notification_type,
+          time: new Date().toLocaleTimeString(),
+          isRead: false
+        },
+        ...prev,
+      ]);
+
+      setUnreadCount((prev) => prev + 1);
+    };
+
+    socket.onerror = (err) => {
+      console.error("WebSocket error:", err);
+    };
+
+    socket.onclose = () => {
+      console.log("Admin notification socket closed");
+    };
+
+    return () => socket.close();
+  }, []);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -489,9 +573,58 @@ const Inventory = () => {
               </>
             )}
 
+            {/* 🔔 NOTIFICATIONS */}
+            <div className="notif-wrap">
+              <button
+                className="notif-btn"
+                onClick={() => {
+                  if (showNotifications) {
+                    // Mark as read when closing
+                    markAsRead();
+                  }
+                  setShowNotifications(!showNotifications);
+                }}
+              >
+                <FaBell />
+                {unreadCount > 0 && (
+                  <span className="notif-badge" key={unreadCount}>
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
 
+              <div className={`notif-dd ${showNotifications ? "open" : ""}`}>
+                <div className="notif-head">
+                  <div className="notif-title">Notifications</div>
+                </div>
 
+                <div className="notif-list">
+                  {notifications.length === 0 ? (
+                    <div className="notif-item">
+                      <div>No notifications</div>
+                    </div>
+                  ) : (
+                    notifications.map((n, i) => (
+                      <div className="notif-item" key={i}>
+                        <div className="notif-ic"><FaBell /></div>
+                        <div>
+                          <div className="notif-item-title">{n.title}</div>
+                          <div className="notif-item-text">{n.message}</div>
+                          <small style={{ opacity: 0.6, fontSize: '10px' }}>{n.time}</small>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
 
+              {showNotifications && (
+                <div
+                  className="notif-backdrop"
+                  onClick={() => setShowNotifications(false)}
+                />
+              )}
+            </div>
           </div>
         </header>
 

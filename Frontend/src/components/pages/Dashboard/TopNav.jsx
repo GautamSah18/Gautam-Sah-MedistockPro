@@ -1,25 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FaBell,
-  FaClock,
   FaSearch,
   FaShoppingCart,
-  FaTag,
-  FaTruck,
-  FaUndo,
-  FaUser,
+  FaUser
 } from "react-icons/fa";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../services/api";
 import "./customerDashboard.css";
-
-const demoNotifications = [
-  { id: 1, icon: <FaTruck />, title: "Order #1023", text: "Dispatched — arriving soon." },
-  { id: 2, icon: <FaClock />, title: "Credit Due", text: "Your credit bill is due in 10 days." },
-  { id: 3, icon: <FaUndo />, title: "Expiry Return", text: "Return request approved for 2 items." },
-  { id: 4, icon: <FaTag />, title: "New Scheme", text: "Flat 10% off on Pain Relief medicines." },
-];
 
 export default function TopNav({
   searchValue = "",
@@ -27,11 +16,99 @@ export default function TopNav({
   showSearch = true,
   cartCount = 0,
   onCartClick = () => { },
-  onAddToCart = () => { }, // Function to add item to cart
+  onAddToCart = () => { },
 }) {
-  const { user } = useAuth();
+  const { user, logout: authLogout } = useAuth();
+
+  /*REAL-TIME NOTIFICATIONS*/
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
-  const [seen, setSeen] = useState(false);
+
+  const getNotifTitle = (type) => {
+    switch (type) {
+      case "medicine": return "New Medicine";
+      case "bonus": return "New Bonus";
+      case "scheme": return "New Scheme";
+      case "expiry": return "Expiry Request";
+      case "complaint": return "Complaint Issue";
+      default: return "Notification";
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await api.get("/api/notifications/");
+      const data = response.data.results || response.data;
+      setNotifications(data.map(n => ({
+        id: n.id,
+        icon: <FaBell />,
+        title: getNotifTitle(n.notification_type),
+        text: n.message,
+        isRead: n.is_read
+      })));
+      setUnreadCount(data.filter(n => !n.is_read).length);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    }
+  };
+
+  const markAsRead = async () => {
+    try {
+      if (unreadCount === 0) return;
+      await api.post("/api/notifications/mark-read/");
+      setUnreadCount(0);
+      setNotifications([]); // Clear notifications once they are seen
+    } catch (err) {
+      console.error("Error marking notifications as read:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/notifications/?token=${token}`);
+
+    socket.onopen = () => {
+      console.log("Notification socket connected");
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const newNotif = {
+        id: Date.now(),
+        icon: <FaBell />,
+        title: getNotifTitle(data.notification_type),
+        text: data.message,
+        isRead: false
+      };
+      setNotifications((prev) => [newNotif, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    };
+
+    socket.onerror = (err) => {
+      console.error("WebSocket error:", err);
+    };
+
+    socket.onclose = () => {
+      console.log("Notification socket closed");
+    };
+
+    return () => socket.close();
+  }, []);
+
+  const toggleNotifications = () => {
+    if (open) {
+      // Mark as read when closing, so user sees them first
+      markAsRead();
+    }
+    setOpen(!open);
+  };
+
+
   const [imgError, setImgError] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -39,64 +116,54 @@ export default function TopNav({
   const [theme, setTheme] = useState(() => localStorage.getItem("mdp_theme") || "light");
   const timeoutRef = useRef(null);
 
-  // Reset imgError when user object changes
   useEffect(() => {
     setImgError(false);
   }, [user]);
 
-  // Update theme in localStorage and document
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("mdp_theme", theme);
   }, [theme]);
 
-  // Function to handle dropdown timeout
   const setDropdownTimeout = () => {
     timeoutRef.current = setTimeout(() => {
       setDropdownOpen(false);
-    }, 300); // 300ms delay before closing
+    }, 300);
   };
 
-  // Function to toggle theme
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
   };
 
-  // Function to handle logout
-  const { logout: authLogout } = useAuth();
   const handleLogout = () => {
-    // Close dropdown before logout
     setDropdownOpen(false);
-
-    // Call logout from auth context
     authLogout();
   };
 
-  // Handle search input changes
   const handleSearchChange = async (value) => {
     onSearchChange(value);
 
-    if (value.trim() === '') {
+    if (value.trim() === "") {
       setSearchResults([]);
       setShowSuggestions(false);
       return;
     }
 
     try {
-      // Fetch search results from API
-      const response = await api.get(`/api/inventory/public/medicines/?search=${encodeURIComponent(value)}`);
+      const response = await api.get(
+        `/api/inventory/public/medicines/?search=${encodeURIComponent(value)}`
+      );
       const medicines = response.data.results || response.data;
-      setSearchResults(medicines.slice(0, 5)); // Limit to 5 suggestions
+      setSearchResults(medicines.slice(0, 5));
       setShowSuggestions(true);
     } catch (error) {
-      console.error('Error fetching search results:', error);
+      console.error("Error fetching search results:", error);
       setSearchResults([]);
       setShowSuggestions(false);
     }
   };
 
-  // Format medicine for display
   const formatMedicineForDisplay = (medicine) => ({
     id: medicine.id,
     name: medicine.name,
@@ -106,7 +173,6 @@ export default function TopNav({
     stock: medicine.stock,
   });
 
-  // Handle adding item to cart from search results
   const handleAddToCart = (medicine) => {
     const formattedMedicine = formatMedicineForDisplay(medicine);
     onAddToCart(formattedMedicine, 1);
@@ -114,22 +180,19 @@ export default function TopNav({
     setShowSuggestions(false);
   };
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const searchContainer = event.target.closest('.search-container');
+      const searchContainer = event.target.closest(".search-container");
       if (!searchContainer && showSuggestions) {
         setShowSuggestions(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showSuggestions]);
-
-  const badgeCount = useMemo(() => (seen ? 0 : demoNotifications.length), [seen]);
 
   return (
     <header className="mdp-nav">
@@ -140,70 +203,53 @@ export default function TopNav({
       </div>
 
       <nav className="mdp-nav__center">
-        <NavLink
-          to="/customerDashboard"
-          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-        >
+        <NavLink to="/customerDashboard" className="nav-link">
           Home
         </NavLink>
-
-        <NavLink
-          to="/customer/prescriptions"
-          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-        >
-          Prescriptions
-        </NavLink>
-
-        <NavLink
-          to="/customer/returns"
-          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-        >
+        <NavLink to="/customer/returns" className="nav-link">
           Expiry Return
         </NavLink>
-
-        <NavLink
-          to="/customer/complaints"
-          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-        >
+        <NavLink to="/customer/complaints" className="nav-link">
           Complaint issues
         </NavLink>
-
-        <NavLink
-          to="/products"
-          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-        >
+        <NavLink to="/products" className="nav-link">
           Products
         </NavLink>
-
-        <NavLink
-          to="/bonus-schemes"
-          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-        >
+        <NavLink to="/bonus-schemes" className="nav-link">
           Bonus & Schemes
         </NavLink>
-
-        <NavLink
-          to="/orders"
-          className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-        >
+        <NavLink to="/orders" className="nav-link">
           Orders
         </NavLink>
+        <NavLink
+        to="/TrackOrders"
+        className={({ isActive }) =>
+          isActive ? "nav-link active" : "nav-link"
+        }
+      >
+        Track Order
+      </NavLink>
       </nav>
 
       <div className="mdp-nav__right">
-        {showSearch ? (
+
+        {/* SEARCH */}
+        {showSearch && (
           <div className="search-container">
             <div className="search">
               <FaSearch className="search-ic" />
               <input
                 value={searchValue}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                onFocus={() => searchValue && searchResults.length > 0 && setShowSuggestions(true)}
+                onFocus={() =>
+                  searchValue &&
+                  searchResults.length > 0 &&
+                  setShowSuggestions(true)
+                }
                 placeholder="Search for medicines..."
               />
             </div>
 
-            {/* Search Suggestions Dropdown */}
             {showSuggestions && searchResults.length > 0 && (
               <div className="search-suggestions">
                 {searchResults.map((medicine) => (
@@ -212,71 +258,89 @@ export default function TopNav({
                     className="suggestion-item"
                     onClick={() => handleAddToCart(medicine)}
                   >
-                    <div className="suggestion-name">{medicine.name}</div>
+                    <div className="suggestion-name">
+                      {medicine.name}
+                    </div>
                     <div className="suggestion-details">
-                      <span className="suggestion-company">{medicine.company}</span>
-                      <span className="suggestion-price">Rs {formatMedicineForDisplay(medicine).price}</span>
+                      <span>{medicine.company}</span>
+                      <span>
+                        Rs {formatMedicineForDisplay(medicine).price}
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        ) : (
-          <div className="nav-spacer" />
         )}
 
-        {/* Notifications */}
+        {/*  NOTIFICATIONS */}
         <div className="notif-wrap">
           <button
             className="icon-btn notif-btn"
-            aria-label="Notifications"
-            onClick={() => {
-              setOpen((v) => !v);
-              setSeen(true);
-            }}
+            onClick={toggleNotifications}
           >
             <FaBell />
-            {badgeCount > 0 ? <span className="notif-badge">{badgeCount}</span> : null}
+            {unreadCount > 0 && (
+              <span className="notif-badge">
+                {unreadCount}
+              </span>
+            )}
           </button>
 
           <div className={`notif-dd ${open ? "open" : ""}`}>
             <div className="notif-head">
               <div className="notif-title">Notifications</div>
-              <button className="notif-clear" onClick={() => setSeen(true)}>
-                Mark all read
-              </button>
             </div>
 
             <div className="notif-list">
-              {demoNotifications.map((n) => (
-                <div className="notif-item" key={n.id}>
-                  <div className="notif-ic">{n.icon}</div>
-                  <div>
-                    <div className="notif-item-title">{n.title}</div>
-                    <div className="notif-item-text">{n.text}</div>
-                  </div>
+              {notifications.length === 0 ? (
+                <div className="notif-item">
+                  <div>No notifications</div>
                 </div>
-              ))}
+              ) : (
+                notifications.map((n) => (
+                  <div className="notif-item" key={n.id}>
+                    <div className="notif-ic">{n.icon}</div>
+                    <div>
+                      <div className="notif-item-title">
+                        {n.title}
+                      </div>
+                      <div className="notif-item-text">
+                        {n.text}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-          {open ? <div className="notif-backdrop" onClick={() => setOpen(false)} /> : null}
+          {open && (
+            <div
+              className="notif-backdrop"
+              onClick={() => setOpen(false)}
+            />
+          )}
         </div>
 
-        {/* Cart */}
-        <button className="icon-btn cart-btn" aria-label="Cart" onClick={onCartClick}>
+        {/* CART */}
+        <button
+          className="icon-btn cart-btn"
+          onClick={onCartClick}
+        >
           <FaShoppingCart />
-          {cartCount > 0 ? <span className="cart-badge">{cartCount}</span> : null}
+          {cartCount > 0 && (
+            <span className="cart-badge">
+              {cartCount}
+            </span>
+          )}
         </button>
 
-
-
-        {/* Profile with dropdown */}
+        {/* PROFILE */}
         <div className="profile-dropdown-container">
           <Link
             className="icon-btn"
-            aria-label="Profile"
             to="/profile"
             onMouseEnter={() => setDropdownOpen(true)}
             onMouseLeave={() => setDropdownTimeout()}
@@ -286,35 +350,43 @@ export default function TopNav({
                 src={user.profilePicture}
                 alt="Profile"
                 onError={() => setImgError(true)}
-                onLoad={() => setImgError(false)}
-                style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "50%",
+                }}
               />
             ) : (
               <FaUser />
             )}
           </Link>
 
-          {/* Dropdown menu */}
           {dropdownOpen && (
             <div
               className="profile-dropdown"
-              onMouseEnter={() => {
-                clearTimeout(timeoutRef.current);
-                setDropdownOpen(true);
-              }}
+              onMouseEnter={() =>
+                clearTimeout(timeoutRef.current)
+              }
               onMouseLeave={() => setDropdownTimeout()}
             >
               <Link
                 className="dropdown-item"
                 to="/profile"
-                onClick={() => setDropdownOpen(false)}
               >
                 Profile
               </Link>
-              <div className="dropdown-item" onClick={toggleTheme}>
-                {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+              <div
+                className="dropdown-item"
+                onClick={toggleTheme}
+              >
+                {theme === "light"
+                  ? "Dark Mode"
+                  : "Light Mode"}
               </div>
-              <div className="dropdown-item" onClick={handleLogout}>
+              <div
+                className="dropdown-item"
+                onClick={handleLogout}
+              >
                 Logout
               </div>
             </div>

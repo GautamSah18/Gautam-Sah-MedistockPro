@@ -19,6 +19,7 @@ import Inventory from "./components/pages/Inventory/Inventory";
 
 // Customer
 import BonusSchemes from "./components/pages/BonusSchemes/BonusSchemes";
+import TrackOrders from "./components/pages/Dashboard/TrackOrders";
 import CustomerComplaints from "./components/pages/Dashboard/CustomerComplaints";
 import CustomerDashboard from "./components/pages/Dashboard/customerDashboard";
 import CustomerPrescriptions from "./components/pages/Dashboard/CustomerPrescriptions";
@@ -183,7 +184,14 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-
+            <Route
+              path="/TrackOrders"
+              element={
+                <ProtectedRoute>
+                  <TrackOrders />
+                </ProtectedRoute>
+              }
+            />
             {/* ================= PAYMENTS ================= */}
             <Route path="/payment" element={<Payment />} />
             <Route path="/paymentsuccess" element={<div>Payment Success</div>} />
@@ -192,7 +200,7 @@ export default function App() {
             {/* ================= DEFAULT ROUTES ================= */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
-
+            
           </Routes>
         </RouteLoader>
       </div>
