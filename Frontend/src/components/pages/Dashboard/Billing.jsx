@@ -96,6 +96,12 @@ export default function Billing() {
       
       // Send the bill data to the backend
       const response = await api.post('/api/billing/create/', billData);
+
+        if (paymentType === 'credit') {
+        await api.post('/api/orders/create/', {
+          total_amount: parseFloat(computed.grandTotal.toFixed(2)),
+        });
+      }
       
       // If a scheme was applied, save the applied scheme data
       if (appliedScheme && response.data && response.data.id) {

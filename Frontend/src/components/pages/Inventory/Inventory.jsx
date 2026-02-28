@@ -10,6 +10,7 @@ import ExpiryReturnRequests from "./ExpiryReturnRequests";
 import "./Inventory.css";
 import Orders from "./Orders";
 import SchemeManagement from "./SchemeManagement";
+import DeliveryOrderStatus from "./DeliveryOrderStatus";
 
 const Inventory = () => {
   const navigate = useNavigate();
@@ -540,6 +541,7 @@ const Inventory = () => {
             <h1>
               {activeTab === 'inventory' && 'Medicine Inventory'}
               {activeTab === 'orders' && 'Orders'}
+              {activeTab === 'delivery' && <DeliveryOrderStatus />}
               {activeTab === 'bonuses' && 'Bonus Management'}
               {activeTab === 'schemes' && 'Scheme Management'}
               {activeTab === 'applied-schemes' && 'Applied Schemes'}
@@ -573,7 +575,7 @@ const Inventory = () => {
               </>
             )}
 
-            {/* 🔔 NOTIFICATIONS */}
+            {/*  NOTIFICATIONS */}
             <div className="notif-wrap">
               <button
                 className="notif-btn"

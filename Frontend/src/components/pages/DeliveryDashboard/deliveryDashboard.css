@@ -1,0 +1,294 @@
+/* ================= PAGE ================= */
+
+.delivery-page {
+  min-height: 100vh;
+  background: #f6fff9;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* ================= HEADER ================= */
+
+.delivery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 30px;
+  background: #047857;
+  color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  color: #bbf7d0;
+}
+
+.delivery-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  color: #047857;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: #d1fae5;
+}
+
+/* ================= CONTAINER ================= */
+
+.delivery-container {
+  padding: 30px;
+}
+
+.dashboard-intro h2 {
+  font-size: 24px;
+  color: #065f46;
+  margin-bottom: 5px;
+}
+
+.dashboard-intro p {
+  color: #047857;
+  margin-bottom: 25px;
+}
+
+/* ================= LOADING ================= */
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  font-size: 16px;
+  color: #065f46;
+}
+
+/* ================= NO ORDERS ================= */
+
+.no-orders {
+  background: white;
+  padding: 40px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1px solid #d1fae5;
+  color: #065f46;
+  box-shadow: 0 4px 10px rgba(0, 128, 0, 0.05);
+}
+
+.no-orders svg {
+  margin-bottom: 10px;
+  color: #047857;
+}
+
+/* ================= ORDER CARD ================= */
+
+.delivery-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid #d1fae5;
+  box-shadow: 0 4px 12px rgba(0, 128, 0, 0.06);
+  margin-bottom: 20px;
+  transition: 0.25s ease;
+}
+
+.delivery-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 128, 0, 0.1);
+}
+
+/* ================= CARD HEADER ================= */
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.card-header h3 {
+  color: #065f46;
+  margin-bottom: 5px;
+}
+
+.card-header p {
+  margin: 3px 0;
+  font-size: 14px;
+  color: #047857;
+}
+
+.accept-btn {
+  background-color: #10b981;   /* Green */
+  color: #ffffff;              /* White text */
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.accept-btn:hover {
+  background-color: #047857;   /* Darker green on hover */
+}
+
+.accept-btn:active {
+  transform: scale(0.97);
+}
+
+/* ================= STATUS BADGE ================= */
+
+.status {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+/* Status Colors */
+
+.status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status.packing {
+  background: #bbf7d0;
+  color: #065f46;
+}
+
+.status.preparing {
+  background: #a7f3d0;
+  color: #065f46;
+}
+
+.status.dispatched {
+  background: #6ee7b7;
+  color: #064e3b;
+}
+
+.status.delivered {
+  background: #10b981;
+  color: white;
+}
+
+/* ================= STATUS BUTTONS ================= */
+
+.status-buttons {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-buttons button {
+  flex: 1;
+  min-width: 100px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #d1fae5;
+  color: #065f46;
+  transition: 0.2s ease;
+}
+
+.status-buttons button:hover:not(:disabled) {
+  background: #10b981;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.status-buttons button:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.delivered-btn {
+  background: #047857;
+  color: white;
+}
+
+.delivered-btn:hover:not(:disabled) {
+  background: #065f46;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+  .delivery-header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .card-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .status-buttons {
+    flex-direction: column;
+  }
+
+  .status-buttons button {
+    width: 100%;
+  }
+}
+
+/* ===== STATUS UPDATE SECTION ===== */
+
+.status-update-section {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.status-update-section select {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #d1fae5;
+  background: #f0fdf4;
+  color: #065f46;
+  font-weight: 500;
+}
+
+.status-update-section button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #10b981;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.status-update-section button:hover:not(:disabled) {
+  background: #047857;
+}
+
+.status-update-section button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}

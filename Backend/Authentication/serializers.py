@@ -140,10 +140,6 @@ class OTPVerificationSerializer(serializers.Serializer):
         otp.is_verified = True
         otp.save(update_fields=['is_verified'])
 
-        # Mark user registration as complete (or verified)
-        user.registration_complete = True
-        user.save(update_fields=['registration_complete'])
-
         data['user'] = user
         return data
 

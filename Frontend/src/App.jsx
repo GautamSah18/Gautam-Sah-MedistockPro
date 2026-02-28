@@ -19,7 +19,6 @@ import Inventory from "./components/pages/Inventory/Inventory";
 
 // Customer
 import BonusSchemes from "./components/pages/BonusSchemes/BonusSchemes";
-import TrackOrders from "./components/pages/Dashboard/TrackOrders";
 import CustomerComplaints from "./components/pages/Dashboard/CustomerComplaints";
 import CustomerDashboard from "./components/pages/Dashboard/customerDashboard";
 import CustomerPrescriptions from "./components/pages/Dashboard/CustomerPrescriptions";
@@ -27,8 +26,12 @@ import ExpiryReturn from "./components/pages/Dashboard/ExpiryReturn";
 import CustomerOrders from "./components/pages/Dashboard/Orders";
 import ProductPage from "./components/pages/Dashboard/ProductPage";
 import ProfileManagement from "./components/pages/Dashboard/ProfileManagement";
+import TrackOrders from "./components/pages/Dashboard/TrackOrders";
 import Orders from "./components/pages/Inventory/Orders.jsx";
 import Payment from "./components/pages/Payment/Payment";
+
+//Delivery
+import DeliveryDashboard from "./components/pages/DeliveryDashboard/DeliveryDashboard";
 
 function RouteLoader({ children }) {
   const location = useLocation();
@@ -189,6 +192,15 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <TrackOrders />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/delivery/dashboard"
+              element={
+                <ProtectedRoute role="delivery">
+                  <DeliveryDashboard />
                 </ProtectedRoute>
               }
             />

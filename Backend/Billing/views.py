@@ -13,6 +13,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from .models import Bill
 from .serializers import BillSerializer, BillCreateSerializer
+from OrderStatusTracking.models import Order
+from Authentication.models import CustomUser as User
 
 
 @api_view(['GET'])
@@ -46,7 +48,34 @@ def create_bill(request):
     #Create a new bill
     serializer = BillCreateSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        bill = serializer.save()
+        
+        # Automatically create an Order for delivery tracking
+        try:
+            # Find an available delivery person
+            delivery_user = User.objects.filter(role="delivery", is_active=True).first()
+            
+            if delivery_user:
+                Order.objects.create(
+                    customer=bill.customer,
+                    delivery_person=delivery_user,
+                    total_amount=bill.total_amount,
+                    status="pending"
+                )
+                print(f"Order created and assigned to {delivery_user.email}")
+            else:
+                # Still create order but without local delivery person assignment if none found
+                Order.objects.create(
+                    customer=bill.customer,
+                    total_amount=bill.total_amount,
+                    status="pending"
+                )
+                print("Order created but no delivery person available to assign.")
+                
+        except Exception as e:
+            # Log error but don't fail the bill creation
+            print(f"Failed to create delivery order: {str(e)}")
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

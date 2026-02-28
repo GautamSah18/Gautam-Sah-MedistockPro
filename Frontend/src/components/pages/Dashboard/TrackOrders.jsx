@@ -1,177 +1,136 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import TopNav from "./TopNav";
 import "./TrackOrders.css";
 import { FaCheck, FaTruck } from "react-icons/fa";
 import { FiSearch } from "react-icons/fi";
+import api from "../../../services/api";
 
 export default function TrackOrders() {
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    fetchOrders();
+
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 10000); // auto refresh every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const res = await api.get("/api/orders/customer/");
+      setOrders(res.data);
+    } catch (error) {
+      console.error("Error fetching customer orders:", error);
+    }
+  };
+
+  const getProgressWidth = (status) => {
+    switch (status) {
+      case "received":
+        return "20%";
+      case "packing":
+        return "40%";
+      case "ready_for_dispatch":
+        return "60%";
+      case "out_for_delivery":
+        return "80%";
+      case "delivered":
+        return "100%";
+      default:
+        return "0%";
+    }
+  };
+
+  const stepStatus = (current, step) => {
+    const orderFlow = [
+      "received",
+      "packing",
+      "ready_for_dispatch",
+      "out_for_delivery",
+      "delivered",
+    ];
+
+    const currentIndex = orderFlow.indexOf(current);
+    const stepIndex = orderFlow.indexOf(step);
+
+    if (stepIndex < currentIndex) return "done";
+    if (stepIndex === currentIndex) return "active";
+    return "";
+  };
+
   return (
     <>
       <TopNav />
 
       <div className="track-page">
 
-        {/* HEADER */}
         <div className="track-header">
           <div>
             <h1>Track Your Order</h1>
-            <p>
-              View the live progress of your orders and estimated delivery dates.
-            </p>
-          </div>
-
-          <button className="help-btn">
-            <span className="help-icon">?</span> Need Help?
-          </button>
-        </div>
-
-        {/* FILTER BAR */}
-        <div className="filter-bar">
-          <div className="search-box">
-            <FiSearch />
-            <input
-              type="text"
-              placeholder="Search by Order ID or Product Name..."
-            />
-          </div>
-
-          <div className="filter-btn">
-            Status: In Progress
-          </div>
-
-          <div className="filter-btn">
-            Date: Last 30 Days
+            <p>View the live progress of your orders.</p>
           </div>
         </div>
 
-        {/* ================= ORDER 1 ================= */}
-        <div className="order-card">
-
-          <div className="order-top">
-            <div>
-              <h3>Order #87432-FGH</h3>
-              <p>Order Date: 15 Oct 2023</p>
+        {orders.length === 0 ? (
+          <div className="empty-box">
+            <div className="empty-icon">
+              <FiSearch />
             </div>
-
-            <div className="order-status">
-              <p>Estimated Delivery: 20 Oct 2023</p>
-              <span className="status-pill green">
-                Out for Delivery
-              </span>
-            </div>
+            <h3>No Orders Found</h3>
+            <p>You have not placed any orders yet.</p>
           </div>
+        ) : (
+          orders.map((order) => (
+            <div key={order.id} className="order-card">
 
-          {/* PROGRESS */}
-          <div className="progress-wrapper">
-            <div className="progress-line-bg"></div>
-            <div className="progress-line-active" style={{ width: "75%" }}></div>
+              <div className="order-top">
+                <div>
+                  <h3>Order #{order.id}</h3>
+                  <p>Order Date: {new Date(order.created_at).toDateString()}</p>
+                </div>
 
-            <div className="progress-steps">
-
-              <div className="step done">
-                <div className="circle"><FaCheck /></div>
-                <span>Order<br />Received</span>
+                <div className="order-status">
+                  <span className="status-pill green">
+                    {order.status.replace(/_/g, " ")}
+                  </span>
+                </div>
               </div>
 
-              <div className="step done">
-                <div className="circle"><FaCheck /></div>
-                <span>Packing</span>
+              <div className="progress-wrapper">
+                <div className="progress-line-bg"></div>
+                <div
+                  className="progress-line-active"
+                  style={{ width: getProgressWidth(order.status) }}
+                ></div>
+
+                <div className="progress-steps">
+
+                  {["received", "packing", "ready_for_dispatch", "out_for_delivery", "delivered"].map((step) => (
+                    <div key={step} className={`step ${stepStatus(order.status, step)}`}>
+                      <div className="circle">
+                        {stepStatus(order.status, step) === "done" ? (
+                          <FaCheck />
+                        ) : stepStatus(order.status, step) === "active" ? (
+                          <FaTruck />
+                        ) : null}
+                      </div>
+                      <span>{step.replace(/_/g, " ")}</span>
+                    </div>
+                  ))}
+
+                </div>
               </div>
 
-              <div className="step done">
-                <div className="circle"><FaCheck /></div>
-                <span>Ready for<br />Dispatch</span>
-              </div>
-
-              <div className="step active">
-                <div className="circle"><FaTruck /></div>
-                <span>Out for<br />Delivery</span>
-              </div>
-
-              <div className="step">
-                <div className="circle grey"></div>
-                <span>Delivered</span>
-              </div>
-
-            </div>
-          </div>
-
-          <div className="order-bottom">
-            <p>23 Items • $2,450.75</p>
-            <span className="details-link">View Details →</span>
-          </div>
-
-        </div>
-
-        {/* ================= ORDER 2 ================= */}
-        <div className="order-card">
-
-          <div className="order-top">
-            <div>
-              <h3>Order #87119-KLM</h3>
-              <p>Order Date: 12 Oct 2023</p>
-            </div>
-
-            <div className="order-status">
-              <p>Delivered: 16 Oct 2023</p>
-              <span className="status-pill grey">
-                Delivered
-              </span>
-            </div>
-          </div>
-
-          {/* PROGRESS */}
-          <div className="progress-wrapper">
-            <div className="progress-line-bg"></div>
-            <div className="progress-line-active" style={{ width: "100%" }}></div>
-
-            <div className="progress-steps">
-
-              <div className="step done">
-                <div className="circle"><FaCheck /></div>
-                <span>Order<br />Received</span>
-              </div>
-
-              <div className="step done">
-                <div className="circle"><FaCheck /></div>
-                <span>Packing</span>
-              </div>
-
-              <div className="step done">
-                <div className="circle"><FaCheck /></div>
-                <span>Ready for<br />Dispatch</span>
-              </div>
-
-              <div className="step done">
-                <div className="circle"><FaCheck /></div>
-                <span>Out for<br />Delivery</span>
-              </div>
-
-              <div className="step done">
-                <div className="circle"><FaCheck /></div>
-                <span>Delivered</span>
+              <div className="order-bottom">
+                <p>Total: Rs. {order.total_amount}</p>
               </div>
 
             </div>
-          </div>
-
-          <div className="order-bottom">
-            <p>12 Items • $890.00</p>
-            <span className="details-link">View Details →</span>
-          </div>
-
-        </div>
-
-        {/* EMPTY STATE */}
-        <div className="empty-box">
-          <div className="empty-icon">
-            <FiSearch />
-          </div>
-          <h3>No Orders Found</h3>
-          <p>
-            No orders match your current search and filter criteria. Try adjusting your search.
-          </p>
-        </div>
+          ))
+        )}
 
       </div>
     </>

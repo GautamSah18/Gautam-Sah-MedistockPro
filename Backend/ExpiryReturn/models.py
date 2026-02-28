@@ -11,7 +11,7 @@ class ExpiryReturnRequest(models.Model):
     ]
 
     customer = models.ForeignKey(
-        settings.AUTH_USER_MODEL,   # ✅ FIXED HERE
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="expiry_returns"
     )

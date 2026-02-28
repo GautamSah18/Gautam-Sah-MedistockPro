@@ -72,12 +72,13 @@ const Register = () => {
 
       console.log("Registration response:", res.data);
 
-      // Save email for OTP verification
+      // ✅ Save email and password for OTP auto-login
       localStorage.setItem("otp_email", formData.email);
+      localStorage.setItem("otp_password", formData.password);
 
-      // Navigate to OTP page with email
+      // Navigate to OTP page with email and role
       navigate("/verify-otp", {
-        state: { email: formData.email },
+        state: { email: formData.email, role: formData.role },
       });
 
     } catch (err) {

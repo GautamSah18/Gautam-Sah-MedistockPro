@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'ExpiryReturn',
     'Complaints',
     'notifications',
+    "OrderStatusTracking",
 ]
 
 AUTH_USER_MODEL = "Authentication.CustomUser"

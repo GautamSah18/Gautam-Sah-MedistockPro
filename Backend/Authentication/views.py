@@ -89,9 +89,34 @@ def verify_otp(request):
 
     # Activate user
     user.is_active = True
+    
+    # Auto-approve delivery persons and provide tokens for auto-login
+    if user.role == 'delivery':
+        user.registration_complete = True
+        user.is_approved = True
+        user.save(update_fields=["is_active", "registration_complete", "is_approved"])
+        
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "message": "OTP verified! You are now logged in.",
+                "next_step": "delivery_dashboard",
+                "user_id": user.id,
+                "role": user.role,
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "role": user.role,
+                }
+            },
+            status=200
+        )
+    
     user.save(update_fields=["is_active"])
 
-    # Allow step 2 (upload documents)
+    # Allow step 2 (upload documents) for others
     cache.set(f"registration_{user.id}", user.id, timeout=3600)
 
     return Response(
@@ -99,6 +124,7 @@ def verify_otp(request):
             "message": "OTP verified successfully",
             "next_step": "upload_documents",
             "user_id": user.id,
+            "role": user.role
         },
         status=200
     )
