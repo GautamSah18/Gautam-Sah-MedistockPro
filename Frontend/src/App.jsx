@@ -16,6 +16,7 @@ import Document from "./components/pages/Login/Document";
 import Billing from "./components/pages/Dashboard/Billing";
 import Dashboard from "./components/pages/Dashboard/Dashboard";
 import Inventory from "./components/pages/Inventory/Inventory";
+import AdminDashboard from "./components/pages/Inventory/AdminDashboard";  // <-- ADDED
 
 // Customer
 import BonusSchemes from "./components/pages/BonusSchemes/BonusSchemes";
@@ -75,9 +76,18 @@ export default function App() {
             {/*  REGISTRATION STEP 2 */}
             <Route path="/upload-documents" element={<Document />} />
 
-
             {/* ================= PUBLIC DOCS ================= */}
             <Route path="/documents" element={<Document />} />
+
+            {/* ================= ADMIN DASHBOARD (NEW) ================= */}
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute role="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
             {/* ================= PROTECTED ROUTES ================= */}
             <Route
@@ -187,6 +197,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/TrackOrders"
               element={
@@ -204,6 +215,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
             {/* ================= PAYMENTS ================= */}
             <Route path="/payment" element={<Payment />} />
             <Route path="/paymentsuccess" element={<div>Payment Success</div>} />
@@ -212,7 +224,7 @@ export default function App() {
             {/* ================= DEFAULT ROUTES ================= */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
-            
+
           </Routes>
         </RouteLoader>
       </div>

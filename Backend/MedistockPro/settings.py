@@ -60,6 +60,8 @@ INSTALLED_APPS = [
     'Complaints',
     'notifications',
     "OrderStatusTracking",
+    "dashboard",
+    "verification",
 ]
 
 AUTH_USER_MODEL = "Authentication.CustomUser"

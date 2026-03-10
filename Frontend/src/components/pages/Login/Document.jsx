@@ -1,5 +1,9 @@
 import { useRef, useState, useEffect } from "react";
-import { FaCheckCircle, FaTimesCircle, FaUpload } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaTimesCircle,
+  FaUpload,
+} from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../../services/api.js";
 import "./Document.css";
@@ -14,12 +18,10 @@ const Document = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get userId from router state OR localStorage
   const userId =
     location.state?.userId ||
     Number(localStorage.getItem("registration_user_id"));
 
-  // Persist userId if passed from OTP page
   useEffect(() => {
     if (location.state?.userId) {
       localStorage.setItem(
@@ -31,11 +33,9 @@ const Document = () => {
 
   if (!userId) {
     return (
-      <div className="business-verification-page">
-        <div className="container">
-          <p>
-            Error: Registration session expired. Please register again.
-          </p>
+      <div className="verification-page">
+        <div className="verification-container">
+          <p>Registration session expired.</p>
           <button onClick={() => navigate("/register")}>
             Go to Register
           </button>
@@ -44,9 +44,6 @@ const Document = () => {
     );
   }
 
-  const [showVerificationPopup, setShowVerificationPopup] =
-    useState(false);
-
   const [files, setFiles] = useState({
     [DOCUMENT_TYPES.PAN]: null,
     [DOCUMENT_TYPES.LICENSE]: null,
@@ -54,25 +51,29 @@ const Document = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [verificationResult, setVerificationResult] =
+    useState(null);
+
   const fileInputs = useRef({});
 
   const handleFileChange = (type, event) => {
     const selectedFile = event.target.files[0];
     if (!selectedFile) return;
 
-    const validTypes = ["image/jpeg", "image/png", "application/pdf"];
+    const validTypes = ["image/jpeg", "image/png"];
     const maxSize = 5 * 1024 * 1024;
     const newErrors = { ...errors };
 
     if (!validTypes.includes(selectedFile.type)) {
       newErrors[type] =
-        "Invalid file type. Please upload JPG, PNG, or PDF.";
+        "Invalid file type. Upload JPG or PNG.";
       setErrors(newErrors);
       return;
     }
 
     if (selectedFile.size > maxSize) {
-      newErrors[type] = "File size exceeds 5MB limit.";
+      newErrors[type] = "File size exceeds 5MB.";
       setErrors(newErrors);
       return;
     }
@@ -104,34 +105,33 @@ const Document = () => {
 
   const getFileName = (file) => {
     if (!file) return "";
-    return file.name.length > 20
-      ? `${file.name.substring(0, 15)}...${file.name.split(".").pop()}`
+    return file.name.length > 25
+      ? `${file.name.substring(0, 18)}...`
       : file.name;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const allFilesUploaded = Object.values(files).every(Boolean);
-    if (!allFilesUploaded) {
+    const allUploaded = Object.values(files).every(Boolean);
+    if (!allUploaded) {
       const newErrors = {};
       Object.keys(files).forEach((key) => {
-        if (!files[key]) newErrors[key] = "This file is required.";
+        if (!files[key]) newErrors[key] = "Required";
       });
-      setErrors((prev) => ({ ...prev, ...newErrors }));
+      setErrors(newErrors);
       return;
     }
 
     try {
+      setLoading(true);
+      setVerificationResult(null);
+
       const formData = new FormData();
-      formData.append("user_id", userId.toString());
+      formData.append("pan", files[DOCUMENT_TYPES.PAN]);
       formData.append(
-        "pharmacy_license",
+        "license",
         files[DOCUMENT_TYPES.LICENSE]
-      );
-      formData.append(
-        "pan_number",
-        files[DOCUMENT_TYPES.PAN]
       );
       formData.append(
         "citizenship",
@@ -139,60 +139,80 @@ const Document = () => {
       );
 
       const response = await api.post(
-        "/api/auth/register/step2/",
+        "/api/verification/verify-documents/",
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
-      console.log("Upload successful:", response.data);
-      setShowVerificationPopup(true);
+      setVerificationResult(response.data);
+
+      if (response.data.verified) {
+        setTimeout(() => {
+          navigate("/login");
+        }, 2500);
+      }
 
     } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Failed to upload documents. Please try again.");
+      console.error("Verification error:", error);
+      alert("Verification failed. Try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="business-verification-page">
-      <div className="container">
-        <header className="header">
-          <div className="logo">
-            <span className="logo-text">MediStock Pro</span>
-          </div>
-          <div className="header-right" />
-        </header>
+    <div className="verification-page">
+      <div className="verification-container">
 
-        <div className="progress-container">
-          <div className="progress-bar">
-            <div className="progress-fill" />
-          </div>
-          <p className="step-text">Step 2 of 3: Document Upload</p>
+        <div className="verification-header">
+          <h2>MediStock Pro</h2>
+          <p>Step 2 of 3 – Business Verification</p>
         </div>
 
-        <main className="main-content">
-          <h1 className="title">Upload Your Business Documents</h1>
-          <p className="subtitle">
-            Please upload the following documents to verify your business
-            and activate your account.
-          </p>
+        <div className="progress-wrapper">
+          <div className="progress-track">
+            <div className="progress-fill"></div>
+          </div>
+        </div>
 
-          <div className="upload-grid">
-            {Object.entries(DOCUMENT_TYPES).map(([_, type]) => (
+        <div className="verification-title">
+          <h1>Upload Business Documents</h1>
+          <p>
+            Upload clear images for identity verification.
+          </p>
+        </div>
+
+        <div className="upload-grid">
+          {Object.entries(DOCUMENT_TYPES).map(
+            ([_, type]) => (
               <div
                 key={type}
-                className="upload-box"
+                className={`upload-card ${
+                  files[type] ? "uploaded" : ""
+                }`}
                 onClick={() => triggerFileInput(type)}
               >
                 <input
                   type="file"
-                  ref={(el) => (fileInputs.current[type] = el)}
-                  onChange={(e) => handleFileChange(type, e)}
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  style={{ display: "none" }}
+                  hidden
+                  ref={(el) =>
+                    (fileInputs.current[type] = el)
+                  }
+                  onChange={(e) =>
+                    handleFileChange(type, e)
+                  }
+                  accept=".jpg,.jpeg,.png"
                 />
 
-                <h3 className="upload-title">
+                <div className="upload-icon-box">
+                  <FaUpload />
+                </div>
+
+                <h3>
                   {type === DOCUMENT_TYPES.PAN
                     ? "Shop PAN Card"
                     : type === DOCUMENT_TYPES.LICENSE
@@ -200,61 +220,84 @@ const Document = () => {
                     : "Citizenship / ID"}
                 </h3>
 
-                <p className="upload-info">
-                  JPG, PNG, PDF. Max 5MB.
-                </p>
-
                 {files[type] ? (
-                  <div className="file-preview">
-                    <span className="file-name">
-                      <FaCheckCircle className="success-icon" />
+                  <div className="file-info">
+                    <FaCheckCircle className="success-icon" />
+                    <span>
                       {getFileName(files[type])}
                     </span>
-                    <button
-                      className="remove-file"
-                      onClick={(e) => removeFile(type, e)}
-                    >
-                      <FaTimesCircle />
-                    </button>
+                    <FaTimesCircle
+                      className="remove-icon"
+                      onClick={(e) =>
+                        removeFile(type, e)
+                      }
+                    />
                   </div>
                 ) : (
-                  <button className="browse-btn">
-                    <FaUpload className="upload-icon" /> Browse Files
-                  </button>
+                  <p className="upload-hint">
+                    Click to upload
+                  </p>
                 )}
 
                 {errors[type] && (
-                  <p className="error-message">{errors[type]}</p>
+                  <p className="error-text">
+                    {errors[type]}
+                  </p>
                 )}
               </div>
-            ))}
-          </div>
-
-          <div className="submit-container">
-            <button className="submit-btn" onClick={handleSubmit}>
-              Submit for Verification
-            </button>
-          </div>
-
-          {showVerificationPopup && (
-            <div className="verification-popup">
-              <div className="verification-content">
-                <FaCheckCircle />
-                <h3>Documents Submitted Successfully!</h3>
-                <p>
-                  Please wait while we verify your documents. You will
-                  be notified once verification is complete.
-                </p>
-                <button
-                  className="close-btn"
-                  onClick={() => navigate("/login")}
-                >
-                  Go to Login
-                </button>
-              </div>
-            </div>
+            )
           )}
-        </main>
+        </div>
+
+        <button
+          className="verify-btn"
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? "Verifying..." : "Submit for Verification"}
+        </button>
+
+       {verificationResult && (
+  <div className="overlay">
+    <div className="result-popup">
+      {verificationResult.verified ? (
+        <>
+          <FaCheckCircle className="popup-success" />
+          <h3>Documents Verified Successfully</h3>
+
+          <p>
+            Your documents have been verified by the AI system.
+          </p>
+
+          <div className="admin-wait-box">
+            ⏳ Please wait for Admin Verification.
+          </div>
+
+          <p className="admin-note">
+            Your account will be activated once the admin
+            reviews and approves your documents.
+          </p>
+        </>
+      ) : (
+        <>
+          <FaTimesCircle className="popup-error" />
+          <h3>Verification Failed</h3>
+          <p>
+            The extracted names did not match across
+            documents.
+          </p>
+        </>
+      )}
+
+      <button
+        className="popup-btn"
+        onClick={() => navigate("/login")}
+      >
+        Go to Login
+      </button>
+    </div>
+  </div>
+)}
       </div>
     </div>
   );

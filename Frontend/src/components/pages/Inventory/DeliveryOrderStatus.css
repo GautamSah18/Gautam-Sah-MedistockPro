@@ -1,25 +1,12 @@
 .delivery-status-wrapper {
   width: 100%;
-  padding: 30px;
+  padding: 0;
 }
 
-.delivery-status-header {
-  margin-bottom: 25px;
-}
-
-.delivery-status-header h2 {
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.delivery-status-header p {
-  color: #6b7280;
-  font-size: 14px;
-}
 
 .delivery-status-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  grid-template-columns: 1fr;
   gap: 20px;
 }
 

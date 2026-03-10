@@ -3,14 +3,15 @@ import { FaBell } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import api from "../../../services/api.js";
+import AdminDashboard from "./AdminDashboard";
 import AppliedSchemes from "./AppliedSchemes";
 import BonusManagement from "./BonusManagement";
 import ComplaintsRequests from "./ComplaintsRequests";
+import DeliveryOrderStatus from "./DeliveryOrderStatus";
 import ExpiryReturnRequests from "./ExpiryReturnRequests";
 import "./Inventory.css";
 import Orders from "./Orders";
 import SchemeManagement from "./SchemeManagement";
-import DeliveryOrderStatus from "./DeliveryOrderStatus";
 
 const Inventory = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const Inventory = () => {
   const [medicines, setMedicines] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'bonuses', 'schemes', 'orders', 'applied-schemes', 'expiry-return', 'complaints'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'inventory', 'bonuses', 'schemes', 'orders', 'applied-schemes', 'expiry-return', 'complaints'
   const [currentMedicine, setCurrentMedicine] = useState({
 
 
@@ -434,6 +435,7 @@ const Inventory = () => {
   }, [medicines]);
 
   const navItems = [
+    { key: "dashboard", label: "Dashboard", icon: "📊", active: activeTab === 'dashboard' },
     { key: "inv", label: "Inventory", icon: "📦", active: activeTab === 'inventory' },
     { key: "bonuses", label: "Bonuses", icon: "🏷️", active: activeTab === 'bonuses' },
     { key: "schemes", label: "Schemes", icon: "🎁", active: activeTab === 'schemes' },
@@ -539,9 +541,10 @@ const Inventory = () => {
 
           <div className="inv-title">
             <h1>
+              {activeTab === 'dashboard' && 'Admin Dashboard'}
               {activeTab === 'inventory' && 'Medicine Inventory'}
               {activeTab === 'orders' && 'Orders'}
-              {activeTab === 'delivery' && <DeliveryOrderStatus />}
+              {activeTab === 'delivery' && 'Delivery Order Tracking'}
               {activeTab === 'bonuses' && 'Bonus Management'}
               {activeTab === 'schemes' && 'Scheme Management'}
               {activeTab === 'applied-schemes' && 'Applied Schemes'}
@@ -549,8 +552,10 @@ const Inventory = () => {
               {activeTab === 'complaints' && 'Complaint issues'}
             </h1>
             <p>
+              {activeTab === 'dashboard' && 'Overview of inventory, sales, and system analytics.'}
               {activeTab === 'inventory' && 'Manage medicines, stock, pricing and expiry.'}
               {activeTab === 'orders' && 'View and manage customer orders.'}
+              {activeTab === 'delivery' && 'Monitor live status of all customer orders.'}
               {activeTab === 'bonuses' && 'View and manage customer Bonuses.'}
               {activeTab === 'schemes' && 'View and manage customer Schemes.'}
               {activeTab === 'applied-schemes' && 'View all schemes applied by customers.'}
@@ -740,12 +745,14 @@ const Inventory = () => {
           </div>
         )}
 
+        {activeTab === 'dashboard' && <AdminDashboard />}
         {activeTab === 'bonuses' && <BonusManagement />}
         {activeTab === 'schemes' && <SchemeManagement />}
         {activeTab === 'applied-schemes' && <AppliedSchemes />}
         {activeTab === 'orders' && <Orders />}
         {activeTab === 'expiry-return' && <ExpiryReturnRequests />}
         {activeTab === 'complaints' && <ComplaintsRequests />}
+        {activeTab === 'delivery' && <DeliveryOrderStatus />}
 
         {/* Modal */}
         {isModalOpen && (

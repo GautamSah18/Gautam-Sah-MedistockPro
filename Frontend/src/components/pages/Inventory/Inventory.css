@@ -444,6 +444,27 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.inv-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.inv-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inv-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.inv-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .inv-nav-item {
@@ -630,13 +651,11 @@
 }
 
 .inv-title h1 {
-  display: flex;
-  justify-content: var(--inv-line);
   margin: 0;
-
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 950;
   color: var(--inv-text);
+  line-height: normal;
 }
 
 .inv-title p {

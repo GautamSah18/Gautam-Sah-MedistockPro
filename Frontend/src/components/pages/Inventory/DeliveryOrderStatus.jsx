@@ -31,7 +31,7 @@ const DeliveryOrderStatus = () => {
   };
 
   const stepStatus = (current, step) => {
-    const flow = ["received","packing","ready_for_dispatch","out_for_delivery","delivered"];
+    const flow = ["received", "packing", "ready_for_dispatch", "out_for_delivery", "delivered"];
     const currentIndex = flow.indexOf(current);
     const stepIndex = flow.indexOf(step);
 
@@ -42,11 +42,6 @@ const DeliveryOrderStatus = () => {
 
   return (
     <div className="delivery-status-wrapper">
-
-      <div className="delivery-status-header">
-        <h2>Delivery Order Tracking</h2>
-        <p>Monitor live status of all customer orders</p>
-      </div>
 
       <div className="delivery-status-grid">
         {orders.map((order) => (
@@ -72,7 +67,7 @@ const DeliveryOrderStatus = () => {
               ></div>
 
               <div className="delivery-progress-steps">
-                {["received","packing","ready_for_dispatch","out_for_delivery","delivered"].map((step) => (
+                {["received", "packing", "ready_for_dispatch", "out_for_delivery", "delivered"].map((step) => (
                   <div key={step} className={`delivery-step ${stepStatus(order.status, step)}`}>
                     <div className="circle">
                       {stepStatus(order.status, step) === "done" ? (
