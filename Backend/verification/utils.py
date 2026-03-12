@@ -3,7 +3,7 @@ import pytesseract
 import re
 from difflib import SequenceMatcher
 
-# Set Tesseract Path (Windows)
+
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
@@ -29,7 +29,6 @@ def clean_name(text):
     if not text:
         return None
 
-    # Keep only Nepali characters
     nepali_chars = re.findall(r"[\u0900-\u097F]+", text)
 
     if not nepali_chars:
@@ -37,7 +36,7 @@ def clean_name(text):
 
     name = "".join(nepali_chars)
 
-    # Remove possible leading noise characters
+
     name = name.lstrip("ःयरथनम")
 
     return name.strip()
@@ -81,7 +80,7 @@ def extract_name(text):
 
     if name_match:
         raw_name = name_match.group(1)
-        raw_name = raw_name.split("\n")[0]  # Stop at newline
+        raw_name = raw_name.split("\n")[0]
         name = clean_name(raw_name)
 
     return name
@@ -105,8 +104,7 @@ def verify_documents(file_paths):
         text = extract_text(path)
         name = extract_name(text)
 
-        print("Extracted Name:", name)  # Debug output
-
+        print("Extracted Name:", name)
         extracted_data.append({
             "name": name
         })
