@@ -63,6 +63,9 @@ export default function CustomerDashboard() {
   const [showSchemePopup, setShowSchemePopup] = useState(false);
   const [appliedScheme, setAppliedScheme] = useState(null);
   const [checkingSchemes, setCheckingSchemes] = useState(false);
+  
+  const [seasonalMedicines, setSeasonalMedicines] = useState([]);
+  const [currentSeason, setCurrentSeason] = useState("Seasonal");
 
 
   const handleSchemeApplied = (schemeData) => {
@@ -152,6 +155,16 @@ export default function CustomerDashboard() {
         const response = await api.get("/api/inventory/public/medicines/");
         setMedicines(response.data.results || response.data);
         setError(null);
+        
+        // Fetch seasonal medicines
+        try {
+          const seasonalRes = await api.get("/api/inventory/public/seasonal-medicines/");
+          setSeasonalMedicines(seasonalRes.data.medicines || []);
+          setCurrentSeason(seasonalRes.data.season || "Seasonal");
+        } catch(e) {
+          console.error("Error fetching seasonal medicines:", e);
+        }
+        
       } catch (err) {
         setError("Failed to load medicines. Please try again later.");
       } finally {
@@ -329,8 +342,11 @@ export default function CustomerDashboard() {
                           <div className="product-meta">
                             <div className="company">{fm.company}</div>
                           </div>
+                          <div className="product-stock" style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px', marginBottom: '4px' }}>
+                            Available: {fm.stock > 0 ? fm.stock + " items" : <span style={{color: '#ef4444'}}>Out of Stock</span>}
+                          </div>
                           <div className="product-price">Rs {fm.price}</div>
-                          <button className="add-btn" onClick={() => addToCart(fm, 1)}>
+                          <button className="add-btn" onClick={() => addToCart(fm, 1)} disabled={fm.stock <= 0} style={fm.stock <= 0 ? {backgroundColor: '#d1d5db', cursor: 'not-allowed', color: '#6b7280'} : {}}>
                             Add to Cart
                           </button>
                         </div>
@@ -347,13 +363,13 @@ export default function CustomerDashboard() {
             </section>
 
             <section className="winter">
-              <div className="winter-title">Winter Medicines</div>
+              <div className="winter-title">{currentSeason} Medicines</div>
               <div className="winter-grid">
                 {!loading &&
-                  filteredMedicines.slice(0, 4).map((medicine) => {
+                  seasonalMedicines.map((medicine) => {
                     const fm = formatMedicineForDisplay(medicine);
                     return (
-                      <article className="winter-card" key={`winter-${fm.id}`}>
+                      <article className="winter-card" key={`seasonal-${fm.id}`}>
                         <div
                           className="winter-img"
                           style={
@@ -370,8 +386,11 @@ export default function CustomerDashboard() {
                             {fm.desc.substring(0, 50)}
                             {fm.desc.length > 50 ? "..." : ""}
                           </div>
+                          <div className="product-stock" style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px', marginBottom: '4px' }}>
+                            Available: {fm.stock > 0 ? fm.stock + " items" : <span style={{color: '#ef4444'}}>Out of Stock</span>}
+                          </div>
                           <div className="winter-price">Rs {fm.price}</div>
-                          <button className="winter-add" onClick={() => addToCart({ id: fm.id, name: fm.name, price: fm.price, mrp: fm.price }, 1)}>
+                          <button className="winter-add" onClick={() => addToCart({ id: fm.id, name: fm.name, price: fm.price, mrp: fm.price, buy_quantity: medicine.buy_quantity, free_quantity: medicine.free_quantity }, 1)} disabled={fm.stock <= 0} style={fm.stock <= 0 ? {backgroundColor: '#d1d5db', cursor: 'not-allowed', color: '#6b7280'} : {}}>
                             Add to Cart
                           </button>
                         </div>
@@ -379,9 +398,9 @@ export default function CustomerDashboard() {
                     );
                   })}
 
-                {!loading && filteredMedicines.length === 0 && (
+                {!loading && seasonalMedicines.length === 0 && (
                   <div className="no-results">
-                    <p>No medicines available.</p>
+                    <p>No seasonal medicines configured right now.</p>
                   </div>
                 )}
               </div>
@@ -413,8 +432,11 @@ export default function CustomerDashboard() {
                           <div className="product-meta">
                             <div className="company">{fm.company}</div>
                           </div>
+                          <div className="product-stock" style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px', marginBottom: '4px' }}>
+                            Available: {fm.stock > 0 ? fm.stock + " items" : <span style={{color: '#ef4444'}}>Out of Stock</span>}
+                          </div>
                           <div className="product-price">Rs {fm.price}</div>
-                          <button className="add-btn" onClick={() => addToCart(fm, 1)}>
+                          <button className="add-btn" onClick={() => addToCart(fm, 1)} disabled={fm.stock <= 0} style={fm.stock <= 0 ? {backgroundColor: '#d1d5db', cursor: 'not-allowed', color: '#6b7280'} : {}}>
                             Add to Cart
                           </button>
                         </div>

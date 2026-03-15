@@ -6,13 +6,17 @@ from OrderStatusTracking.models import Order
 from Authentication.models import CustomUser as User
 from inventory.models import Medicine
 from Billing.models import Bill  # if you want to calculate sales from bills
-
+from loyalty.models import LoyaltyAccount, CreditBill
+from django.db.models import Count
+from inventory.utils import check_seasonal_stock_levels
 
 @api_view(['GET'])
 def admin_dashboard_analytics(request):
     """
     Admin Dashboard Analytics
     """
+    # Trigger seasonal stock checks
+    check_seasonal_stock_levels()
 
     # Total Sales (From Bills)
     total_sales = Bill.objects.aggregate(
@@ -56,11 +60,25 @@ def admin_dashboard_analytics(request):
         "name", "stock"
     )
 
+    # Loyalty Analytics
+    total_loyalty_accounts = LoyaltyAccount.objects.count()
+    tier_distribution_qs = LoyaltyAccount.objects.values('tier').annotate(count=Count('tier'))
+    tier_distribution = [{"name": item['tier'].capitalize(), "value": item['count']} for item in tier_distribution_qs]
+
+    # Credit Bills Analytics
+    unpaid_bills_qs = CreditBill.objects.filter(status='unpaid')
+    total_unpaid_bills_amount = unpaid_bills_qs.aggregate(total=Sum('total_amount'))['total'] or 0
+    total_unpaid_bills_count = unpaid_bills_qs.count()
+
     return Response({
         "total_sales": total_sales,
         "total_orders": total_orders,
         "total_users": total_users,
         "low_stock_count": low_stock_count,
         "top_medicines": top_medicines,
-        "low_stock_items": list(low_stock_items)
+        "low_stock_items": list(low_stock_items),
+        "total_loyalty_accounts": total_loyalty_accounts,
+        "loyalty_tier_distribution": tier_distribution,
+        "total_unpaid_bills_amount": total_unpaid_bills_amount,
+        "total_unpaid_bills_count": total_unpaid_bills_count
     })

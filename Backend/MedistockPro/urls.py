@@ -1,5 +1,3 @@
-# filepath: Backend/MedistockPro/urls.py
-
 from django.contrib import admin
 from django.urls import path, re_path, include
 from django.conf import settings
@@ -90,6 +88,9 @@ urlpatterns = [
 
     #ai docs verification
     path("api/verification/", include("verification.urls")),
+    
+    # Loyalty
+    path("api/loyalty/", include("loyalty.urls")),
 ]
 
 # Serve media files in development

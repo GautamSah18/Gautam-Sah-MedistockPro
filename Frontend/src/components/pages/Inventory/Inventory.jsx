@@ -10,12 +10,26 @@ import ComplaintsRequests from "./ComplaintsRequests";
 import DeliveryOrderStatus from "./DeliveryOrderStatus";
 import ExpiryReturnRequests from "./ExpiryReturnRequests";
 import "./Inventory.css";
+import LoyaltyAdmin from "./LoyaltyAdmin";
 import Orders from "./Orders";
 import SchemeManagement from "./SchemeManagement";
+import AdminProfileSettings from "./AdminProfileSettings";
+import SeasonalMedicineConfig from "./SeasonalMedicineConfig";
+import MedicineStock from "./MedicineStock";
+import UserManagement from "./UserManagement";
 
 const Inventory = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+
+  const profilePic = user?.profilePicture;
+  const initials = useMemo(() => {
+    const name = user?.fullName || 'Admin User';
+    const parts = name.trim().split(/\s+/);
+    const a = parts[0]?.[0] || "A";
+    const b = parts[1]?.[0] || "";
+    return (a + b).toUpperCase();
+  }, [user]);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -436,14 +450,18 @@ const Inventory = () => {
 
   const navItems = [
     { key: "dashboard", label: "Dashboard", icon: "📊", active: activeTab === 'dashboard' },
+    { key: "user-management", label: "User Management", icon: "👥", active: activeTab === 'user-management' },
     { key: "inv", label: "Inventory", icon: "📦", active: activeTab === 'inventory' },
+    { key: "medicine-stock", label: "Medicine Stock", icon: "📈", active: activeTab === 'medicine-stock' },
     { key: "bonuses", label: "Bonuses", icon: "🏷️", active: activeTab === 'bonuses' },
     { key: "schemes", label: "Schemes", icon: "🎁", active: activeTab === 'schemes' },
+    { key: "seasonal", label: "Seasonal", icon: "🌤️", active: activeTab === 'seasonal' },
     { key: "applied-schemes", label: "Applied Schemes", icon: "✅", active: activeTab === 'applied-schemes' },
     { key: "orders", label: "Orders", icon: "🧺", active: activeTab === 'orders' },
     { key: "expiry-return", label: "Expiry Return", icon: "🔄", active: activeTab === 'expiry-return' },
     { key: "complaints", label: "Complaints", icon: "📢", active: activeTab === 'complaints' },
     { key: "delivery", label: "Delivery", icon: "🚚", active: activeTab === 'delivery' },
+    { key: "loyalty", label: "Loyalty", icon: "💎", active: activeTab === 'loyalty' },
     { key: "settings", label: "Settings", icon: "⚙️", active: activeTab === 'settings' },
   ];
 
@@ -483,7 +501,7 @@ const Inventory = () => {
               className={`inv-nav-item ${it.active ? "active" : ""}`}
               type="button"
               onClick={() => {
-                if (['inv', 'bonuses', 'schemes', 'applied-schemes'].includes(it.key)) {
+                if (['inv', 'user-management', 'medicine-stock', 'bonuses', 'schemes', 'seasonal', 'applied-schemes'].includes(it.key)) {
                   setActiveTab(it.key === 'inv' ? 'inventory' : it.key);
                 } else {
                   setActiveTab(it.key);
@@ -542,25 +560,35 @@ const Inventory = () => {
           <div className="inv-title">
             <h1>
               {activeTab === 'dashboard' && 'Admin Dashboard'}
+              {activeTab === 'user-management' && 'User Management'}
               {activeTab === 'inventory' && 'Medicine Inventory'}
+              {activeTab === 'medicine-stock' && 'Medicine Stock Levels'}
               {activeTab === 'orders' && 'Orders'}
               {activeTab === 'delivery' && 'Delivery Order Tracking'}
+              {activeTab === 'loyalty' && 'Loyalty Management'}
               {activeTab === 'bonuses' && 'Bonus Management'}
               {activeTab === 'schemes' && 'Scheme Management'}
+              {activeTab === 'seasonal' && 'Seasonal Medicine Mapping'}
               {activeTab === 'applied-schemes' && 'Applied Schemes'}
               {activeTab === 'expiry-return' && 'Expiry Return Requests'}
               {activeTab === 'complaints' && 'Complaint issues'}
+              {activeTab === 'settings' && 'Profile Settings'}
             </h1>
             <p>
               {activeTab === 'dashboard' && 'Overview of inventory, sales, and system analytics.'}
+              {activeTab === 'user-management' && 'Select Pharmacy User to change.'}
               {activeTab === 'inventory' && 'Manage medicines, stock, pricing and expiry.'}
+              {activeTab === 'medicine-stock' && 'Real-time overview of current available stock for all medicines.'}
               {activeTab === 'orders' && 'View and manage customer orders.'}
               {activeTab === 'delivery' && 'Monitor live status of all customer orders.'}
+              {activeTab === 'loyalty' && 'View all customer loyalty points, tiers, and credit bill payments.'}
               {activeTab === 'bonuses' && 'View and manage customer Bonuses.'}
               {activeTab === 'schemes' && 'View and manage customer Schemes.'}
+              {activeTab === 'seasonal' && 'Map medicines to seasons so they appear automatically on the customer dashboard.'}
               {activeTab === 'applied-schemes' && 'View all schemes applied by customers.'}
               {activeTab === 'expiry-return' && 'View and manage medicine expiry return requests from customers.'}
               {activeTab === 'complaints' && 'Review and manage customer complaints regarding medicines or service.'}
+              {activeTab === 'settings' && 'Manage your admin profile, credentials, and visibility.'}
             </p>
           </div>
 
@@ -630,6 +658,20 @@ const Inventory = () => {
                   className="notif-backdrop"
                   onClick={() => setShowNotifications(false)}
                 />
+              )}
+            </div>
+
+            {/* PROFILE ICON */}
+            <div 
+              className="inv-topbar-profile" 
+              style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', color: '#0f3d2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', overflow: 'hidden', cursor: 'pointer', marginLeft: '12px', border: '2px solid #20b46a', flexShrink: 0 }} 
+              onClick={() => setActiveTab('settings')} 
+              title="Profile Settings"
+            >
+              {profilePic ? (
+                <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: '14px' }}>{initials}</span>
               )}
             </div>
           </div>
@@ -746,13 +788,18 @@ const Inventory = () => {
         )}
 
         {activeTab === 'dashboard' && <AdminDashboard />}
+        {activeTab === 'user-management' && <UserManagement />}
+        {activeTab === 'medicine-stock' && <MedicineStock />}
+        {activeTab === 'loyalty' && <LoyaltyAdmin />}
         {activeTab === 'bonuses' && <BonusManagement />}
         {activeTab === 'schemes' && <SchemeManagement />}
+        {activeTab === 'seasonal' && <SeasonalMedicineConfig />}
         {activeTab === 'applied-schemes' && <AppliedSchemes />}
         {activeTab === 'orders' && <Orders />}
         {activeTab === 'expiry-return' && <ExpiryReturnRequests />}
         {activeTab === 'complaints' && <ComplaintsRequests />}
         {activeTab === 'delivery' && <DeliveryOrderStatus />}
+        {activeTab === 'settings' && <AdminProfileSettings />}
 
         {/* Modal */}
         {isModalOpen && (

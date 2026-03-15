@@ -17,4 +17,7 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
     path("change-password/", views.change_password, name="change_password"),
 
+    # Admin User Management
+    path("admin/users/", views.admin_user_list, name="admin_user_list"),
+    path("admin/users/<int:pk>/", views.admin_user_detail, name="admin_user_detail"),
 ]

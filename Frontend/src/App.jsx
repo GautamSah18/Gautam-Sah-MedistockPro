@@ -15,8 +15,8 @@ import Document from "./components/pages/Login/Document";
 // Admin
 import Billing from "./components/pages/Dashboard/Billing";
 import Dashboard from "./components/pages/Dashboard/Dashboard";
+import AdminDashboard from "./components/pages/Inventory/AdminDashboard"; // <-- ADDED
 import Inventory from "./components/pages/Inventory/Inventory";
-import AdminDashboard from "./components/pages/Inventory/AdminDashboard";  // <-- ADDED
 
 // Customer
 import BonusSchemes from "./components/pages/BonusSchemes/BonusSchemes";
@@ -24,6 +24,7 @@ import CustomerComplaints from "./components/pages/Dashboard/CustomerComplaints"
 import CustomerDashboard from "./components/pages/Dashboard/customerDashboard";
 import CustomerPrescriptions from "./components/pages/Dashboard/CustomerPrescriptions";
 import ExpiryReturn from "./components/pages/Dashboard/ExpiryReturn";
+import LoyaltyDashboard from "./components/pages/Dashboard/LoyaltyDashboard";
 import CustomerOrders from "./components/pages/Dashboard/Orders";
 import ProductPage from "./components/pages/Dashboard/ProductPage";
 import ProfileManagement from "./components/pages/Dashboard/ProfileManagement";
@@ -194,6 +195,15 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <BonusSchemes />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/loyalty"
+              element={
+                <ProtectedRoute>
+                  <LoyaltyDashboard />
                 </ProtectedRoute>
               }
             />

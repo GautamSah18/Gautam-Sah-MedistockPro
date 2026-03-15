@@ -63,8 +63,12 @@ export default function AdminDashboard() {
     { name: "Out of Stock", value: 10 },
   ];
 
+  // Loyalty Tier Distribution
+  const tierDistribution = data.loyalty_tier_distribution || [];
+
   const orderColors = ["#0f3d2e", "#4CAF50", "#FCA5A5"];
   const stockColors = ["#4CAF50", "#FDE68A", "#FCA5A5"];
+  const tierColors = ["#9ca3af", "#b45309", "#cbd5e1", "#fbbf24", "#06b6d4"];
 
   return (
     <div className="dashboard-wrapper">
@@ -93,6 +97,16 @@ export default function AdminDashboard() {
         <div className="dashboard-kpi-card">
           <span>Low Stock Count</span>
           <h2>{data.low_stock_count} Items</h2>
+        </div>
+
+        <div className="dashboard-kpi-card">
+          <span>Loyalty Accounts</span>
+          <h2>{data.total_loyalty_accounts || 0}</h2>
+        </div>
+
+        <div className="dashboard-kpi-card">
+          <span>Unpaid Credit Bills</span>
+          <h2>Rs. {data.total_unpaid_bills_amount || 0}</h2>
         </div>
       </div>
 
@@ -199,8 +213,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* FOURTH ROW - DONUT CHART */}
-      <div className="dashboard-full-width">
+      {/* FOURTH ROW - DONUT CHARTS */}
+      <div className="dashboard-bottom-grid">
         <div className="dashboard-card">
           <div className="dashboard-card-header">
             <h3>Stock Distribution</h3>
@@ -218,12 +232,52 @@ export default function AdminDashboard() {
                 paddingAngle={4}
               >
                 {stockDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={stockColors[index]} />
+                  <Cell key={`cell-${index}`} fill={stockColors[index % stockColors.length]} />
                 ))}
               </Pie>
               <Tooltip />
               <Legend />
             </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Loyalty Tier Distribution */}
+        <div className="dashboard-card">
+          <div className="dashboard-card-header">
+            <h3>Loyalty Tier Distribution</h3>
+            <p>Customers by Loyalty Tier</p>
+          </div>
+
+          <ResponsiveContainer width="100%" height={300}>
+            {tierDistribution.length > 0 ? (
+              <PieChart>
+                <Pie
+                  data={tierDistribution}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={70}
+                  outerRadius={110}
+                  paddingAngle={4}
+                >
+                  {tierDistribution.map((entry, index) => {
+                    const tierName = entry.name.toLowerCase();
+                    let color = "#9ca3af"; // regular
+                    if (tierName === "bronze") color = "#b45309";
+                    else if (tierName === "silver") color = "#94a3b8";
+                    else if (tierName === "gold") color = "#fbbf24";
+                    else if (tierName === "diamond") color = "#06b6d4";
+                    
+                    return <Cell key={`cell-${index}`} fill={color} />;
+                  })}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#6b7280' }}>
+                No loyalty accounts found.
+              </div>
+            )}
           </ResponsiveContainer>
         </div>
       </div>

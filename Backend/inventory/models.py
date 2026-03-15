@@ -141,3 +141,19 @@ class Medicine(models.Model):
         verbose_name = "Medicine"
         verbose_name_plural = "Medicines"
         ordering = ['-created_at']
+
+class SeasonalMedicine(models.Model):
+    SEASON_CHOICES = [
+        ('Winter', 'Winter'),
+        ('Spring', 'Spring'),
+        ('Summer', 'Summer'),
+        ('Autumn', 'Autumn'),
+    ]
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='seasonal_mappings')
+    season = models.CharField(max_length=20, choices=SEASON_CHOICES)
+    
+    class Meta:
+        unique_together = ('medicine', 'season')
+        verbose_name = "Seasonal Medicine"
+        verbose_name_plural = "Seasonal Medicines"
+

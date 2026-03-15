@@ -6,12 +6,15 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Sum, F
 from django.utils import timezone
 from datetime import timedelta
-from .models import Medicine, Category
+from .models import Medicine, Category, SeasonalMedicine
+from .utils import get_current_season
 from .serializers import (
     MedicineSerializer,
     CategorySerializer,
     StockUpdateSerializer,
-    PublicMedicineSerializer
+    PublicMedicineSerializer,
+    SeasonalMedicineSerializer,
+    PublicSeasonalMedicineSerializer
 )
 from .permissions import IsAdmin
 
@@ -136,3 +139,33 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdmin]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
+
+class SeasonalMedicineViewSet(viewsets.ModelViewSet):
+    queryset = SeasonalMedicine.objects.all()
+    serializer_class = SeasonalMedicineSerializer
+    permission_classes = [IsAdmin]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['medicine__name']
+    filterset_fields = ['season']
+
+class PublicSeasonalMedicineViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = PublicSeasonalMedicineSerializer
+    
+    def get_queryset(self):
+        season = get_current_season()
+        return SeasonalMedicine.objects.filter(season=season, medicine__is_active=True, medicine__stock__gt=0)
+    
+    def get_permissions(self):
+        from rest_framework.permissions import IsAuthenticated
+        return [IsAuthenticated()]
+
+    def list(self, request, *args, **kwargs):
+        season = get_current_season()
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        # Format exactly as requested
+        medicines = [item['medicine'] for item in serializer.data if item.get('medicine')]
+        return Response({
+            "season": season,
+            "medicines": medicines
+        })

@@ -221,14 +221,17 @@ export default function TopNav({
         <NavLink to="/orders" className="nav-link">
           Orders
         </NavLink>
+        <NavLink to="/loyalty" className="nav-link">
+          Loyalty
+        </NavLink>
         <NavLink
-        to="/TrackOrders"
-        className={({ isActive }) =>
-          isActive ? "nav-link active" : "nav-link"
-        }
-      >
-        Track Order
-      </NavLink>
+          to="/TrackOrders"
+          className={({ isActive }) =>
+            isActive ? "nav-link active" : "nav-link"
+          }
+        >
+          Track Order
+        </NavLink>
       </nav>
 
       <div className="mdp-nav__right">

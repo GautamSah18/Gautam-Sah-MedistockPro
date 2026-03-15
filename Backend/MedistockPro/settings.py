@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "OrderStatusTracking",
     "dashboard",
     "verification",
+    "loyalty",
 ]
 
 AUTH_USER_MODEL = "Authentication.CustomUser"

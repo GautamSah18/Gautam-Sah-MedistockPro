@@ -11,6 +11,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
 from .models import Bill
 from .serializers import BillSerializer, BillCreateSerializer
 from OrderStatusTracking.models import Order
@@ -48,8 +49,42 @@ def create_bill(request):
     #Create a new bill
     serializer = BillCreateSerializer(data=request.data)
     if serializer.is_valid():
-        bill = serializer.save()
-        
+        with transaction.atomic():
+            bill = serializer.save()
+            
+            # Deduct stock for each item dynamically
+            from inventory.models import Medicine
+            try:
+                for item in bill.items:
+                    # bill.items looks like: [{"id": 1, "name": "...", "qty": 2, ...}]
+                    # We should query either by name or by id. (Assuming name since existing analytics does that)
+                    med_name = item.get("name")
+                    qty = int(item.get("qty", 0))
+                    
+                    if med_name and qty > 0:
+                        try:
+                            med = Medicine.objects.get(name=med_name)
+                            # Ensure stock doesn't go below 0
+                            med.stock = max(0, med.stock - qty)
+                            med.save()
+                            
+                            # Trigger low stock or out of stock alert
+                            from notifications.services import notify_admins
+                            from notifications.models import Notification
+                            if med.stock == 0:
+                                msg = f"ALERT: {med.name} is completely Out of Stock following a recent purchase!"
+                                if not Notification.objects.filter(message=msg, is_read=False, user__is_staff=True).exists():
+                                    notify_admins(msg, notification_type="medicine")
+                            elif med.stock <= med.min_stock:
+                                msg = f"WARNING: {med.name} stock has fallen below the minimum limit ({med.stock} remaining)."
+                                if not Notification.objects.filter(message=msg, is_read=False, user__is_staff=True).exists():
+                                    notify_admins(msg, notification_type="medicine")
+                                    
+                        except Medicine.DoesNotExist:
+                            print(f"Medicine {med_name} not found, could not subtract stock.")
+            except Exception as e:
+                print(f"Error deducting stock: {str(e)}")
+            
         # Automatically create an Order for delivery tracking
         try:
             # Find an available delivery person
@@ -75,6 +110,15 @@ def create_bill(request):
         except Exception as e:
             # Log error but don't fail the bill creation
             print(f"Failed to create delivery order: {str(e)}")
+
+        # Trigger loyalty points for credit purchases
+        if str(bill.payment_type).lower() == 'credit':
+            try:
+                from loyalty.services import process_credit_purchase
+                process_credit_purchase(bill.customer, bill.total_amount)
+                print(f"Loyalty logic triggered for credit purchase: {bill.total_amount}")
+            except Exception as e:
+                print(f"Failed to process loyalty for credit purchase: {str(e)}")
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

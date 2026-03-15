@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Medicine, Category
+from .models import Medicine, Category, SeasonalMedicine
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -82,3 +82,17 @@ class StockUpdateSerializer(serializers.Serializer):
                 )
 
         return data
+
+class SeasonalMedicineSerializer(serializers.ModelSerializer):
+    medicine_details = MedicineSerializer(source='medicine', read_only=True)
+    
+    class Meta:
+        model = SeasonalMedicine
+        fields = ['id', 'medicine', 'season', 'medicine_details']
+        
+class PublicSeasonalMedicineSerializer(serializers.ModelSerializer):
+    medicine = PublicMedicineSerializer(read_only=True)
+    
+    class Meta:
+        model = SeasonalMedicine
+        fields = ['id', 'season', 'medicine']

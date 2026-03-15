@@ -19,6 +19,7 @@ from .serializers import (
     ResendOTPSerializer,
 )
 from .forms import RegistrationStep1Form, RegistrationStep2Form, LoginForm
+from rest_framework import serializers
 
 
 
@@ -280,3 +281,98 @@ def change_password(request):
     user.save()
 
     return Response({"message": "Password updated"}, status=200)
+
+# Admin User Management
+from .models import PharmacyDocument
+
+class PharmacyUserAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'email', 'role', 'is_active', 'is_staff', 'is_approved', 'registration_complete']
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_user_list(request):
+    if request.user.role != 'admin':
+        return Response({"error": "Admin access required"}, status=403)
+        
+    users = CustomUser.objects.all().order_by('-created_at')
+    # Can use standard serializer manually here since simple list
+    data = []
+    for u in users:
+        data.append({
+            'id': u.id,
+            'email': u.email,
+            'role': u.role,
+            'is_active': u.is_active,
+            'is_staff': u.is_staff,
+            'is_approved': u.is_approved,
+            'registration_complete': u.registration_complete
+        })
+    return Response(data, status=200)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def admin_user_detail(request, pk):
+    if request.user.role != 'admin':
+        return Response({"error": "Admin access required"}, status=403)
+        
+    try:
+        user = CustomUser.objects.get(pk=pk)
+    except CustomUser.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+        
+    if request.method == 'GET':
+        user_data = {
+            'id': user.id,
+            'email': user.email,
+            'role': user.role,
+            'is_active': user.is_active,
+            'is_staff': user.is_staff,
+            'is_approved': user.is_approved,
+            'registration_complete': user.registration_complete,
+            'documents': None
+        }
+        
+        try:
+            docs = PharmacyDocument.objects.get(user=user)
+            user_data['documents'] = {
+                'pharmacy_license': request.build_absolute_uri(docs.pharmacy_license.url) if docs.pharmacy_license else None,
+                'pan_number': request.build_absolute_uri(docs.pan_number.url) if docs.pan_number else None,
+                'citizenship': request.build_absolute_uri(docs.citizenship.url) if docs.citizenship else None,
+                'status': docs.status,
+                'admin_notes': docs.admin_notes,
+                'uploaded_at': docs.uploaded_at,
+                'reviewed_at': docs.reviewed_at
+            }
+        except PharmacyDocument.DoesNotExist:
+            pass
+            
+        return Response(user_data, status=200)
+        
+    elif request.method == 'PUT':
+        # Update user
+        if 'is_active' in request.data: user.is_active = request.data['is_active']
+        if 'is_staff' in request.data: user.is_staff = request.data['is_staff']
+        if 'is_approved' in request.data: user.is_approved = request.data['is_approved']
+        if 'registration_complete' in request.data: user.registration_complete = request.data['registration_complete']
+        
+        user.save()
+        
+        # Update documents if present
+        if 'document_status' in request.data or 'admin_notes' in request.data:
+            try:
+                docs = PharmacyDocument.objects.get(user=user)
+                if 'document_status' in request.data: 
+                    docs.status = request.data['document_status']
+                if 'admin_notes' in request.data:
+                    docs.admin_notes = request.data['admin_notes']
+                docs.save()
+            except PharmacyDocument.DoesNotExist:
+                pass
+                
+        return Response({"message": "User updated successfully"}, status=200)
+    
+    elif request.method == 'DELETE':
+        user.delete()
+        return Response({"message": "User deleted successfully"}, status=204)
