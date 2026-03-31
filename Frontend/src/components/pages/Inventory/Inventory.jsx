@@ -96,6 +96,7 @@ const Inventory = () => {
       const response = await api.get("/api/notifications/");
       const data = response.data.results || response.data;
       setNotifications(data.map(n => ({
+        id: n.id,
         title: getNotifTitle(n.notification_type),
         message: n.message,
         type: n.notification_type,
@@ -119,6 +120,29 @@ const Inventory = () => {
     }
   };
 
+  const markSingleAsRead = async (id) => {
+    try {
+      await api.post(`/api/notifications/${id}/mark-read/`);
+      setNotifications((prev) => {
+        const updated = prev.filter((item) => item.id !== id);
+        setUnreadCount(updated.filter(n => !n.isRead).length);
+        return updated;
+      });
+    } catch (err) {
+      console.error("Error marking single notification as read:", err);
+    }
+  };
+
+  const handleNotificationClick = (n) => {
+    if (n.type === "complaint") setActiveTab("complaints");
+    else if (n.type === "expiry") setActiveTab("expiry-return");
+    else if (n.type === "medicine") setActiveTab("inventory");
+    else if (n.type === "bonus") setActiveTab("bonuses");
+    else if (n.type === "scheme") setActiveTab("schemes");
+
+    setShowNotifications(false);
+  };
+
   useEffect(() => {
     fetchNotifications();
 
@@ -136,6 +160,7 @@ const Inventory = () => {
 
       setNotifications((prev) => [
         {
+          id: data.id,
           title: getNotifTitle(data.notification_type),
           message: data.message,
           type: data.notification_type,
@@ -608,58 +633,81 @@ const Inventory = () => {
               </>
             )}
 
-            {/*  NOTIFICATIONS */}
-            <div className="notif-wrap">
+{/* NOTIFICATIONS */}
+<div className="notif-wrap">
+  <button
+    className="notif-btn"
+    onClick={() => setShowNotifications(!showNotifications)}
+  >
+    <FaBell />
+    {unreadCount > 0 && (
+      <span className="notif-badge">
+        {unreadCount}
+      </span>
+    )}
+  </button>
+
+  <div className={`notif-dd ${showNotifications ? "open" : ""}`}>
+    <div className="notif-head">
+      <div className="notif-title">Notifications</div>
+
+      {notifications.length > 0 && (
+        <button
+          className="mark-all-btn"
+          onClick={markAsRead}
+        >
+          Mark All as Read
+        </button>
+      )}
+    </div>
+
+    <div className="notif-list">
+      {notifications.length === 0 ? (
+        <div className="notif-item">
+          <div>No notifications</div>
+        </div>
+      ) : (
+        notifications.map((n) => (
+          <div 
+            className="notif-item" 
+            key={n.id}
+            onClick={() => handleNotificationClick(n)}
+            style={{ cursor: "pointer" }}
+          >
+            <div className="notif-ic">
+              <FaBell />
+            </div>
+
+            <div className="notif-content">
+              <div className="notif-item-title">{n.title}</div>
+              <div className="notif-item-text">{n.message}</div>
+              <small style={{ opacity: 0.6, fontSize: "10px" }}>
+                {n.time}
+              </small>
+
               <button
-                className="notif-btn"
-                onClick={() => {
-                  if (showNotifications) {
-                    // Mark as read when closing
-                    markAsRead();
-                  }
-                  setShowNotifications(!showNotifications);
+                className="mark-read-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  markSingleAsRead(n.id);
                 }}
               >
-                <FaBell />
-                {unreadCount > 0 && (
-                  <span className="notif-badge" key={unreadCount}>
-                    {unreadCount}
-                  </span>
-                )}
+                Mark as Read
               </button>
-
-              <div className={`notif-dd ${showNotifications ? "open" : ""}`}>
-                <div className="notif-head">
-                  <div className="notif-title">Notifications</div>
-                </div>
-
-                <div className="notif-list">
-                  {notifications.length === 0 ? (
-                    <div className="notif-item">
-                      <div>No notifications</div>
-                    </div>
-                  ) : (
-                    notifications.map((n, i) => (
-                      <div className="notif-item" key={i}>
-                        <div className="notif-ic"><FaBell /></div>
-                        <div>
-                          <div className="notif-item-title">{n.title}</div>
-                          <div className="notif-item-text">{n.message}</div>
-                          <small style={{ opacity: 0.6, fontSize: '10px' }}>{n.time}</small>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {showNotifications && (
-                <div
-                  className="notif-backdrop"
-                  onClick={() => setShowNotifications(false)}
-                />
-              )}
             </div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+
+  {showNotifications && (
+    <div
+      className="notif-backdrop"
+      onClick={() => setShowNotifications(false)}
+    />
+  )}
+</div>
 
             {/* PROFILE ICON */}
             <div 

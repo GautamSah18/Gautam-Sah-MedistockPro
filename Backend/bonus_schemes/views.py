@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models, transaction
 from django.utils import timezone
 
@@ -195,9 +196,9 @@ def apply_bill_scheme(request):
         if gifts.count() != len(set(gift_ids)):
             return Response({"detail": "Invalid gift selection."}, status=400)
 
-        total_value = sum(float(g.value) for g in gifts)
+        total_value = sum(Decimal(str(g.value)) for g in gifts)
 
-        if total_value > float(scheme.remaining_gift_value):
+        if total_value > Decimal(str(scheme.remaining_gift_value)):
             return Response({"detail": "Insufficient gift balance."}, status=400)
 
         scheme.remaining_gift_value -= total_value
@@ -251,9 +252,9 @@ def apply_scheme_to_bill(request):
         if gifts.count() != len(set(gift_ids)):
             return Response({"detail": "Invalid gift selection."}, status=400)
 
-        total_value = sum(float(g.value) for g in gifts)
+        total_value = sum(Decimal(str(g.value)) for g in gifts)
 
-        if total_value > float(scheme.remaining_gift_value):
+        if total_value > Decimal(str(scheme.remaining_gift_value)):
             return Response({"detail": "Insufficient gift balance."}, status=400)
 
         scheme.remaining_gift_value -= total_value

@@ -30,11 +30,20 @@ class GiftSerializer(serializers.ModelSerializer):
 
 
 class BillSchemeSerializer(serializers.ModelSerializer):
-    gifts = GiftSerializer(many=True, read_only=True)
+    gifts = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        queryset=Gift.objects.all(),
+        required=False
+    )
 
     class Meta:
         model = BillScheme
         fields = '__all__'
+
+    def to_representation(self, instance):
+        repr = super().to_representation(instance)
+        repr['gifts'] = GiftSerializer(instance.gifts.all(), many=True).data
+        return repr
 
 
 class CustomerSerializer(serializers.ModelSerializer):

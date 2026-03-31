@@ -2169,3 +2169,33 @@ button {
   color: var(--text);
   font-weight: 700;
 }
+.notif-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.notif-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mark-read-btn,
+.mark-all-btn {
+  background: #0d6efd;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  width: fit-content;
+}
+
+.mark-read-btn:hover,
+.mark-all-btn:hover {
+  opacity: 0.9;
+}

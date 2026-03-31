@@ -16,12 +16,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 
-const schemes = [
-  { tag: "10% OFF", tagColor: "green", title: "Flat 10% Off on Pain Relief\nMedicines", cta: "Shop Now →", tone: "mint" },
-  { tag: "BOGO", tagColor: "blue", title: "Buy 1 Get 1 on Multivitamins", cta: "Shop Now →", tone: "lavender" },
-  { tag: "SALE", tagColor: "orange", title: "Winter Care Sale Up to 20%\nOff", cta: "Shop Now →", tone: "butter" },
-  { tag: "SPECIAL OFFER", tagColor: "red", title: "Free Delivery on Orders Over\n$50", cta: "Learn More →", tone: "rose" },
-];
+// Hard-coded list removed in favor of dynamic API data
 
 function Rating({ value = 4 }) {
   const stars = useMemo(() => {
@@ -66,6 +61,41 @@ export default function CustomerDashboard() {
   
   const [seasonalMedicines, setSeasonalMedicines] = useState([]);
   const [currentSeason, setCurrentSeason] = useState("Seasonal");
+
+  const [activeBonuses, setActiveBonuses] = useState([]);
+  const [activeSchemes, setActiveSchemes] = useState([]);
+
+  const tones = ["mint", "lavender", "butter", "rose", "mint", "lavender"];
+  const tagColors = ["green", "blue", "orange", "red", "green", "blue"];
+
+  const dynamicOffers = useMemo(() => {
+    const combined = [];
+    activeSchemes.forEach((s) => {
+      combined.push({
+        type: "scheme",
+        tag: "SCHEME",
+        title: `${s.name}\nMin Bill Rs ${Number(s.min_bill_amount || 0).toLocaleString()}`,
+        cta: "View Scheme →",
+        data: s,
+      });
+    });
+    activeBonuses.forEach((b) => {
+      combined.push({
+        type: "bonus",
+        tag: "BONUS",
+        title: `Buy ${b.buy_quantity} Get ${b.free_quantity} Free on ${
+          b.medicine?.name || "Medicines"
+        }`,
+        cta: "Claim Bonus →",
+        data: b,
+      });
+    });
+    return combined.slice(0, 4).map((offer, idx) => ({
+      ...offer,
+      tone: tones[idx % tones.length],
+      tagColor: tagColors[idx % tagColors.length],
+    }));
+  }, [activeBonuses, activeSchemes]);
 
 
   const handleSchemeApplied = (schemeData) => {
@@ -163,6 +193,20 @@ export default function CustomerDashboard() {
           setCurrentSeason(seasonalRes.data.season || "Seasonal");
         } catch(e) {
           console.error("Error fetching seasonal medicines:", e);
+        }
+        
+        // Fetch active bonuses and schemes
+        try {
+          const [bonusesRes, schemesRes] = await Promise.all([
+            api.get("/api/bonus-schemes/bonuses/active/"),
+            api.get("/api/bonus-schemes/bill-schemes/"),
+          ]);
+          const bData = Array.isArray(bonusesRes.data) ? bonusesRes.data : bonusesRes.data.results || [];
+          const sData = Array.isArray(schemesRes.data) ? schemesRes.data : schemesRes.data.results || [];
+          setActiveBonuses(bData);
+          setActiveSchemes(sData);
+        } catch (e) {
+          console.error("Error fetching promos:", e);
         }
         
       } catch (err) {
@@ -298,17 +342,28 @@ export default function CustomerDashboard() {
 
             <section className="section">
               <div className="section-title">Schemes &amp; Discounts</div>
-              <div className="scheme-grid">
-                {schemes.map((s, idx) => (
-                  <div key={idx} className={`scheme-card tone-${s.tone}`}>
-                    <div className={`scheme-tag tag-${s.tagColor}`}>{s.tag}</div>
-                    <div className="scheme-title">{s.title}</div>
-                    <a className="scheme-cta" href="#medicines">
-                      {s.cta}
-                    </a>
-                  </div>
-                ))}
-              </div>
+              {dynamicOffers.length === 0 && !loading ? (
+                <div style={{ color: "#6b7280", padding: "10px 0" }}>No active schemes or bonuses right now. Check back later!</div>
+              ) : (
+                <div className="scheme-grid">
+                  {dynamicOffers.map((s, idx) => (
+                    <div
+                      key={idx}
+                      className={`scheme-card tone-${s.tone}`}
+                      style={{ cursor: "pointer" }}
+                      onClick={() => navigate("/bonus-schemes")}
+                    >
+                      <div className={`scheme-tag tag-${s.tagColor}`}>{s.tag}</div>
+                      <div className="scheme-title" style={{ whiteSpace: "pre-line" }}>
+                        {s.title}
+                      </div>
+                      <a className="scheme-cta" onClick={(e) => e.preventDefault()}>
+                        {s.cta}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="section" id="medicines">

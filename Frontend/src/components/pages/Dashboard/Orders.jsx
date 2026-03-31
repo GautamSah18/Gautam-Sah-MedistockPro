@@ -30,36 +30,13 @@ export default function Orders() {
     }
   };
 
-  const handleDownloadBill = async (billId) => {
-    try {
-      const response = await api.get(`/api/billing/${billId}/download/`, {
-        responseType: 'blob'
-      });
-      
-      // Get filename from Content-Disposition header if available
-      const contentDisposition = response.headers['content-disposition'] || response.headers['Content-Disposition'];
-      let filename = `bill_${billId}.pdf`;
-      
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1];
-        }
-      }
-      
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading bill:", error);
-      alert("Failed to download bill");
-    }
+  const handleDownloadBill = (billId) => {
+    const token = localStorage.getItem('access_token');
+    const baseUrl = api.defaults.baseURL || '';
+    const url = `${baseUrl}/api/billing/${billId}/print/?token=${token}`;
+    
+    // Open in a new window. The print_bill.html automatically triggers print dialog.
+    window.open(url, '_blank');
   };
 
   const formatStatus = (status) => {
@@ -163,7 +140,7 @@ export default function Orders() {
                           className="secondary-btn"
                           onClick={() => handleDownloadBill(order.id)}
                         >
-                          Download Bill
+                          📥 Download Bill
                         </button>
                         {order.payment_status === 'due' && (
                           <button 
@@ -185,9 +162,15 @@ export default function Orders() {
                       <div className="credit-info">
                         <span className="credit-tag">Credit Purchase</span>
                         <span className="due-date">
-                          Due Date: {new Date(order.created_at).setMonth(new Date(order.created_at).getMonth() + 2) > new Date() 
-                            ? new Date(new Date(order.created_at).setMonth(new Date(order.created_at).getMonth() + 2)).toLocaleDateString()
-                            : 'Overdue'}
+                          {(() => {
+                            const createdDate = new Date(order.created_at);
+                            const dueDate = new Date(createdDate.getTime() + 60 * 24 * 60 * 60 * 1000);
+                            const diffDays = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
+                            
+                            if (diffDays > 0) return `${diffDays} days to pay`;
+                            if (diffDays === 0) return `Due today`;
+                            return `Overdue by ${Math.abs(diffDays)} days`;
+                          })()}
                         </span>
                       </div>
                     )}
@@ -198,6 +181,7 @@ export default function Orders() {
           )}
         </div>
       </div>
+
     </div>
   );
 }

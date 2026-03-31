@@ -5,34 +5,54 @@ import {
   FaShoppingCart,
   FaUser
 } from "react-icons/fa";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../services/api";
 import "./customerDashboard.css";
 
 export default function TopNav({
   searchValue = "",
-  onSearchChange = () => { },
+  onSearchChange = () => {},
   showSearch = true,
   cartCount = 0,
-  onCartClick = () => { },
-  onAddToCart = () => { },
+  onCartClick = () => {},
+  onAddToCart = () => {},
 }) {
   const { user, logout: authLogout } = useAuth();
+  const navigate = useNavigate();
 
-  /*REAL-TIME NOTIFICATIONS*/
+  /* REAL-TIME NOTIFICATIONS */
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
 
+  const handleNotificationClick = (n) => {
+    if (n.notification_type === "complaint") {
+      navigate("/customer/complaints");
+    } else if (n.notification_type === "expiry") {
+      navigate("/customer/returns");
+    } else if (n.notification_type === "medicine") {
+      navigate("/products");
+    } else if (n.notification_type === "bonus" || n.notification_type === "scheme") {
+      navigate("/bonus-schemes");
+    }
+    setOpen(false);
+  };
+
   const getNotifTitle = (type) => {
     switch (type) {
-      case "medicine": return "New Medicine";
-      case "bonus": return "New Bonus";
-      case "scheme": return "New Scheme";
-      case "expiry": return "Expiry Request";
-      case "complaint": return "Complaint Issue";
-      default: return "Notification";
+      case "medicine":
+        return "New Medicine";
+      case "bonus":
+        return "New Bonus";
+      case "scheme":
+        return "New Scheme";
+      case "expiry":
+        return "Expiry Request";
+      case "complaint":
+        return "Complaint Issue";
+      default:
+        return "Notification";
     }
   };
 
@@ -40,27 +60,46 @@ export default function TopNav({
     try {
       const response = await api.get("/api/notifications/");
       const data = response.data.results || response.data;
-      setNotifications(data.map(n => ({
+
+      const mappedNotifications = data.map((n) => ({
         id: n.id,
         icon: <FaBell />,
         title: getNotifTitle(n.notification_type),
         text: n.message,
-        isRead: n.is_read
-      })));
-      setUnreadCount(data.filter(n => !n.is_read).length);
+        isRead: n.is_read,
+        notification_type: n.notification_type,
+      }));
+
+      setNotifications(mappedNotifications);
+      setUnreadCount(mappedNotifications.length);
     } catch (err) {
       console.error("Error fetching notifications:", err);
     }
   };
 
-  const markAsRead = async () => {
+  const markAllAsRead = async () => {
     try {
-      if (unreadCount === 0) return;
+      if (notifications.length === 0) return;
+
       await api.post("/api/notifications/mark-read/");
+      setNotifications([]);
       setUnreadCount(0);
-      setNotifications([]); // Clear notifications once they are seen
     } catch (err) {
-      console.error("Error marking notifications as read:", err);
+      console.error("Error marking all notifications as read:", err);
+    }
+  };
+
+  const markSingleAsRead = async (id) => {
+    try {
+      await api.post(`/api/notifications/${id}/mark-read/`);
+
+      setNotifications((prev) => {
+        const updated = prev.filter((item) => item.id !== id);
+        setUnreadCount(updated.length);
+        return updated;
+      });
+    } catch (err) {
+      console.error("Error marking single notification as read:", err);
     }
   };
 
@@ -78,13 +117,16 @@ export default function TopNav({
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
+
       const newNotif = {
-        id: Date.now(),
+        id: data.id, // IMPORTANT: backend websocket should send real notification id
         icon: <FaBell />,
         title: getNotifTitle(data.notification_type),
         text: data.message,
-        isRead: false
+        isRead: false,
+        notification_type: data.notification_type,
       };
+
       setNotifications((prev) => [newNotif, ...prev]);
       setUnreadCount((prev) => prev + 1);
     };
@@ -101,13 +143,8 @@ export default function TopNav({
   }, []);
 
   const toggleNotifications = () => {
-    if (open) {
-      // Mark as read when closing, so user sees them first
-      markAsRead();
-    }
-    setOpen(!open);
+    setOpen((prev) => !prev);
   };
-
 
   const [imgError, setImgError] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
@@ -235,8 +272,6 @@ export default function TopNav({
       </nav>
 
       <div className="mdp-nav__right">
-
-        {/* SEARCH */}
         {showSearch && (
           <div className="search-container">
             <div className="search">
@@ -261,14 +296,10 @@ export default function TopNav({
                     className="suggestion-item"
                     onClick={() => handleAddToCart(medicine)}
                   >
-                    <div className="suggestion-name">
-                      {medicine.name}
-                    </div>
+                    <div className="suggestion-name">{medicine.name}</div>
                     <div className="suggestion-details">
                       <span>{medicine.company}</span>
-                      <span>
-                        Rs {formatMedicineForDisplay(medicine).price}
-                      </span>
+                      <span>Rs {formatMedicineForDisplay(medicine).price}</span>
                     </div>
                   </div>
                 ))}
@@ -277,7 +308,6 @@ export default function TopNav({
           </div>
         )}
 
-        {/*  NOTIFICATIONS */}
         <div className="notif-wrap">
           <button
             className="icon-btn notif-btn"
@@ -285,15 +315,21 @@ export default function TopNav({
           >
             <FaBell />
             {unreadCount > 0 && (
-              <span className="notif-badge">
-                {unreadCount}
-              </span>
+              <span className="notif-badge">{unreadCount}</span>
             )}
           </button>
 
           <div className={`notif-dd ${open ? "open" : ""}`}>
             <div className="notif-head">
               <div className="notif-title">Notifications</div>
+              {notifications.length > 0 && (
+                <button
+                  className="mark-all-btn"
+                  onClick={markAllAsRead}
+                >
+                  Mark all as read
+                </button>
+              )}
             </div>
 
             <div className="notif-list">
@@ -303,15 +339,25 @@ export default function TopNav({
                 </div>
               ) : (
                 notifications.map((n) => (
-                  <div className="notif-item" key={n.id}>
+                  <div
+                    className="notif-item"
+                    key={n.id}
+                    onClick={() => handleNotificationClick(n)}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="notif-ic">{n.icon}</div>
-                    <div>
-                      <div className="notif-item-title">
-                        {n.title}
-                      </div>
-                      <div className="notif-item-text">
-                        {n.text}
-                      </div>
+                    <div className="notif-content">
+                      <div className="notif-item-title">{n.title}</div>
+                      <div className="notif-item-text">{n.text}</div>
+                      <button
+                        className="mark-read-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markSingleAsRead(n.id);
+                        }}
+                      >
+                        Mark as Read
+                      </button>
                     </div>
                   </div>
                 ))
@@ -327,20 +373,16 @@ export default function TopNav({
           )}
         </div>
 
-        {/* CART */}
         <button
           className="icon-btn cart-btn"
           onClick={onCartClick}
         >
           <FaShoppingCart />
           {cartCount > 0 && (
-            <span className="cart-badge">
-              {cartCount}
-            </span>
+            <span className="cart-badge">{cartCount}</span>
           )}
         </button>
 
-        {/* PROFILE */}
         <div className="profile-dropdown-container">
           <Link
             className="icon-btn"
@@ -367,24 +409,17 @@ export default function TopNav({
           {dropdownOpen && (
             <div
               className="profile-dropdown"
-              onMouseEnter={() =>
-                clearTimeout(timeoutRef.current)
-              }
+              onMouseEnter={() => clearTimeout(timeoutRef.current)}
               onMouseLeave={() => setDropdownTimeout()}
             >
-              <Link
-                className="dropdown-item"
-                to="/profile"
-              >
+              <Link className="dropdown-item" to="/profile">
                 Profile
               </Link>
               <div
                 className="dropdown-item"
                 onClick={toggleTheme}
               >
-                {theme === "light"
-                  ? "Dark Mode"
-                  : "Light Mode"}
+                {theme === "light" ? "Dark Mode" : "Light Mode"}
               </div>
               <div
                 className="dropdown-item"

@@ -46,6 +46,7 @@ const CartSchemePopup = ({ cartTotal = 0, isVisible, onClose, onApplyScheme }) =
     return (schemes || [])
       .filter(isActiveToday)
       .filter((s) => s?.unlocked === true)
+      .filter((s) => schemeGiftLimit(s) > 0)
       .sort((a, b) => Number(a.min_bill_amount || 0) - Number(b.min_bill_amount || 0));
   }, [schemes]);
 
@@ -79,7 +80,7 @@ const CartSchemePopup = ({ cartTotal = 0, isVisible, onClose, onApplyScheme }) =
           ) : loadError ? (
             <p>{loadError}</p>
           ) : eligibleSchemes.length > 0 ? (
-            <div className="schemes-list">
+            <div className="schemes-list" style={{ maxHeight: "300px", overflowY: "auto", paddingRight: "10px" }}>
               <h3>Available Schemes:</h3>
 
               {eligibleSchemes.map((scheme) => (

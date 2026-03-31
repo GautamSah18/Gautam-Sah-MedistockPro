@@ -257,7 +257,9 @@ const BonusSchemes = () => {
               </div>
             ) : (
               <div className="schemes-grid">
-                {(schemes || []).map((scheme) => {
+                {(schemes || [])
+                  .filter((s) => schemeLimit(s) > 0)
+                  .map((scheme) => {
                   const eligible = isEligibleForScheme(scheme);
                   const remaining = Math.max(0, num(scheme?.remaining_to_unlock || 0));
                   const customerTotal = num(scheme?.customer_total_purchase || 0);

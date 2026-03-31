@@ -70,6 +70,18 @@ def admin_dashboard_analytics(request):
     total_unpaid_bills_amount = unpaid_bills_qs.aggregate(total=Sum('total_amount'))['total'] or 0
     total_unpaid_bills_count = unpaid_bills_qs.count()
 
+    # Overdue Credit Notification
+    from django.utils import timezone
+    from notifications.services import notify_admins
+    from notifications.models import Notification
+    
+    overdue_bills = unpaid_bills_qs.filter(due_date__lt=timezone.now())
+    for bill in overdue_bills:
+        msg = f"Credit Bill for {bill.user.email} (Amount: Rs {bill.total_amount:.2f}) is Overdue!"
+        # Check if this specific notification already exists
+        if not Notification.objects.filter(message=msg).exists():
+            notify_admins(msg, notification_type="billing")
+
     return Response({
         "total_sales": total_sales,
         "total_orders": total_orders,
