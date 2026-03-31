@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./CustomerDashboard.css";
+import "./customerDashboard.css";
 import TopNav from "./TopNav";
 import api from "../../../services/api";
 
