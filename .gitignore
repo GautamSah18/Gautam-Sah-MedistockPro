@@ -1,0 +1,39 @@
+# ===============================
+# PYTHON / DJANGO
+# ===============================
+
+venv/
+env/
+Backend/venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# ===============================
+# NODE / REACT
+# ===============================
+
+node_modules/
+dist/
+build/
+coverage/
+
+# ===============================
+# ENV FILES
+# ===============================
+
+.env
+.env.local
+
+# ===============================
+# IDE FILES
+# ===============================
+
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,118 @@
+/* Import Inter font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff;
+  color: #111827;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Remove default button styles */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Remove default input styles */
+input, textarea, select {
+  font-family: inherit;
+  font-size: 100%;
+}
+
+/* Remove default link styles */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Utility classes */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ===== Route Loader Overlay (green tint) ===== */
+/* Background overlay (still full screen, but light) */
+.route-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+
+  /* light green tint + blur */
+  background: rgba(20, 163, 94, 0.10);
+  backdrop-filter: blur(8px);
+}
+
+
+/* Loading text */
+.route-loader-text {
+  font-weight: 900;
+  color: #0f7a44;
+  letter-spacing: 0.2px;
+}
+
+/* 12-bar spinner (green) */
+.spinner12 {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.spinner12 span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 20px;
+  border-radius: 999px;
+  background: #20b46a;
+  transform-origin: center -20px;
+  opacity: 0.12;
+  animation: spinnerFade 1s linear infinite;
+}
+
+/* 12 bars around circle */
+.spinner12 span:nth-child(1)  { transform: translate(-50%, -50%) rotate(0deg);   animation-delay: -0s; }
+.spinner12 span:nth-child(2)  { transform: translate(-50%, -50%) rotate(30deg);  animation-delay: -0.083s; }
+.spinner12 span:nth-child(3)  { transform: translate(-50%, -50%) rotate(60deg);  animation-delay: -0.166s; }
+.spinner12 span:nth-child(4)  { transform: translate(-50%, -50%) rotate(90deg);  animation-delay: -0.249s; }
+.spinner12 span:nth-child(5)  { transform: translate(-50%, -50%) rotate(120deg); animation-delay: -0.332s; }
+.spinner12 span:nth-child(6)  { transform: translate(-50%, -50%) rotate(150deg); animation-delay: -0.415s; }
+.spinner12 span:nth-child(7)  { transform: translate(-50%, -50%) rotate(180deg); animation-delay: -0.498s; }
+.spinner12 span:nth-child(8)  { transform: translate(-50%, -50%) rotate(210deg); animation-delay: -0.581s; }
+.spinner12 span:nth-child(9)  { transform: translate(-50%, -50%) rotate(240deg); animation-delay: -0.664s; }
+.spinner12 span:nth-child(10) { transform: translate(-50%, -50%) rotate(270deg); animation-delay: -0.747s; }
+.spinner12 span:nth-child(11) { transform: translate(-50%, -50%) rotate(300deg); animation-delay: -0.83s; }
+.spinner12 span:nth-child(12) { transform: translate(-50%, -50%) rotate(330deg); animation-delay: -0.913s; }
+
+@keyframes spinnerFade {
+  0% { opacity: 1; }
+  100% { opacity: 0.12; }
+}

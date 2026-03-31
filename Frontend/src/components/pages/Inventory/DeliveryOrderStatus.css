@@ -1,0 +1,116 @@
+.delivery-status-wrapper {
+  width: 100%;
+  padding: 0;
+}
+
+
+.delivery-status-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.delivery-order-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  transition: 0.2s ease;
+}
+
+.delivery-order-card:hover {
+  transform: translateY(-3px);
+}
+
+.delivery-order-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delivery-order-top h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.delivery-order-top p {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.delivery-status-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #d1fae5;
+  color: #047857;
+  text-transform: capitalize;
+}
+
+.delivery-progress-wrapper {
+  margin-top: 25px;
+  position: relative;
+}
+
+.delivery-progress-bg {
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 3px;
+}
+
+.delivery-progress-active {
+  height: 4px;
+  background: #10b981;
+  border-radius: 3px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.delivery-progress-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.delivery-step {
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.delivery-step .circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  margin-bottom: 6px;
+}
+
+.delivery-step.done .circle {
+  background: #10b981;
+  color: white;
+}
+
+.delivery-step.active .circle {
+  background: #10b981;
+  color: white;
+}
+
+.delivery-order-bottom {
+  margin-top: 15px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .delivery-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
