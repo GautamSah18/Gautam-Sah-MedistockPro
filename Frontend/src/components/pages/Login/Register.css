@@ -1,7 +1,7 @@
 /* Main container */
-.body{
+.body {
   margin: 0;
-  padding: 0;
+  padding: 20px;
   min-height: 100vh;
   display: flex;
   justify-content: flex-end;
@@ -13,8 +13,8 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
+  box-sizing: border-box;
 }
-
 
 .register-container {
   width: 100%;
@@ -30,6 +30,7 @@
   align-items: center;
   margin-bottom: 24px;
   justify-content: center;
+  text-align: center;
 }
 
 .logo-container h1 {
@@ -38,6 +39,8 @@
   font-weight: 600;
   color: #111827;
   letter-spacing: 0.5px;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .logo-icon {
@@ -47,6 +50,7 @@
   background: #eef2ff;
   padding: 6px;
   border-radius: 6px;
+  flex-shrink: 0;
 }
 
 /* Registration card */
@@ -55,9 +59,11 @@
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 40px;
-  width: 420px;
+  width: 100%;
+  max-width: 420px;
   border: 1px solid #e5e7eb;
   position: relative;
+  box-sizing: border-box;
 }
 
 /* Header section */
@@ -72,6 +78,7 @@
   font-size: 20px;
   font-weight: 600;
   line-height: 1.4;
+  word-break: break-word;
 }
 
 .register-header p {
@@ -184,15 +191,15 @@
 }
 
 /* Password strength color indicators */
-.strength-too-short { background-color: #ff4d4f; } /* Red */
-.strength-weak { background-color: #ffa940; }     /* Orange */
-.strength-good { background-color: #ffd666; }     /* Yellow */
-.strength-strong { background-color: #52c41a; }   /* Green */
+.strength-too-short { background-color: #ff4d4f; }
+.strength-weak { background-color: #ffa940; }
+.strength-good { background-color: #ffd666; }
+.strength-strong { background-color: #52c41a; }
 
 /* Submit button */
 .submit-btn {
   width: 100%;
-  padding: 10px 16px;
+  padding: 12px 16px;
   background: #10b981;
   color: white;
   border: none;
@@ -203,6 +210,7 @@
   margin-top: 8px;
   transition: all 0.2s;
   font-family: inherit;
+  min-height: 44px;
 }
 
 .submit-btn:hover {
@@ -219,6 +227,7 @@
   margin-top: 16px;
   font-size: 14px;
   color: #6b7280;
+  line-height: 1.6;
 }
 
 .login-link a {
@@ -242,6 +251,8 @@
   display: flex;
   justify-content: center;
   gap: 12px;
+  flex-wrap: wrap;
+  line-height: 1.6;
 }
 
 .footer-links a {
@@ -255,27 +266,6 @@
   text-decoration: underline;
 }
 
-/* Add some responsive adjustments */
-@media (max-width: 480px) {
-  .register-card {
-    padding: 24px 20px;
-    margin: 0 16px;
-  }
-  
-  .register-header h2 {
-    font-size: 18px;
-  }
-  
-  .form-group input {
-    height: 40px;
-  }
-  
-  .submit-btn {
-    padding: 8px 12px;
-  }
-}
-
-
 .role-dropdown {
   width: 100%;
   padding: 12px 16px;
@@ -285,6 +275,8 @@
   background-color: white;
   cursor: pointer;
   transition: border-color 0.3s ease;
+  box-sizing: border-box;
+  min-height: 44px;
 }
 
 .role-dropdown:focus {
@@ -305,30 +297,174 @@
   display: block;
 }
 
-/* Responsive adjustments */
+/* Tablet */
+@media (max-width: 992px) {
+  .body {
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .register-container {
+    margin: 0 auto;
+    max-width: 500px;
+    padding: 16px;
+  }
+
+  .register-card {
+    max-width: 100%;
+  }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
+  .body {
+    justify-content: center;
+    align-items: center;
+    padding: 20px 12px;
+    background-position: center;
+  }
+
+  .register-container {
+    margin: 0 auto;
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .register-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 28px 20px;
+    border-radius: 10px;
+  }
+
+  .logo-container {
+    margin-bottom: 18px;
+  }
+
+  .logo-container h1 {
+    font-size: 18px;
+  }
+
+  .logo-icon {
+    font-size: 22px;
+  }
+
+  .register-header {
+    margin-bottom: 20px;
+  }
+
+  .register-header h2 {
+    font-size: 18px;
+  }
+
+  .register-header p {
+    font-size: 13px;
+  }
+
+  .form-group input {
+    height: 42px;
+    font-size: 14px;
+  }
+
+  .submit-btn {
+    padding: 12px 14px;
+    width: 100%;
+  }
+
+  .footer-links {
+    gap: 8px;
+    font-size: 12px;
+  }
+
   .role-selection {
     gap: 10px;
   }
-  
+
   .role-option {
     padding: 14px;
   }
-  
+
   .role-option-header {
     gap: 10px;
   }
-  
+
   .role-icon {
     font-size: 18px;
   }
-  
+
   .role-label {
     font-size: 15px;
   }
-  
+
   .role-description {
     font-size: 13px;
     padding-left: 28px;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .body {
+    padding: 14px 10px;
+    justify-content: center;
+  }
+
+  .register-container {
+    padding: 0;
+    margin: 0 auto;
+  }
+
+  .register-card {
+    padding: 22px 16px;
+    margin: 0;
+    border-radius: 10px;
+  }
+
+  .logo-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .logo-icon {
+    margin-right: 0;
+    font-size: 20px;
+  }
+
+  .logo-container h1 {
+    font-size: 17px;
+  }
+
+  .register-header h2 {
+    font-size: 17px;
+  }
+
+  .register-header p {
+    font-size: 12px;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-group input,
+  .role-dropdown {
+    height: 40px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .submit-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .login-link {
+    font-size: 13px;
+  }
+
+  .footer-links {
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 18px;
   }
 }

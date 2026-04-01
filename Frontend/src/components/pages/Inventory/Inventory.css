@@ -1276,3 +1276,531 @@
 .mark-all-btn:hover {
   opacity: 0.9;
 }
+
+/* ===========================
+   MOBILE RESPONSIVE OVERRIDES
+============================*/
+
+@media (max-width: 1200px) {
+  .bonus-management-content,
+  .scheme-management-content,
+  .form-container,
+  .table-container {
+    padding: 40px;
+  }
+
+  .inv-main {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 992px) {
+  .bonus-management-content,
+  .scheme-management-content,
+  .form-container,
+  .table-container {
+    padding: 28px;
+    margin: 16px;
+  }
+
+  .management-header {
+    padding: 0;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .management-header h2 {
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .inv-main {
+    padding: 16px 16px 40px;
+  }
+
+  .inv-title h1,
+  .inv-title p {
+    white-space: normal;
+  }
+
+  .inv-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .inv-search {
+    flex: 1 1 260px;
+    min-width: 0;
+  }
+
+  .inv-search input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .add-medicine-btn {
+    flex: 0 0 auto;
+  }
+
+  .notif-dd {
+    width: 320px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+@media (max-width: 900px) {
+  .inv-main {
+    padding: 14px 14px 36px;
+  }
+
+  .inv-topbar {
+    gap: 12px;
+  }
+
+  .inv-title h1 {
+    font-size: 20px;
+    line-height: 1.3;
+  }
+
+  .inv-title p {
+    line-height: 1.4;
+  }
+
+  .management-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .inventory-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .management-table table,
+  .inventory-table table {
+    min-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bonus-management-content,
+  .scheme-management-content {
+    padding: 20px;
+    margin: 12px;
+    border-radius: 12px;
+  }
+
+  .bonus-management-content h2,
+  .scheme-management-content h2 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+
+  .bonus-management-content p,
+  .scheme-management-content p {
+    font-size: 1rem;
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+
+  .coming-soon {
+    padding: 40px 16px;
+  }
+
+  .soon-icon {
+    font-size: 3rem;
+  }
+
+  .coming-soon h3 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+
+  .coming-soon p {
+    font-size: 1rem;
+  }
+
+  .management-header {
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .management-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-edit,
+  .btn-delete,
+  .btn-update,
+  .btn-cancel,
+  .btn-submit {
+    min-height: 44px;
+  }
+
+  .form-container,
+  .table-container {
+    padding: 20px;
+    margin: 12px;
+    border-radius: 12px;
+  }
+
+  .form-container h3,
+  .table-container h3 {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions > * {
+    width: 100%;
+  }
+
+  .gifts-selection {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .gift-option {
+    padding: 12px;
+  }
+
+  .gift-info {
+    align-items: flex-start;
+    gap: 8px;
+    flex-direction: column;
+  }
+
+  .inv-main {
+    padding: 12px 12px 28px;
+  }
+
+  .inv-topbar {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .inv-title h1 {
+    font-size: 18px;
+  }
+
+  .inv-title p {
+    font-size: 12px;
+  }
+
+  .inv-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-left: 0;
+  }
+
+  .inv-search {
+    width: 100%;
+  }
+
+  .inv-search input {
+    width: 100%;
+  }
+
+  .add-medicine-btn {
+    width: 100%;
+  }
+
+  .inv-stat {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .inv-stat__value {
+    font-size: 20px;
+  }
+
+  .inventory-table thead th,
+  .inventory-table tbody td,
+  .management-table th,
+  .management-table td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  .inv-modal-overlay {
+    padding: 10px;
+  }
+
+  .inv-modal {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 14px;
+  }
+
+  .modal-header {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .modal-header h2 {
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .inv-modal form {
+    padding: 12px;
+  }
+
+  .form-section {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .inv-modal .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .inv-modal .modal-actions > * {
+    width: 100%;
+  }
+
+  .notif-dd {
+    right: 0;
+    width: 300px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .notif-head {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .mark-read-btn,
+  .mark-all-btn {
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 640px) {
+  .inv-sidebar {
+    width: 260px !important;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .notif-dd {
+    position: fixed;
+    top: 70px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+
+  .notif-list {
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .bonus-management-content,
+  .scheme-management-content,
+  .form-container,
+  .table-container {
+    padding: 16px;
+    margin: 10px;
+  }
+
+  .bonus-management-content h2,
+  .scheme-management-content h2,
+  .management-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .bonus-management-content p,
+  .scheme-management-content p {
+    font-size: 0.95rem;
+  }
+
+  .coming-soon {
+    padding: 28px 14px;
+  }
+
+  .soon-icon {
+    font-size: 2.5rem;
+  }
+
+  .coming-soon h3 {
+    font-size: 1.1rem;
+  }
+
+  .coming-soon p {
+    font-size: 0.95rem;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-edit,
+  .btn-delete {
+    width: 100%;
+    padding: 12px 16px;
+  }
+
+  .btn-edit {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .inv-search input {
+    font-size: 16px;
+  }
+
+  .inv-main {
+    padding: 10px 10px 24px;
+  }
+
+  .inv-topbar {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .inv-burger {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .inv-title h1 {
+    font-size: 16px;
+  }
+
+  .inv-title p {
+    font-size: 11px;
+  }
+
+  .inv-stat__label {
+    font-size: 11px;
+  }
+
+  .inv-stat__value {
+    font-size: 18px;
+  }
+
+  .category-badge,
+  .status-badge {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .btn-update,
+  .btn-delete {
+    display: block;
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .btn-update {
+    margin-bottom: 8px;
+  }
+
+  .inv-modal-overlay {
+    padding: 8px;
+  }
+
+  .inv-modal {
+    border-radius: 12px;
+  }
+
+  .close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .notif-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .notif-dd {
+    top: 64px;
+    right: 8px;
+    left: 8px;
+  }
+
+  .notif-item {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .notif-ic {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .notif-item-title {
+    font-size: 12px;
+  }
+
+  .notif-item-text {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .bonus-management-content,
+  .scheme-management-content,
+  .form-container,
+  .table-container {
+    padding: 14px;
+    margin: 8px;
+  }
+
+  .inv-main {
+    padding: 8px 8px 20px;
+  }
+
+  .inv-topbar {
+    padding: 8px;
+  }
+
+  .inv-title h1 {
+    font-size: 15px;
+  }
+
+  .inv-title p {
+    font-size: 10px;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notif-dd {
+    top: 60px;
+  }
+
+  .mark-read-btn,
+  .mark-all-btn {
+    width: 100%;
+  }
+}
