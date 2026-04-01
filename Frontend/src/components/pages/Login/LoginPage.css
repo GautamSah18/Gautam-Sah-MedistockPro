@@ -1,4 +1,4 @@
-.body {
+body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -11,14 +11,7 @@
     sans-serif;
 }
 
-.login-container {
-  width: 100%;
-  max-width: 450px;
-  padding: 20px;
-  margin: 0 420px 0 0;
-  box-sizing: border-box;
-  transform: translateX(200px);
-}
+.login-container { width: 100%; max-width: 450px; padding: 20px; margin: 0 420px 0 0; box-sizing: border-box; transform: translateX(200px); }
 
 .logo-container {
   text-align: center;
@@ -269,20 +262,75 @@
   margin: 0 10px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .login-container {
-    padding: 15px;
+    max-width: 100%;
+    padding: 16px;
+    margin: 0 auto;
+    transform: none;
   }
-  
+
   .login-card {
-    padding: 30px 20px;
+    padding: 28px 20px;
+    border-radius: 12px;
   }
-  
+
+  .logo-container {
+    margin-bottom: 20px;
+  }
+
   .logo-container h1 {
     font-size: 24px;
   }
-  
+
   .login-header h2 {
     font-size: 24px;
+  }
+
+  .login-header p {
+    font-size: 14px;
+  }
+
+  .form-group input,
+  .role-dropdown,
+  .submit-btn {
+    min-height: 44px;
+  }
+
+  .footer-links {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 12px;
+  }
+
+  .login-card {
+    padding: 22px 16px;
+  }
+
+  .logo-icon {
+    font-size: 38px;
+  }
+
+  .logo-container h1 {
+    font-size: 22px;
+  }
+
+  .login-header h2 {
+    font-size: 22px;
+  }
+
+  .submit-btn,
+  .back-btn {
+    width: 100%;
+  }
+
+  .footer-links span {
+    display: block;
+    margin: 6px 0;
   }
 }
