@@ -6,13 +6,9 @@ from django.utils import timezone
 from datetime import timedelta
 import random
 import string
-
 from .managers import CustomUserManager
 
-
-
 # Custom User Model
-
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('admin', 'Admin'),

@@ -57,7 +57,8 @@
 .register-card {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+              0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 40px;
   width: 100%;
   max-width: 420px;
@@ -106,6 +107,7 @@
   width: 100%;
   padding: 10px 14px;
   background: #ffffff;
+  background-color: #ffffff;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
@@ -113,17 +115,38 @@
   transition: all 0.2s;
   box-sizing: border-box;
   height: 42px;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: #4f46e5;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  background: #ffffff;
+  background-color: #ffffff;
 }
 
 .form-group input::placeholder {
   color: #9ca3af;
   font-weight: 400;
+}
+
+/* Autofill fix */
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus,
+.form-group input:-webkit-autofill:active,
+.password-input input:-webkit-autofill,
+.password-input input:-webkit-autofill:hover,
+.password-input input:-webkit-autofill:focus,
+.password-input input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  caret-color: #111827;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Password input container */
@@ -135,8 +158,32 @@
 }
 
 .password-input input {
-  padding-right: 36px;
   width: 100%;
+  padding: 10px 36px 10px 14px;
+  background: #ffffff;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #111827;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  height: 42px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.password-input input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  background: #ffffff;
+  background-color: #ffffff;
+}
+
+.password-input input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
 }
 
 .toggle-password {
@@ -191,10 +238,21 @@
 }
 
 /* Password strength color indicators */
-.strength-too-short { background-color: #ff4d4f; }
-.strength-weak { background-color: #ffa940; }
-.strength-good { background-color: #ffd666; }
-.strength-strong { background-color: #52c41a; }
+.strength-too-short {
+  background-color: #ff4d4f;
+}
+
+.strength-weak {
+  background-color: #ffa940;
+}
+
+.strength-good {
+  background-color: #ffd666;
+}
+
+.strength-strong {
+  background-color: #52c41a;
+}
 
 /* Submit button */
 .submit-btn {
@@ -272,17 +330,21 @@
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   font-size: 16px;
-  background-color: white;
+  background-color: #ffffff;
+  color: #111827;
   cursor: pointer;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
   box-sizing: border-box;
   min-height: 44px;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .role-dropdown:focus {
   outline: none;
   border-color: #4a90e2;
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  background-color: #ffffff;
 }
 
 .role-dropdown option {
@@ -361,7 +423,8 @@
     font-size: 13px;
   }
 
-  .form-group input {
+  .form-group input,
+  .password-input input {
     height: 42px;
     font-size: 14px;
   }
@@ -447,10 +510,15 @@
   }
 
   .form-group input,
+  .password-input input,
   .role-dropdown {
     height: 40px;
     padding: 10px 12px;
     font-size: 14px;
+  }
+
+  .password-input input {
+    padding-right: 36px;
   }
 
   .submit-btn {

@@ -34,7 +34,7 @@ class Order(models.Model):
     status = models.CharField(
         max_length=30,
         choices=STATUS_CHOICES,
-        default="received"   # ✅ FIXED
+        default="received"
     )
 
     is_accepted = models.BooleanField(

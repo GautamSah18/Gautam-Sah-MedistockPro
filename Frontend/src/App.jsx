@@ -8,6 +8,9 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import LoginPage from "./components/pages/Login/LoginPage";
 import OTPVerification from "./components/pages/Login/OtpVerification";
 import Register from "./components/pages/Login/Register";
+import ForgotPassword from "./components/pages/Login/ForgotPassword";
+import ForgotPasswordVerify from "./components/pages/Login/ForgotPasswordVerify";
+import ResetPassword from "./components/pages/Login/ResetPassword";
 
 // Docs
 import Document from "./components/pages/Login/Document";
@@ -73,6 +76,9 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-otp" element={<OTPVerification />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/forgot-password/verify" element={<ForgotPasswordVerify />} />
+            <Route path="/forgot-password/reset" element={<ResetPassword />} />
 
             {/*  REGISTRATION STEP 2 */}
             <Route path="/upload-documents" element={<Document />} />

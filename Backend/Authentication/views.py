@@ -17,6 +17,8 @@ from .serializers import (
     UserProfileSerializer,
     OTPVerificationSerializer,
     ResendOTPSerializer,
+    ForgotPasswordSerializer,
+    ResetPasswordSerializer,
 )
 from .forms import RegistrationStep1Form, RegistrationStep2Form, LoginForm
 from rest_framework import serializers
@@ -376,3 +378,66 @@ def admin_user_detail(request, pk):
     elif request.method == 'DELETE':
         user.delete()
         return Response({"message": "User deleted successfully"}, status=204)
+
+# Forgot Password
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def forgot_password_request(request):
+    serializer = ForgotPasswordSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    
+    email = serializer.validated_data['email']
+    user = CustomUser.objects.get(email=email)
+    
+    otp = OTP.generate_otp(user)
+    
+    send_mail(
+        "Medistock Password Reset OTP",
+        f"Your OTP for password reset is {otp.code}. It expires in 10 minutes.",
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
+    
+    return Response(
+        {"message": "OTP sent to your email address."},
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def forgot_password_verify(request):
+    serializer = OTPVerificationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    
+    # OTPVerificationSerializer already marks it as verified on validation success
+    return Response(
+        {"message": "OTP verified successfully. You can now reset your password."},
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def forgot_password_reset(request):
+    serializer = ResetPasswordSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    
+    user = serializer.validated_data['user']
+    new_password = serializer.validated_data['new_password']
+    otp_obj = serializer.validated_data['otp_obj']
+    
+    # Securely update the password
+    user.set_password(new_password)
+    user.save()
+    
+    # Clear the OTP object
+    otp_obj.delete()
+    
+    return Response(
+        {"message": "Password reset successfully. You can now log in with your new password."},
+        status=status.HTTP_200_OK
+    )

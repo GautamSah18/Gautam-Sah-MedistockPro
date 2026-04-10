@@ -20,4 +20,9 @@ urlpatterns = [
     # Admin User Management
     path("admin/users/", views.admin_user_list, name="admin_user_list"),
     path("admin/users/<int:pk>/", views.admin_user_detail, name="admin_user_detail"),
+
+    # Forgot Password
+    path("forgot-password/request/", views.forgot_password_request, name="forgot_password_request"),
+    path("forgot-password/verify/", views.forgot_password_verify, name="forgot_password_verify"),
+    path("forgot-password/reset/", views.forgot_password_reset, name="forgot_password_reset"),
 ]

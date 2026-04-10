@@ -170,3 +170,47 @@ class ResendOTPSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+
+# ==========================
+# Forgot Password Serializers
+# ==========================
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("User with this email does not exist.")
+        return value
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+        
+        try:
+            user = CustomUser.objects.get(email=data['email'])
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("User not found")
+
+        try:
+            otp = OTP.objects.filter(
+                user=user,
+                code=data['otp'],
+                is_verified=True
+            ).latest('created_at')
+        except OTP.DoesNotExist:
+            raise serializers.ValidationError("Invalid or unverified OTP")
+
+        if otp.is_expired():
+            raise serializers.ValidationError("OTP has expired")
+
+        data['user'] = user
+        data['otp_obj'] = otp
+        return data
