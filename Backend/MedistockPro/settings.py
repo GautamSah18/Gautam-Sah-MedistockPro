@@ -31,9 +31,13 @@ SECRET_KEY = 'django-insecure-ga-_=v8rugvir=h)s5(c6m7p##1b6m$e*8heq4_76)(de2yd$c
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [  ".onrender.com",
+    "localhost",
+    "127.0.0.1",]
 
-
+RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 # Application definition
 
 INSTALLED_APPS = [

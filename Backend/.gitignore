@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables
+.env
+.env.*
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media & static (optional depending on setup)
+media/
+staticfiles/
+
+# Migrations (optional - only if you don’t want to track)
+# */migrations/
+# !*/migrations/__init__.py
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# PyCharm
+*.iml
+
+# Testing / coverage
+.coverage
+htmlcov/
+.tox/
+.nox/
+pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Secrets
+*.pem
+*.key
+
+# Build files
+build/
+dist/
+*.egg-info/
+
+# Node (if using frontend inside backend)
+node_modules/
+
+# Docker (if used)
+*.pid
+*.seed
+*.pid.lock
+
+# Render / deployment
+.render/

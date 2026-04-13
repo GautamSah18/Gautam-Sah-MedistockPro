@@ -173,7 +173,7 @@
 
 .secondary-btn {
   background: #e9ecef;
-  color: #495057;
+  color: #3486d8;
 }
 
 .secondary-btn:hover {
@@ -198,6 +198,10 @@
   transform: none;
   box-shadow: none;
 }
+.apply-scheme-btn{
+ background: rgb(192, 198, 243);
+}
+
 
 /* Responsive Design */
 @media (max-width: 768px) {
