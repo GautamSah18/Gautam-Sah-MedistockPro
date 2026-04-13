@@ -31,6 +31,8 @@ const Register = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -51,18 +53,22 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setErrorMsg("");
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      setErrorMsg("Passwords don't match!");
       return;
     }
 
     try {
+      setLoading(true);
+
       const res = await api.post("/api/auth/register/step1/", {
         email: formData.email,
         password: formData.password,
@@ -72,7 +78,7 @@ const Register = () => {
 
       console.log("Registration response:", res.data);
 
-      // ✅ Save email and password for OTP auto-login
+      // Save email and password for OTP auto-login
       localStorage.setItem("otp_email", formData.email);
       localStorage.setItem("otp_password", formData.password);
 
@@ -83,10 +89,21 @@ const Register = () => {
 
     } catch (err) {
       console.error(err);
-      alert(
-        err.response?.data?.error ||
-        "Registration failed. Please try again."
-      );
+
+      // Parse backend field-level errors like { email: ["Email already registered"] }
+      const errorData = err.response?.data;
+      if (errorData && typeof errorData === "object") {
+        const messages = Object.entries(errorData)
+          .map(([field, msgs]) =>
+            `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`
+          )
+          .join("\n");
+        setErrorMsg(messages);
+      } else {
+        setErrorMsg(errorData?.error || "Registration failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -109,6 +126,7 @@ const Register = () => {
                 onChange={handleChange}
                 placeholder="name@company.com"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -122,6 +140,7 @@ const Register = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                 />
                 <span onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -156,6 +175,7 @@ const Register = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                 />
                 <span onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                   {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
@@ -170,14 +190,50 @@ const Register = () => {
                 value={formData.role}
                 onChange={handleChange}
                 required
+                disabled={loading}
               >
                 <option value="customer">Customer</option>
                 <option value="delivery">Delivery Person</option>
               </select>
             </div>
 
-            <button type="submit" className="submit-btn">
-              Register
+            {errorMsg && (
+              <div
+                style={{
+                  color: "#ff4444",
+                  fontSize: "0.875rem",
+                  marginBottom: "12px",
+                  whiteSpace: "pre-line",
+                  backgroundColor: "#fff0f0",
+                  padding: "10px 14px",
+                  borderRadius: "6px",
+                  border: "1px solid #ffcccc",
+                }}
+              >
+                {errorMsg}
+              </div>
+            )}
+
+            {loading && (
+              <div
+                style={{
+                  color: "#888",
+                  fontSize: "0.8rem",
+                  marginBottom: "8px",
+                  textAlign: "center",
+                }}
+              >
+                Please wait, this may take up to 30 seconds on first request...
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={loading}
+              style={{ opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer" }}
+            >
+              {loading ? "Registering..." : "Register"}
             </button>
           </form>
 
