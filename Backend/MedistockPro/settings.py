@@ -14,6 +14,9 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 
+load_dotenv()
+
+
 
 
 
@@ -26,10 +29,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ga-_=v8rugvir=h)s5(c6m7p##1b6m$e*8heq4_76)(de2yd$c'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ga-_=v8rugvir=h)s5(c6m7p##1b6m$e*8heq4_76)(de2yd$c')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = [  ".onrender.com",
     "localhost",
@@ -38,6 +41,14 @@ ALLOWED_HOSTS = [  ".onrender.com",
 RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# Security settings for production
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    USE_X_FORWARDED_HOST = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -121,11 +132,13 @@ WSGI_APPLICATION = 'MedistockPro.wsgi.application'
 
 ASGI_APPLICATION = "MedistockPro.asgi.application"
 
+REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379")
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [REDIS_URL],
         },
     },
 }
@@ -268,9 +281,9 @@ SIMPLE_JWT = {
 
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dfei1ajh6',
-    'API_KEY': '249692913898242',
-    'API_SECRET': 'JqhQhgiVUIA0DvzmtLl5ITtrYbQ',
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', 'dfei1ajh6'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY', '249692913898242'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', 'JqhQhgiVUIA0DvzmtLl5ITtrYbQ'),
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
@@ -307,7 +320,6 @@ DEFAULT_FROM_EMAIL = os.getenv(
     "Medistock Pro <gautamsah4271@gmail.com>"
 )
 
-load_dotenv()
 # File upload settings
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB

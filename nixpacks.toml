@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["python3", "gcc"]
+
+[phases.install]
+cmds = ["pip install -r Backend/requirements.txt"]
+
+[phases.build]
+cmds = ["chmod +x Backend/build.sh", "cd Backend && ./build.sh"]
+
+[start]
+cmd = "cd Backend && daphne MedistockPro.asgi:application --port $PORT --bind 0.0.0.0"
