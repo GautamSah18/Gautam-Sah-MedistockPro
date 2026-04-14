@@ -8,7 +8,11 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.core.mail import send_mail
+import logging
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
+
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -43,20 +47,27 @@ def registration_step1(request):
     user.save()
 
     otp = OTP.generate_otp(user)
-
-    send_mail(
-        "Medistock OTP Verification",
-        f"Your OTP is {otp.code}. It expires in 10 minutes.",
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    
+    # Try sending email but don't crash if it fails
+    email_sent = False
+    try:
+        send_mail(
+            "Medistock OTP Verification",
+            f"Your OTP is {otp.code}. It expires in 10 minutes.",
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        email_sent = True
+    except Exception as e:
+        logger.error(f"Failed to send registration OTP to {user.email}: {str(e)}")
 
     return Response(
         {
-            "message": "OTP sent to email",
+            "message": "OTP sent to email" if email_sent else "Registration successful, but failed to send OTP email. Please contact support or check your email settings.",
             "user_id": user.id,
             "email": user.email,
+            "email_status": "sent" if email_sent else "failed"
         },
         status=201
     )
@@ -70,14 +81,23 @@ def send_otp(request):
 
     user = CustomUser.objects.get(email=serializer.validated_data['email'])
     otp = OTP.generate_otp(user)
+    
+    email_sent = False
+    try:
+        send_mail(
+            "Medistock OTP",
+            f"Your OTP is {otp.code}. It expires in 10 minutes.",
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        email_sent = True
+    except Exception as e:
+        logger.error(f"Failed to resend OTP to {user.email}: {str(e)}")
 
-    send_mail(
-        "Medistock OTP",
-        f"Your OTP is {otp.code}. It expires in 10 minutes.",
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    if not email_sent:
+        return Response({"error": "Failed to send OTP email. Please check your SMTP settings."}, status=500)
+        
     return Response({"message": "OTP resent"}, status=200)
 
 # Verify OTP
@@ -393,14 +413,26 @@ def forgot_password_request(request):
     
     otp = OTP.generate_otp(user)
     
-    send_mail(
-        "Medistock Password Reset OTP",
-        f"Your OTP for password reset is {otp.code}. It expires in 10 minutes.",
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    # Try sending email but don't crash if it fails
+    email_sent = False
+    try:
+        send_mail(
+            "Medistock Password Reset OTP",
+            f"Your OTP for password reset is {otp.code}. It expires in 10 minutes.",
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        email_sent = True
+    except Exception as e:
+        logger.error(f"Failed to send password reset OTP to {user.email}: {str(e)}")
     
+    if not email_sent:
+        return Response(
+            {"error": "Failed to send reset email. Please check your SMTP settings."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
     return Response(
         {"message": "OTP sent to your email address."},
         status=status.HTTP_200_OK
