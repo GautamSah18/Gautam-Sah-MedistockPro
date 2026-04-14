@@ -34,9 +34,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ga-_=v8rugvir=h)s5(c6m7p##
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = [  ".onrender.com",
+ALLOWED_HOSTS = [
+    ".up.railway.app",
+    ".railway.app",
     "localhost",
-    "127.0.0.1",]
+    "127.0.0.1",
+]
 
 RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME:
