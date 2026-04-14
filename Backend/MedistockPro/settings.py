@@ -322,6 +322,7 @@ DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL",
     "Medistock Pro <gautamsah4271@gmail.com>"
 )
+EMAIL_TIMEOUT = 10
 
 # File upload settings
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
