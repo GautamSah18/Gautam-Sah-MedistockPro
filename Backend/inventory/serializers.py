@@ -10,7 +10,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class MedicineSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(
-        source='category.name',
+        source='category',
         read_only=True,
         allow_null=True
     )
@@ -21,8 +21,6 @@ class MedicineSerializer(serializers.ModelSerializer):
         model = Medicine
         fields = '__all__'
         read_only_fields = ['status', 'created_at', 'updated_at']
-
-
 
     def validate(self, data):
         expiry_date = data.get(
@@ -39,8 +37,14 @@ class MedicineSerializer(serializers.ModelSerializer):
                 "Expiry date must be after manufacture date"
             )
 
-        stock = data.get('stock')
-        max_stock = data.get('max_stock')
+        stock = data.get(
+            'stock',
+            self.instance.stock if self.instance else None
+        )
+        max_stock = data.get(
+            'max_stock',
+            self.instance.max_stock if self.instance else None
+        )
 
         if stock is not None and max_stock is not None and stock > max_stock:
             raise serializers.ValidationError(
@@ -52,7 +56,7 @@ class MedicineSerializer(serializers.ModelSerializer):
 
 class PublicMedicineSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(
-        source='category.name',
+        source='category',
         read_only=True,
         allow_null=True
     )
@@ -63,8 +67,6 @@ class PublicMedicineSerializer(serializers.ModelSerializer):
         model = Medicine
         fields = '__all__'
         read_only_fields = ['status', 'created_at', 'updated_at']
-
-
 
 
 class StockUpdateSerializer(serializers.Serializer):
@@ -83,16 +85,18 @@ class StockUpdateSerializer(serializers.Serializer):
 
         return data
 
+
 class SeasonalMedicineSerializer(serializers.ModelSerializer):
     medicine_details = MedicineSerializer(source='medicine', read_only=True)
-    
+
     class Meta:
         model = SeasonalMedicine
         fields = ['id', 'medicine', 'season', 'medicine_details']
-        
+
+
 class PublicSeasonalMedicineSerializer(serializers.ModelSerializer):
     medicine = PublicMedicineSerializer(read_only=True)
-    
+
     class Meta:
         model = SeasonalMedicine
         fields = ['id', 'season', 'medicine']

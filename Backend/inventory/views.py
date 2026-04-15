@@ -1,11 +1,13 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Sum, F
 from django.utils import timezone
 from datetime import timedelta
+import traceback
+
 from .models import Medicine, Category, SeasonalMedicine
 from .utils import get_current_season
 from .serializers import (
@@ -23,8 +25,7 @@ class MedicineViewSet(viewsets.ModelViewSet):
     queryset = Medicine.objects.all()
     serializer_class = MedicineSerializer
     permission_classes = [IsAdmin]
-
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     filter_backends = [
         DjangoFilterBackend,
@@ -35,13 +36,30 @@ class MedicineViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'generic_name', 'company', 'batch_no']
     ordering_fields = ['name', 'stock', 'expiry_date', 'created_at']
 
+    def create(self, request, *args, **kwargs):
+        try:
+            print("REQUEST DATA:", request.data)
+            print("REQUEST FILES:", request.FILES)
+
+            serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                print("SERIALIZER ERRORS:", serializer.errors)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+        except Exception as e:
+            print("MEDICINE CREATE ERROR:", str(e))
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def perform_create(self, serializer):
-        username = getattr(self.request.user, 'username', 'admin')
-        serializer.save(created_by=username)
+        serializer.save()
 
     def perform_update(self, serializer):
-        username = getattr(self.request.user, 'username', 'admin')
-        serializer.save(updated_by=username)
+        serializer.save()
 
     @action(detail=True, methods=['post'])
     def update_stock(self, request, pk=None):
@@ -140,6 +158,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
+
 class SeasonalMedicineViewSet(viewsets.ModelViewSet):
     queryset = SeasonalMedicine.objects.all()
     serializer_class = SeasonalMedicineSerializer
@@ -148,13 +167,18 @@ class SeasonalMedicineViewSet(viewsets.ModelViewSet):
     search_fields = ['medicine__name']
     filterset_fields = ['season']
 
+
 class PublicSeasonalMedicineViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PublicSeasonalMedicineSerializer
-    
+
     def get_queryset(self):
         season = get_current_season()
-        return SeasonalMedicine.objects.filter(season=season, medicine__is_active=True, medicine__stock__gt=0)
-    
+        return SeasonalMedicine.objects.filter(
+            season=season,
+            medicine__is_active=True,
+            medicine__stock__gt=0
+        )
+
     def get_permissions(self):
         from rest_framework.permissions import IsAuthenticated
         return [IsAuthenticated()]
@@ -163,7 +187,6 @@ class PublicSeasonalMedicineViewSet(viewsets.ReadOnlyModelViewSet):
         season = get_current_season()
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        # Format exactly as requested
         medicines = [item['medicine'] for item in serializer.data if item.get('medicine')]
         return Response({
             "season": season,
