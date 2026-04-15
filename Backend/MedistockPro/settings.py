@@ -31,27 +31,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ga-_=v8rugvir=h)s5(c6m7p##1b6m$e*8heq4_76)(de2yd$c')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = True
 
 ALLOWED_HOSTS = [
-    ".up.railway.app",
-    ".railway.app",
     "localhost",
     "127.0.0.1",
 ]
-
-RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-
-# Security settings for production
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    USE_X_FORWARDED_HOST = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -153,32 +138,16 @@ CHANNEL_LAYERS = {
 }
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-import os
-import dj_database_url
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=False
-        )
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "MedistockPro",
+        "USER": "postgres",
+        "PASSWORD": "12345",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "MedistockPro",
-            "USER": "postgres",
-            "PASSWORD": "12345",
-            "HOST": "localhost",
-            "PORT": "5432",
-        }
-    }
+}
 
 
 
@@ -230,20 +199,12 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://medistockprov2.netlify.app",
 ]
-# CSRF settings for API endpoints
+
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://medistockprov2.netlify.app",
 ]
-
-CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS
-
-# Allow CSRF cookie to be sent with cross-origin requests
-CSRF_COOKIE_SAMESITE = None
-CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
 
 CORS_ALLOW_ALL_ORIGINS = True
 
