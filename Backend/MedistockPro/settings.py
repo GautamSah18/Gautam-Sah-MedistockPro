@@ -336,9 +336,6 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
 
 
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "onboarding@resend.dev")
-
 
 
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")
