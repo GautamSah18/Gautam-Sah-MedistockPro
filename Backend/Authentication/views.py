@@ -190,9 +190,12 @@ def registration_step2(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def user_login(request):
+    logger.info(f"Login attempt for email: {request.data.get('email')}, role: {request.data.get('role')}")
+    
     form = LoginForm(request.data)
 
     if not form.is_valid():
+        logger.warning(f"Login form validation failed: {form.errors}")
         return Response(form.errors, status=400)
 
     user = authenticate(
@@ -201,14 +204,29 @@ def user_login(request):
         password=form.cleaned_data['password']
     )
 
-    if not user or user.role != form.cleaned_data['role']:
-        return Response({"error": "Invalid credentials"}, status=400)
+    if not user:
+        # Check if user exists at all to give a better error
+        try:
+            existing = CustomUser.objects.get(email=form.cleaned_data['email'])
+            if not existing.is_active:
+                logger.warning(f"Login failed: account not active for {form.cleaned_data['email']}")
+                return Response({"error": "Account is not active. Please verify your email first."}, status=400)
+            logger.warning(f"Login failed: wrong password for {form.cleaned_data['email']}")
+        except CustomUser.DoesNotExist:
+            logger.warning(f"Login failed: no user found with email {form.cleaned_data['email']}")
+        return Response({"error": "Invalid email or password"}, status=400)
+    
+    if user.role != form.cleaned_data['role']:
+        logger.warning(f"Login failed: role mismatch for {user.email} (expected {form.cleaned_data['role']}, got {user.role})")
+        return Response({"error": f"This account is registered as '{user.role}', not '{form.cleaned_data['role']}'"}, status=400)
 
     if not user.can_login():
-        return Response({"error": "Account not approved"}, status=403)
+        logger.warning(f"Login failed: can_login() returned False for {user.email} (approved={user.is_approved}, reg_complete={user.registration_complete})")
+        return Response({"error": "Account not approved yet. Please wait for admin approval."}, status=403)
 
     refresh = RefreshToken.for_user(user)
 
+    logger.info(f"Login successful for {user.email}")
     return Response({
         "access": str(refresh.access_token),
         "refresh": str(refresh),

@@ -85,6 +85,12 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = "Authentication.CustomUser"
 
+# Allow authenticate() to work for inactive users too
+# (our login view handles is_active checks via can_login())
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.AllowAllUsersModelBackend',
+]
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',

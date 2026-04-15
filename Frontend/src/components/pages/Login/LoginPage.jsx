@@ -131,6 +131,8 @@ const Login = () => {
       console.error("Login error:", err);
       
       if (err.response) {
+        const data = err.response.data;
+
         if (err.response.status === 401) {
           setErrors(prev => ({
             ...prev,
@@ -139,12 +141,30 @@ const Login = () => {
         } else if (err.response.status === 403) {
           setErrors(prev => ({
             ...prev,
-            general: 'Access denied for this role'
+            general: data?.error || 'Account not approved. Please contact administrator.'
+          }));
+        } else if (err.response.status === 400) {
+          // Backend returns {"error": "..."} or Django form errors {"field": ["msg"]}
+          let errorMsg = '';
+          if (data?.error) {
+            errorMsg = data.error;
+          } else if (typeof data === 'object') {
+            // Django form validation errors come as {field: [errors]}
+            const messages = Object.entries(data)
+              .map(([key, val]) => Array.isArray(val) ? val.join(', ') : val)
+              .join('. ');
+            errorMsg = messages || 'Login failed';
+          } else {
+            errorMsg = 'Login failed';
+          }
+          setErrors(prev => ({
+            ...prev,
+            general: errorMsg
           }));
         } else {
           setErrors(prev => ({
             ...prev,
-            general: err.response.data?.message || 'Login failed'
+            general: data?.error || data?.message || 'Login failed'
           }));
         }
       } else {
