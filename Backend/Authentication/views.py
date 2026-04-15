@@ -7,10 +7,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
-from django.core.mail import send_mail
 from django.conf import settings
 
 import logging
+import resend
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
@@ -26,6 +26,24 @@ from .serializers import (
 from .forms import RegistrationStep1Form, RegistrationStep2Form, LoginForm
 
 logger = logging.getLogger(__name__)
+
+resend.api_key = settings.RESEND_API_KEY
+
+
+def send_resend_email(subject, message, recipient_list):
+    try:
+        for recipient in recipient_list:
+            resend.Emails.send({
+                "from": settings.DEFAULT_FROM_EMAIL,
+                "to": [recipient],
+                "subject": subject,
+                "html": f"<p>{message}</p>",
+            })
+            print(f"Email sent successfully to {recipient}")
+    except Exception as e:
+        logger.error(f"Resend email failed for {recipient_list}: {str(e)}")
+        print(f"Resend email failed for {recipient_list}: {str(e)}")
+        raise
 
 
 # Registration Step 1
@@ -50,12 +68,10 @@ def registration_step1(request):
         print("Generated registration OTP:", otp.code)
         print("Sending registration OTP to:", user.email)
 
-        send_mail(
+        send_resend_email(
             "Medistock OTP Verification",
             f"Your OTP is {otp.code}. It expires in 10 minutes.",
-            settings.DEFAULT_FROM_EMAIL,
             [user.email],
-            fail_silently=False,
         )
 
         print("Registration OTP email sent successfully")
@@ -90,12 +106,10 @@ def send_otp(request):
         print("Generated resend OTP:", otp.code)
         print("Sending resend OTP to:", user.email)
 
-        send_mail(
+        send_resend_email(
             "Medistock OTP",
             f"Your OTP is {otp.code}. It expires in 10 minutes.",
-            settings.DEFAULT_FROM_EMAIL,
             [user.email],
-            fail_silently=False,
         )
 
         print("Resend OTP email sent successfully")
@@ -118,10 +132,8 @@ def verify_otp(request):
 
     user = serializer.validated_data['user']
 
-    # Activate user
     user.is_active = True
 
-    # Auto-approve delivery persons and provide tokens for auto-login
     if user.role == 'delivery':
         user.registration_complete = True
         user.is_approved = True
@@ -147,7 +159,6 @@ def verify_otp(request):
 
     user.save(update_fields=["is_active"])
 
-    # Allow step 2 (upload documents) for others
     cache.set(f"registration_{user.id}", user.id, timeout=3600)
 
     return Response(
@@ -171,7 +182,10 @@ def registration_step2(request):
     if not cache.get(f"registration_{user_id}"):
         return Response({"error": "Session expired"}, status=400)
 
-    user = CustomUser.objects.get(id=user_id)
+    try:
+        user = CustomUser.objects.get(id=user_id)
+    except CustomUser.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
 
     if not user.otps.filter(is_verified=True).exists():
         return Response({"error": "OTP not verified"}, status=400)
@@ -229,7 +243,6 @@ def user_login(request):
         logger.warning(f"Login failed: role mismatch for {user.email} (expected {form.cleaned_data['role']}, got {user.role})")
         return Response({"error": f"This account is registered as '{user.role}', not '{form.cleaned_data['role']}'"}, status=400)
 
-    # Admin must log in before any other user can log in
     admin_logged_in_before = CustomUser.objects.filter(role='admin', last_login__isnull=False).exists()
     if user.role != 'admin' and not admin_logged_in_before:
         logger.warning(f"Login blocked: admin has not logged in yet. User={user.email}")
@@ -239,7 +252,10 @@ def user_login(request):
         )
 
     if not user.can_login():
-        logger.warning(f"Login failed: can_login() returned False for {user.email} (approved={user.is_approved}, reg_complete={user.registration_complete})")
+        logger.warning(
+            f"Login failed: can_login() returned False for {user.email} "
+            f"(approved={user.is_approved}, reg_complete={user.registration_complete})"
+        )
         return Response({"error": "Account not approved yet. Please wait for admin approval."}, status=403)
 
     refresh = RefreshToken.for_user(user)
@@ -283,7 +299,6 @@ def logout_view(request):
 def user_profile(request):
     user = request.user
 
-    # GET profile
     if request.method == 'GET':
         serializer = UserProfileSerializer(user)
         data = serializer.data
@@ -295,7 +310,6 @@ def user_profile(request):
         )
         return Response(data, status=200)
 
-    # UPDATE profile
     serializer = UserProfileSerializer(
         user,
         data=request.data,
@@ -444,12 +458,10 @@ def forgot_password_request(request):
         print("Generated forgot password OTP:", otp.code)
         print("Sending forgot password OTP to:", user.email)
 
-        send_mail(
+        send_resend_email(
             "Medistock Password Reset OTP",
             f"Your OTP for password reset is {otp.code}. It expires in 10 minutes.",
-            settings.DEFAULT_FROM_EMAIL,
             [user.email],
-            fail_silently=False,
         )
 
         print("Forgot password OTP email sent successfully")
