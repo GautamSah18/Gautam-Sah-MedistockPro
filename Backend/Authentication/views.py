@@ -243,14 +243,6 @@ def user_login(request):
         logger.warning(f"Login failed: role mismatch for {user.email} (expected {form.cleaned_data['role']}, got {user.role})")
         return Response({"error": f"This account is registered as '{user.role}', not '{form.cleaned_data['role']}'"}, status=400)
 
-    admin_logged_in_before = CustomUser.objects.filter(role='admin', last_login__isnull=False).exists()
-    if user.role != 'admin' and not admin_logged_in_before:
-        logger.warning(f"Login blocked: admin has not logged in yet. User={user.email}")
-        return Response(
-            {"error": "Admin must log in first before other users can access the system."},
-            status=403
-        )
-
     if not user.can_login():
         logger.warning(
             f"Login failed: can_login() returned False for {user.email} "
