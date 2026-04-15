@@ -10,7 +10,7 @@ from django.core.cache import cache
 from django.conf import settings
 
 import logging
-import resend
+import requests
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
@@ -27,22 +27,39 @@ from .forms import RegistrationStep1Form, RegistrationStep2Form, LoginForm
 
 logger = logging.getLogger(__name__)
 
-resend.api_key = settings.RESEND_API_KEY
 
+def send_brevo_email(subject, message, recipient_list):
+    url = "https://api.brevo.com/v3/smtp/email"
 
-def send_resend_email(subject, message, recipient_list):
+    headers = {
+        "accept": "application/json",
+        "api-key": settings.BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
     try:
-        for recipient in recipient_list:
-            resend.Emails.send({
-                "from": settings.DEFAULT_FROM_EMAIL,
-                "to": [recipient],
+        for email in recipient_list:
+            data = {
+                "sender": {
+                    "name": "Medistock",
+                    "email": settings.DEFAULT_FROM_EMAIL
+                },
+                "to": [
+                    {"email": email}
+                ],
                 "subject": subject,
-                "html": f"<p>{message}</p>",
-            })
-            print(f"Email sent successfully to {recipient}")
+                "htmlContent": f"<p>{message}</p>"
+            }
+
+            response = requests.post(url, json=data, headers=headers, timeout=30)
+            print("Brevo response:", response.status_code, response.text)
+
+            if response.status_code not in [200, 201, 202]:
+                raise Exception(f"Brevo API error: {response.status_code} - {response.text}")
+
     except Exception as e:
-        logger.error(f"Resend email failed for {recipient_list}: {str(e)}")
-        print(f"Resend email failed for {recipient_list}: {str(e)}")
+        logger.error(f"Brevo email failed for {recipient_list}: {str(e)}")
+        print(f"Brevo email failed for {recipient_list}: {str(e)}")
         raise
 
 
@@ -68,7 +85,7 @@ def registration_step1(request):
         print("Generated registration OTP:", otp.code)
         print("Sending registration OTP to:", user.email)
 
-        send_resend_email(
+        send_brevo_email(
             "Medistock OTP Verification",
             f"Your OTP is {otp.code}. It expires in 10 minutes.",
             [user.email],
@@ -106,7 +123,7 @@ def send_otp(request):
         print("Generated resend OTP:", otp.code)
         print("Sending resend OTP to:", user.email)
 
-        send_resend_email(
+        send_brevo_email(
             "Medistock OTP",
             f"Your OTP is {otp.code}. It expires in 10 minutes.",
             [user.email],
@@ -450,7 +467,7 @@ def forgot_password_request(request):
         print("Generated forgot password OTP:", otp.code)
         print("Sending forgot password OTP to:", user.email)
 
-        send_resend_email(
+        send_brevo_email(
             "Medistock Password Reset OTP",
             f"Your OTP for password reset is {otp.code}. It expires in 10 minutes.",
             [user.email],
