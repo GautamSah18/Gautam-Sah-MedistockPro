@@ -11,14 +11,19 @@ from .serializers import ExpiryReturnSerializer
 
 # CUSTOMER APIs
 
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_expiry_return(request):
     serializer = ExpiryReturnSerializer(data=request.data)
 
     if serializer.is_valid():
-        serializer.save(customer=request.user)
+        expiry_request = serializer.save(customer=request.user)
+
+        try:
+            send_expiry_status_email(expiry_request)
+        except Exception as e:
+            print("Expiry return create email failed:", str(e))
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -35,9 +40,7 @@ def my_expiry_returns(request):
     return Response(serializer.data)
 
 
-
 # ADMIN APIs
-
 
 @api_view(["GET"])
 @permission_classes([IsAdminUser])
@@ -60,26 +63,24 @@ def update_expiry_status(request, pk):
     if new_status not in ["Approved", "Rejected"]:
         return Response({"error": "Invalid status"}, status=400)
 
-    # Update Status
     expiry_request.status = new_status
     expiry_request.save()
 
-    # Send Email Notification
-    send_expiry_status_email(expiry_request)
+    try:
+        send_expiry_status_email(expiry_request)
+    except Exception as e:
+        print("Expiry return status email failed:", str(e))
 
     return Response({
-        "message": f"Request {new_status} successfully and email sent"
-    })
-
+        "message": f"Request {new_status} successfully"
+    }, status=200)
 
 
 # EMAIL FUNCTION
 
-
 def send_expiry_status_email(expiry_request):
     customer = expiry_request.customer
 
-    # Skip if no email
     if not customer.email:
         return
 
@@ -91,7 +92,7 @@ def send_expiry_status_email(expiry_request):
     if status_value == "Approved":
         subject = "Expiry Return Approved - Medistock Pro"
         message = f"""
-Dear,
+Dear Customer,
 
 Your expiry return request has been APPROVED.
 
@@ -110,7 +111,7 @@ Medistock Pro Team
     else:
         subject = "Expiry Return Rejected - Medistock Pro"
         message = f"""
-Dear {customer.username},
+Dear Customer,
 
 Your expiry return request has been REJECTED.
 

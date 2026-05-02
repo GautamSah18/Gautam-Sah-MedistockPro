@@ -16,7 +16,13 @@ def create_complaint(request):
     serializer = ComplaintSerializer(data=request.data)
 
     if serializer.is_valid():
-        serializer.save(customer=request.user)
+        complaint = serializer.save(customer=request.user)
+
+        try:
+            send_complaint_email(complaint)
+        except Exception as e:
+            print("Complaint email send failed:", str(e))
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -48,9 +54,13 @@ def update_complaint_status(request, pk):
     complaint.status = new_status
     complaint.save()
 
-    send_complaint_email(complaint)
+    try:
+        send_complaint_email(complaint)
+    except Exception as e:
+        print("Complaint status email failed:", str(e))
 
-    return Response({"message": f"Complaint {new_status} and email sent"})
+    return Response({"message": f"Complaint {new_status} successfully"}, status=200)
+
 
 def send_complaint_email(complaint):
     customer = complaint.customer
@@ -61,7 +71,7 @@ def send_complaint_email(complaint):
     if complaint.status == "Approved":
         subject = "We Apologize - Complaint Acknowledged"
         message = f"""
-Dear,
+Dear Customer,
 
 We sincerely apologize for the inconvenience caused regarding:
 
@@ -77,7 +87,7 @@ Medistock Pro Team
     else:
         subject = "Complaint Review Update"
         message = f"""
-Dear {customer.username},
+Dear Customer,
 
 Your complaint regarding:
 

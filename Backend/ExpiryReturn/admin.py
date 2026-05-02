@@ -1,6 +1,6 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.urls import path
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.utils.html import format_html
 
 from .models import ExpiryReturnRequest
@@ -22,7 +22,7 @@ class ExpiryReturnAdmin(admin.ModelAdmin):
     )
 
     list_filter = ("status",)
-    search_fields = ("medicine", "customer__username")
+    search_fields = ("medicine", "customer__email")
 
     # Approve Button
     def approve_button(self, obj):
@@ -55,16 +55,34 @@ class ExpiryReturnAdmin(admin.ModelAdmin):
 
     # Approve Logic
     def approve_request(self, request, pk):
-        obj = ExpiryReturnRequest.objects.get(pk=pk)
+        obj = get_object_or_404(ExpiryReturnRequest, pk=pk)
         obj.status = "Approved"
         obj.save()
-        send_expiry_status_email(obj)
-        return redirect(request.META.get('HTTP_REFERER'))
+
+        try:
+            send_expiry_status_email(obj)
+            messages.success(request, "Expiry return approved and email sent successfully.")
+        except Exception as e:
+            messages.warning(
+                request,
+                f"Expiry return approved, but email could not be sent: {str(e)}"
+            )
+
+        return redirect(request.META.get('HTTP_REFERER', '/admin/'))
 
     # Reject Logic
     def reject_request(self, request, pk):
-        obj = ExpiryReturnRequest.objects.get(pk=pk)
+        obj = get_object_or_404(ExpiryReturnRequest, pk=pk)
         obj.status = "Rejected"
         obj.save()
-        send_expiry_status_email(obj)
-        return redirect(request.META.get('HTTP_REFERER'))
+
+        try:
+            send_expiry_status_email(obj)
+            messages.success(request, "Expiry return rejected and email sent successfully.")
+        except Exception as e:
+            messages.warning(
+                request,
+                f"Expiry return rejected, but email could not be sent: {str(e)}"
+            )
+
+        return redirect(request.META.get('HTTP_REFERER', '/admin/'))
