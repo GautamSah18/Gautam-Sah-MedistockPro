@@ -17,12 +17,6 @@ def create_complaint(request):
 
     if serializer.is_valid():
         complaint = serializer.save(customer=request.user)
-
-        try:
-            send_complaint_email(complaint)
-        except Exception as e:
-            print("Complaint email send failed:", str(e))
-
         return Response(
             {
                 "message": "Complaint submitted successfully",
@@ -90,7 +84,7 @@ Thank you for bringing this to our attention.
 Regards,
 Medistock Pro Team
 """
-    else:
+    elif complaint.status == "Rejected":
         subject = "Complaint Review Update"
         message = f"""
 Dear Customer,
@@ -106,6 +100,8 @@ If you need further assistance, please contact support.
 Regards,
 Medistock Pro Team
 """
+    else:
+        return
 
     send_mail(
         subject,

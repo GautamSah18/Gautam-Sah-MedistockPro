@@ -10,7 +10,6 @@ from .serializers import ExpiryReturnSerializer
 
 
 # CUSTOMER APIs
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_expiry_return(request):
@@ -18,12 +17,6 @@ def create_expiry_return(request):
 
     if serializer.is_valid():
         expiry_request = serializer.save(customer=request.user)
-
-        try:
-            send_expiry_status_email(expiry_request)
-        except Exception as e:
-            print("Expiry return create email failed:", str(e))
-
         return Response(
             {
                 "message": "Expiry return request submitted successfully",
@@ -47,7 +40,6 @@ def my_expiry_returns(request):
 
 
 # ADMIN APIs
-
 @api_view(["GET"])
 @permission_classes([IsAdminUser])
 def admin_expiry_returns(request):
@@ -82,8 +74,6 @@ def update_expiry_status(request, pk):
     }, status=200)
 
 
-# EMAIL FUNCTION
-
 def send_expiry_status_email(expiry_request):
     customer = expiry_request.customer
 
@@ -114,7 +104,7 @@ Thank you for using Medistock Pro.
 Regards,
 Medistock Pro Team
 """
-    else:
+    elif status_value == "Rejected":
         subject = "Expiry Return Rejected - Medistock Pro"
         message = f"""
 Dear Customer,
@@ -131,6 +121,8 @@ For further clarification, please contact our support team.
 Regards,
 Medistock Pro Team
 """
+    else:
+        return
 
     send_mail(
         subject,
