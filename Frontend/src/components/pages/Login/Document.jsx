@@ -19,30 +19,21 @@ const Document = () => {
   const navigate = useNavigate();
 
   const userId =
+    location.state?.user_id ||
     location.state?.userId ||
     Number(localStorage.getItem("registration_user_id"));
 
   useEffect(() => {
-    if (location.state?.userId) {
+    const incomingUserId =
+      location.state?.user_id || location.state?.userId;
+
+    if (incomingUserId) {
       localStorage.setItem(
         "registration_user_id",
-        location.state.userId
+        incomingUserId
       );
     }
   }, [location.state]);
-
-  if (!userId) {
-    return (
-      <div className="verification-page">
-        <div className="verification-container">
-          <p>Registration session expired.</p>
-          <button onClick={() => navigate("/register")}>
-            Go to Register
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const [files, setFiles] = useState({
     [DOCUMENT_TYPES.PAN]: null,
@@ -56,6 +47,19 @@ const Document = () => {
     useState(null);
 
   const fileInputs = useRef({});
+
+  if (!userId) {
+    return (
+      <div className="verification-page">
+        <div className="verification-container">
+          <p>Registration session expired.</p>
+          <button onClick={() => navigate("/register")}>
+            Go to Register
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleFileChange = (type, event) => {
     const selectedFile = event.target.files[0];
@@ -128,9 +132,10 @@ const Document = () => {
       setVerificationResult(null);
 
       const formData = new FormData();
-      formData.append("pan", files[DOCUMENT_TYPES.PAN]);
+      formData.append("user_id", userId);
+      formData.append("pan_number", files[DOCUMENT_TYPES.PAN]);
       formData.append(
-        "license",
+        "pharmacy_license",
         files[DOCUMENT_TYPES.LICENSE]
       );
       formData.append(
@@ -139,7 +144,7 @@ const Document = () => {
       );
 
       const response = await api.post(
-        "/api/verification/verify-documents/",
+        "/api/auth/register/step2/",
         formData,
         {
           headers: {
@@ -148,17 +153,28 @@ const Document = () => {
         }
       );
 
-      setVerificationResult(response.data);
+      setVerificationResult({
+        verified: true,
+        message: response.data.message,
+      });
 
-      if (response.data.verified) {
-        setTimeout(() => {
-          navigate("/login");
-        }, 2500);
-      }
+      localStorage.removeItem("registration_user_id");
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 2500);
 
     } catch (error) {
-      console.error("Verification error:", error);
-      alert("Verification failed. Try again.");
+      console.error("Document upload error:", error);
+
+      const errorMessage =
+        error.response?.data?.error ||
+        "Document upload failed. Please try again.";
+
+      setVerificationResult({
+        verified: false,
+        message: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -254,50 +270,47 @@ const Document = () => {
           onClick={handleSubmit}
           disabled={loading}
         >
-          {loading ? "Verifying..." : "Submit for Verification"}
+          {loading ? "Submitting..." : "Submit for Verification"}
         </button>
 
-       {verificationResult && (
-  <div className="overlay">
-    <div className="result-popup">
-      {verificationResult.verified ? (
-        <>
-          <FaCheckCircle className="popup-success" />
-          <h3>Documents Verified Successfully</h3>
+        {verificationResult && (
+          <div className="overlay">
+            <div className="result-popup">
+              {verificationResult.verified ? (
+                <>
+                  <FaCheckCircle className="popup-success" />
+                  <h3>Documents Uploaded Successfully</h3>
 
-          <p>
-            Your documents have been verified by the AI system.
-          </p>
+                  <p>
+                    Your documents have been submitted successfully.
+                  </p>
 
-          <div className="admin-wait-box">
-            ⏳ Please wait for Admin Verification.
+                  <div className="admin-wait-box">
+                    ⏳ Please wait for Admin Verification.
+                  </div>
+
+                  <p className="admin-note">
+                    Your account will be activated once the admin
+                    reviews and approves your documents.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <FaTimesCircle className="popup-error" />
+                  <h3>Upload Failed</h3>
+                  <p>{verificationResult.message}</p>
+                </>
+              )}
+
+              <button
+                className="popup-btn"
+                onClick={() => navigate("/login")}
+              >
+                Go to Login
+              </button>
+            </div>
           </div>
-
-          <p className="admin-note">
-            Your account will be activated once the admin
-            reviews and approves your documents.
-          </p>
-        </>
-      ) : (
-        <>
-          <FaTimesCircle className="popup-error" />
-          <h3>Verification Failed</h3>
-          <p>
-            The extracted names did not match across
-            documents.
-          </p>
-        </>
-      )}
-
-      <button
-        className="popup-btn"
-        onClick={() => navigate("/login")}
-      >
-        Go to Login
-      </button>
-    </div>
-  </div>
-)}
+        )}
       </div>
     </div>
   );

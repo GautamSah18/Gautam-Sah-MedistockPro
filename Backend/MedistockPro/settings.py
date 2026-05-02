@@ -190,7 +190,7 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# ✅ FIXED FOR DJANGO 5 + CLOUDINARY
+#  FIXED FOR DJANGO 5 + CLOUDINARY
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",

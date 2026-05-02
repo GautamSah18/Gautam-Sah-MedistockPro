@@ -176,7 +176,7 @@ def verify_otp(request):
 
     user.save(update_fields=["is_active"])
 
-    cache.set(f"registration_{user.id}", user.id, timeout=3600)
+
 
     return Response(
         {
@@ -196,8 +196,8 @@ def verify_otp(request):
 def registration_step2(request):
     user_id = request.data.get("user_id")
 
-    if not cache.get(f"registration_{user_id}"):
-        return Response({"error": "Session expired"}, status=400)
+    if not user_id:
+        return Response({"error": "User ID is required"}, status=400)
 
     try:
         user = CustomUser.objects.get(id=user_id)
@@ -219,13 +219,10 @@ def registration_step2(request):
     user.registration_complete = True
     user.save(update_fields=["registration_complete"])
 
-    cache.delete(f"registration_{user_id}")
-
     return Response(
         {"message": "Documents uploaded successfully"},
         status=201
     )
-
 
 # Login (JWT)
 @api_view(['POST'])
