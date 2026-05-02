@@ -24,7 +24,13 @@ def create_expiry_return(request):
         except Exception as e:
             print("Expiry return create email failed:", str(e))
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                "message": "Expiry return request submitted successfully",
+                "data": ExpiryReturnSerializer(expiry_request).data
+            },
+            status=status.HTTP_201_CREATED
+        )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

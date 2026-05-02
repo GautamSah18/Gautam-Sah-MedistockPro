@@ -5,14 +5,12 @@ import "./customerDashboard.css";
 import TopNav from "./TopNav";
 
 export default function CustomerComplaints() {
-
     const [medicineName, setMedicineName] = useState("");
     const [reason, setReason] = useState("");
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [medicines, setMedicines] = useState([]);
 
-    // Fetch medicines for datalist
     useEffect(() => {
         const fetchMedicines = async () => {
             try {
@@ -25,7 +23,6 @@ export default function CustomerComplaints() {
         fetchMedicines();
     }, []);
 
-    // Submit complaint to backend
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -37,10 +34,12 @@ export default function CustomerComplaints() {
         try {
             setLoading(true);
 
-            await api.post("/api/complaints/create/", {
+            const response = await api.post("/api/complaints/create/", {
                 medicine_name: medicineName,
                 reason: reason
             });
+
+            console.log("Complaint submitted successfully:", response.data);
 
             setSubmitted(true);
             setTimeout(() => setSubmitted(false), 3000);
@@ -48,9 +47,16 @@ export default function CustomerComplaints() {
             setMedicineName("");
             setReason("");
 
+            alert(response.data?.message || "Complaint submitted successfully.");
         } catch (error) {
             console.error("Error submitting complaint:", error);
-            alert("Something went wrong. Please try again.");
+            console.error("Backend response:", error.response?.data);
+
+            alert(
+                error.response?.data?.error ||
+                error.response?.data?.message ||
+                "Something went wrong. Please try again."
+            );
         } finally {
             setLoading(false);
         }
@@ -86,7 +92,6 @@ export default function CustomerComplaints() {
                     </div>
 
                     <form onSubmit={handleSubmit} style={{ marginTop: "24px" }}>
-
                         <div className="field">
                             <label style={{ fontWeight: 950, fontSize: 13, display: "block", marginBottom: "8px" }}>
                                 Medicine Name *
@@ -159,7 +164,6 @@ export default function CustomerComplaints() {
                         >
                             {loading ? "Submitting..." : "Submit Complaint"}
                         </button>
-
                     </form>
 
                     {submitted && (

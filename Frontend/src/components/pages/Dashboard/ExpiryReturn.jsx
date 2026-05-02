@@ -4,7 +4,6 @@ import TopNav from "./TopNav";
 import api from "../../../services/api";
 
 export default function ExpiryReturn() {
-
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +15,6 @@ export default function ExpiryReturn() {
     reason: ""
   });
 
-  // Fetch expiry return history on load
   useEffect(() => {
     fetchReturns();
   }, []);
@@ -30,7 +28,6 @@ export default function ExpiryReturn() {
     }
   };
 
-  // Submit expiry return request
   const submit = async (e) => {
     e.preventDefault();
 
@@ -50,7 +47,9 @@ export default function ExpiryReturn() {
         reason: form.reason,
       });
 
-      setHistory((prev) => [res.data, ...prev]);
+      console.log("Expiry return success:", res.data);
+
+      await fetchReturns();
 
       setForm({
         medicine: "",
@@ -60,9 +59,16 @@ export default function ExpiryReturn() {
         reason: ""
       });
 
+      alert(res.data?.message || "Expiry return request submitted successfully.");
     } catch (error) {
       console.error("Error submitting expiry return:", error);
-      alert("Something went wrong.");
+      console.error("Backend response:", error.response?.data);
+
+      alert(
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Something went wrong. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -80,11 +86,8 @@ export default function ExpiryReturn() {
           </p>
 
           <div className="returns-layout">
-
-            {/* Form Section */}
             <form className="return-form" onSubmit={submit}>
               <div className="form-grid">
-
                 <div className="field">
                   <label>Medicine Name *</label>
                   <input
@@ -129,7 +132,6 @@ export default function ExpiryReturn() {
                     placeholder="Qty"
                   />
                 </div>
-
               </div>
 
               <label className="field" style={{ display: "block" }}>
@@ -151,12 +153,10 @@ export default function ExpiryReturn() {
               </button>
             </form>
 
-            {/* History Section */}
             <div className="return-history">
               <div className="hist-title">Return History</div>
 
               <div className="hist-table">
-
                 <div className="hist-row head">
                   <div>ID</div>
                   <div>Medicine</div>
@@ -184,15 +184,12 @@ export default function ExpiryReturn() {
                     </div>
                   </div>
                 ))}
-
               </div>
 
               <div className="detail-hint">
                 Admin will review returns. Approved returns will be collected or credited.
               </div>
-
             </div>
-
           </div>
         </div>
       </div>
