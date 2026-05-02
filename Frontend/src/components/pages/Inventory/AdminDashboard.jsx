@@ -38,7 +38,7 @@ export default function AdminDashboard() {
 
   /* ---------- Chart Data ---------- */
 
-  // Sales Trend (Mock or from API later)
+  // Sales Trend
   const salesTrend = data.sales_trend || [
     { day: "Mon", sales: 1200 },
     { day: "Tue", sales: 1800 },

@@ -14,7 +14,7 @@ export default function OTPVerification() {
 
   const navigate = useNavigate();
 
-  // ✅ Get email & password from localStorage
+  //  Get email & password from localStorage
   const email = localStorage.getItem("otp_email");
   const password = localStorage.getItem("otp_password");
 
@@ -36,7 +36,7 @@ export default function OTPVerification() {
     return () => clearInterval(interval);
   }, [timer]);
 
-  // 🔐 VERIFY OTP + AUTO LOGIN
+  //  VERIFY OTP + AUTO LOGIN
   const handleVerify = async (e) => {
     e.preventDefault();
     setError("");
@@ -100,7 +100,7 @@ export default function OTPVerification() {
     }
   };
 
-  // 🔁 RESEND OTP
+  // RESEND OTP
   const handleResendOTP = async () => {
     if (timer > 0 || resending) return;
 
