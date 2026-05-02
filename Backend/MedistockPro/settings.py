@@ -141,7 +141,7 @@ WSGI_APPLICATION = 'MedistockPro.wsgi.application'
 
 ASGI_APPLICATION = "MedistockPro.asgi.application"
 
-
+REDIS_URL = os.getenv("REDIS_URL")
 if REDIS_URL:
     CHANNEL_LAYERS = {
         "default": {
