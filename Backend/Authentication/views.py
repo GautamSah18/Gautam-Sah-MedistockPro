@@ -302,7 +302,7 @@ def logout_view(request):
 
 
 # User Profile
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])
 def user_profile(request):
@@ -313,27 +313,19 @@ def user_profile(request):
         data = serializer.data
         data['id'] = user.id
         data['role'] = user.role
-        data['profile_picture'] = (
-            request.build_absolute_uri(user.profile_picture.url)
-            if user.profile_picture else None
-        )
+        data['profile_picture'] = user.profile_picture.url if user.profile_picture else None
         return Response(data, status=200)
 
-    serializer = UserProfileSerializer(
-        user,
-        data=request.data,
-        partial=True
-    )
+    serializer = UserProfileSerializer(user, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
     serializer.save()
 
-    data = serializer.data
+    user.refresh_from_db()
+
+    data = UserProfileSerializer(user).data
     data['id'] = user.id
     data['role'] = user.role
-    data['profile_picture'] = (
-        request.build_absolute_uri(user.profile_picture.url)
-        if user.profile_picture else None
-    )
+    data['profile_picture'] = user.profile_picture.url if user.profile_picture else None
 
     return Response(data, status=200)
 

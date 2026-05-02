@@ -62,6 +62,8 @@ class LoginSerializer(serializers.Serializer):
 # User Profile Serializer
 # ==========================
 class UserProfileSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = CustomUser
         fields = [
@@ -84,16 +86,22 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         # Replace profile picture safely
         if 'profile_picture' in validated_data:
-            if instance.profile_picture:
-                try:
-                    if default_storage.exists(instance.profile_picture.name):
-                        default_storage.delete(instance.profile_picture.name)
-                except Exception:
-                    pass
-            instance.profile_picture = validated_data['profile_picture']
+            new_picture = validated_data.get('profile_picture')
+
+            if new_picture:
+                if instance.profile_picture:
+                    try:
+                        instance.profile_picture.delete(save=False)
+                    except Exception:
+                        pass
+
+                instance.profile_picture = new_picture
 
         instance.save()
         return instance
+    
+
+
 
 
 # ==========================
