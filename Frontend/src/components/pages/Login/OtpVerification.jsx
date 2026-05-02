@@ -14,18 +14,15 @@ export default function OTPVerification() {
 
   const navigate = useNavigate();
 
-  //  Get email & password from localStorage
   const email = localStorage.getItem("otp_email");
   const password = localStorage.getItem("otp_password");
 
-  // Redirect if no email
   useEffect(() => {
     if (!email) {
       navigate("/register");
     }
   }, [email, navigate]);
 
-  // Countdown timer
   useEffect(() => {
     if (timer === 0) return;
 
@@ -36,7 +33,6 @@ export default function OTPVerification() {
     return () => clearInterval(interval);
   }, [timer]);
 
-  //  VERIFY OTP + AUTO LOGIN
   const handleVerify = async (e) => {
     e.preventDefault();
     setError("");
@@ -50,7 +46,6 @@ export default function OTPVerification() {
     try {
       setLoading(true);
 
-      // Step 1: Verify OTP
       const res = await api.post("/api/auth/verify-otp/", {
         email: email,
         code: otp,
@@ -59,7 +54,6 @@ export default function OTPVerification() {
       if (res.status === 200) {
         setMessage("OTP verified successfully!");
 
-        // Handle auto-login from verify-otp response (e.g., for delivery role)
         if (res.data.access && res.data.refresh) {
           localStorage.setItem("access_token", res.data.access);
           localStorage.setItem("refresh_token", res.data.refresh);
@@ -69,7 +63,6 @@ export default function OTPVerification() {
           if (user.email) localStorage.setItem("userEmail", user.email);
           if (user.role) localStorage.setItem("userRole", user.role);
 
-          // Remove temp password if it exists
           localStorage.removeItem("otp_password");
 
           setMessage("Verification successful! Redirecting to dashboard...");
@@ -79,13 +72,18 @@ export default function OTPVerification() {
           return;
         }
 
-        // For roles that need document upload (like pharmacy/customer)
         if (res.data.next_step === "upload_documents") {
+          localStorage.setItem("registration_user_id", res.data.user_id);
+
           setTimeout(() => {
-            navigate("/upload-documents");
+            navigate("/upload-documents", {
+              state: {
+                user_id: res.data.user_id,
+                role: res.data.role,
+              },
+            });
           }, 1500);
         } else {
-          // Default fallback
           setTimeout(() => {
             navigate("/login", { state: { message: "Account verified. Please log in." } });
           }, 1500);
@@ -100,7 +98,6 @@ export default function OTPVerification() {
     }
   };
 
-  // RESEND OTP
   const handleResendOTP = async () => {
     if (timer > 0 || resending) return;
 
