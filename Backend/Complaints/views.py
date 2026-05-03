@@ -3,11 +3,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
-from django.core.mail import send_mail
-from django.conf import settings
 
 from .models import Complaint
 from .serializers import ComplaintSerializer
+from notifications.email_utils import send_brevo_email
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +51,6 @@ def update_complaint_status(request, pk):
         return Response({"error": "Invalid status"}, status=400)
 
     complaint.status = new_status
-
-    # update_fields prevents post_save signal from firing for unrelated logic
     complaint.save(update_fields=["status"])
 
     try:
@@ -105,10 +102,4 @@ Medistock Pro Team"""
     else:
         return
 
-    send_mail(
-        subject,
-        message,
-        settings.EMAIL_HOST_USER,
-        [customer.email],
-        fail_silently=False,
-    )
+    send_brevo_email(subject, message, [customer.email])

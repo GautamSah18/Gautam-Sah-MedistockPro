@@ -3,11 +3,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
-from django.core.mail import send_mail
-from django.conf import settings
 
 from .models import ExpiryReturnRequest
 from .serializers import ExpiryReturnSerializer
+from notifications.email_utils import send_brevo_email
 
 logger = logging.getLogger(__name__)
 
@@ -125,10 +124,4 @@ Medistock Pro Team"""
     else:
         return
 
-    send_mail(
-        subject,
-        message,
-        settings.EMAIL_HOST_USER,
-        [customer.email],
-        fail_silently=False,
-    )
+    send_brevo_email(subject, message, [customer.email])
