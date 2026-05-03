@@ -195,34 +195,89 @@ def verify_otp(request):
 @parser_classes([MultiPartParser, FormParser])
 def registration_step2(request):
     user_id = request.data.get("user_id")
-
+ 
     if not user_id:
         return Response({"error": "User ID is required"}, status=400)
-
+ 
     try:
         user = CustomUser.objects.get(id=user_id)
     except CustomUser.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
-
+ 
     if not user.otps.filter(is_verified=True).exists():
         return Response({"error": "OTP not verified"}, status=400)
-
+ 
     form = RegistrationStep2Form(request.data, request.FILES)
-
+ 
     if not form.is_valid():
         return Response(form.errors, status=400)
+ 
+
+    pan = request.FILES.get("pan_number")
+    citizenship = request.FILES.get("citizenship")
+    license_doc = request.FILES.get("pharmacy_license")
+ 
+    if not all([pan, citizenship, license_doc]):
+        return Response(
+            {"error": "All three documents (PAN, citizenship, pharmacy license) are required."},
+            status=400
+        )
+ 
+    tmp_files = []
+    try:
+        file_paths = []
+        for file in [pan, citizenship, license_doc]:
+            suffix = os.path.splitext(file.name)[1] or ".jpg"
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+            for chunk in file.chunks():
+                tmp.write(chunk)
+            tmp.close()
+            file_paths.append(tmp.name)
+            tmp_files.append(tmp.name)
+ 
+        result = verify_documents(file_paths)
+        logger.info(f"Verification result for user {user_id}: {result}")
+ 
+    except Exception as e:
+        logger.error(f"Document verification error for user {user_id}: {str(e)}", exc_info=True)
+        return Response(
+            {"error": "Document verification failed. Please upload clear images and try again."},
+            status=500
+        )
+    finally:
+        for path in tmp_files:
+            try:
+                os.unlink(path)
+            except Exception:
+                pass
+ 
+    if not result.get("verified"):
+        return Response(
+            {
+                "error": "Document verification failed. Names on documents do not match.",
+                "confidence_score": result.get("confidence_score", 0),
+                "reason": result.get("reason", "Verification failed."),
+                "documents": result.get("documents", [])
+            },
+            status=400
+        )
+ 
 
     docs = form.save(commit=False)
     docs.user = user
     docs.save()
-
+ 
     user.registration_complete = True
     user.save(update_fields=["registration_complete"])
-
+ 
     return Response(
-        {"message": "Documents uploaded successfully"},
+        {
+            "message": "Documents verified and uploaded successfully.",
+            "confidence_score": result.get("confidence_score"),
+        },
         status=201
     )
+ 
 
 # Login (JWT)
 @api_view(['POST'])
