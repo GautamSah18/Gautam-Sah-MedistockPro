@@ -1,15 +1,15 @@
+import sys
 import cv2
 import pytesseract
 import re
 from difflib import SequenceMatcher
 
+if sys.platform == "win32":
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+else:
+    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-
-# --------------------------------------------------
-# Normalize Nepali Digits
-# --------------------------------------------------
 def normalize_nepali_digits(text):
     nepali_to_english = {
         "०": "0", "१": "1", "२": "2", "३": "3", "४": "4",
@@ -22,9 +22,6 @@ def normalize_nepali_digits(text):
     return text
 
 
-# --------------------------------------------------
-# Strong Name Cleaning
-# --------------------------------------------------
 def clean_name(text):
     if not text:
         return None
@@ -35,21 +32,13 @@ def clean_name(text):
         return None
 
     name = "".join(nepali_chars)
-
-
     name = name.lstrip("ःयरथनम")
 
     return name.strip()
 
 
-# --------------------------------------------------
-# OCR Extraction
-# --------------------------------------------------
 def extract_text(image_path):
-
     img = cv2.imread(image_path)
-
-    # Resize for better OCR
     img = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -68,14 +57,9 @@ def extract_text(image_path):
     return text
 
 
-# --------------------------------------------------
-# Extract Name Only
-# --------------------------------------------------
 def extract_name(text):
-
     name = None
 
-    # Extract text after "नाम" or "नाम/थर"
     name_match = re.search(r"नाम[/थर]*\s*[:\-]?\s*(.*)", text)
 
     if name_match:
@@ -86,18 +70,11 @@ def extract_name(text):
     return name
 
 
-# --------------------------------------------------
-# Similarity Function
-# --------------------------------------------------
 def similarity(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 
-# --------------------------------------------------
-# MAIN VERIFICATION (NAME ONLY)
-# --------------------------------------------------
 def verify_documents(file_paths):
-
     extracted_data = []
 
     for path in file_paths:
@@ -114,9 +91,7 @@ def verify_documents(file_paths):
     verified = False
     confidence = 0
 
-    # Require all 3 names
     if len(names) == 3:
-
         score1 = similarity(names[0], names[1])
         score2 = similarity(names[1], names[2])
 

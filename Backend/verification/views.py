@@ -1,18 +1,16 @@
+import os
+import tempfile
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.conf import settings
-import os
 from .utils import verify_documents
 
 
 class DocumentVerificationAPIView(APIView):
-
     permission_classes = [AllowAny]
 
     def post(self, request):
-
         pan = request.FILES.get("pan")
         citizenship = request.FILES.get("citizenship")
         license_doc = request.FILES.get("license")
@@ -24,16 +22,24 @@ class DocumentVerificationAPIView(APIView):
             )
 
         file_paths = []
+        tmp_files = []
 
-        for file in [pan, citizenship, license_doc]:
-            file_path = os.path.join(settings.MEDIA_ROOT, file.name)
-
-            with open(file_path, "wb+") as destination:
+        try:
+            for file in [pan, citizenship, license_doc]:
+                suffix = os.path.splitext(file.name)[1]
+                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
                 for chunk in file.chunks():
-                    destination.write(chunk)
+                    tmp.write(chunk)
+                tmp.close()
+                file_paths.append(tmp.name)
+                tmp_files.append(tmp.name)
 
-            file_paths.append(file_path)
+            result = verify_documents(file_paths)
+            return Response(result)
 
-        result = verify_documents(file_paths)
-
-        return Response(result)
+        finally:
+            for path in tmp_files:
+                try:
+                    os.unlink(path)
+                except Exception:
+                    pass
