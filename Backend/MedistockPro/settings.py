@@ -239,10 +239,8 @@ EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = os.getenv(
-    "DEFAULT_FROM_EMAIL",
-    f"Medistock Pro <{os.getenv('EMAIL_HOST_USER', 'gautamsah4271@gmail.com')}>"
-)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "gautamsah4271@gmail.com")
+
 EMAIL_TIMEOUT = 10
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024

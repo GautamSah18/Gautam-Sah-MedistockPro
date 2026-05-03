@@ -1,3 +1,4 @@
+import logging
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -8,8 +9,9 @@ from django.conf import settings
 from .models import Complaint
 from .serializers import ComplaintSerializer
 
+logger = logging.getLogger(__name__)
 
-# Customer create complaint
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_complaint(request):
@@ -28,7 +30,6 @@ def create_complaint(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Admin view all complaints
 @api_view(["GET"])
 @permission_classes([IsAdminUser])
 def admin_complaints(request):
@@ -37,7 +38,6 @@ def admin_complaints(request):
     return Response(serializer.data)
 
 
-# Admin approve/reject complaint
 @api_view(["PATCH"])
 @permission_classes([IsAdminUser])
 def update_complaint_status(request, pk):
@@ -52,12 +52,15 @@ def update_complaint_status(request, pk):
         return Response({"error": "Invalid status"}, status=400)
 
     complaint.status = new_status
-    complaint.save()
+
+    # update_fields prevents post_save signal from firing for unrelated logic
+    complaint.save(update_fields=["status"])
 
     try:
         send_complaint_email(complaint)
+        logger.info(f"Complaint email sent → {complaint.customer.email}")
     except Exception as e:
-        print("Complaint status email failed:", str(e))
+        logger.error(f"Complaint email failed for pk={pk}: {str(e)}", exc_info=True)
 
     return Response({"message": f"Complaint {new_status} successfully"}, status=200)
 
@@ -66,12 +69,12 @@ def send_complaint_email(complaint):
     customer = complaint.customer
 
     if not customer.email:
+        logger.warning(f"Complaint {complaint.pk} has no customer email, skipping.")
         return
 
     if complaint.status == "Approved":
         subject = "We Apologize - Complaint Acknowledged"
-        message = f"""
-Dear Customer,
+        message = f"""Dear Customer,
 
 We sincerely apologize for the inconvenience caused regarding:
 
@@ -82,12 +85,11 @@ We have reviewed your complaint and will sort this issue out as soon as possible
 Thank you for bringing this to our attention.
 
 Regards,
-Medistock Pro Team
-"""
+Medistock Pro Team"""
+
     elif complaint.status == "Rejected":
         subject = "Complaint Review Update"
-        message = f"""
-Dear Customer,
+        message = f"""Dear Customer,
 
 Your complaint regarding:
 
@@ -98,15 +100,15 @@ has been reviewed and closed.
 If you need further assistance, please contact support.
 
 Regards,
-Medistock Pro Team
-"""
+Medistock Pro Team"""
+
     else:
         return
 
     send_mail(
         subject,
         message,
-        settings.DEFAULT_FROM_EMAIL,
+        settings.EMAIL_HOST_USER,
         [customer.email],
         fail_silently=False,
     )
