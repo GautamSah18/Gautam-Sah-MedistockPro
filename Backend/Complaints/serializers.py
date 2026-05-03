@@ -7,13 +7,19 @@ class ComplaintSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Complaint
-        fields = "__all__"
-        read_only_fields = ["customer", "status", "created_at"]
+        fields = [
+            "id",
+            "customer",
+            "customer_name",
+            "medicine_name",
+            "reason",
+            "status",
+            "created_at",
+        ]
+        read_only_fields = ["id", "customer", "customer_name", "status", "created_at"]
 
     def get_customer_name(self, obj):
         if obj.customer:
             full_name = f"{obj.customer.first_name or ''} {obj.customer.last_name or ''}".strip()
-            if full_name:
-                return full_name
-            return obj.customer.email
+            return full_name if full_name else obj.customer.email
         return ""
