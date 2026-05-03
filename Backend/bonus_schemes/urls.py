@@ -23,4 +23,7 @@ urlpatterns = [
     path('applied-schemes/me/', views.my_applied_schemes),
     # Admin view of all applied schemes
     path('applied-schemes/all/', views.all_applied_schemes),
+
+    path("gifts/manage/", views.manage_gifts),
+    path("gifts/<int:pk>/", views.manage_gift_detail),
 ]

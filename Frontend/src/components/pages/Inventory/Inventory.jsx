@@ -17,7 +17,7 @@ import AdminProfileSettings from "./AdminProfileSettings";
 import SeasonalMedicineConfig from "./SeasonalMedicineConfig";
 import MedicineStock from "./MedicineStock";
 import UserManagement from "./UserManagement";
-
+import GiftManagement from "./GiftManagement";
 const Inventory = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
@@ -482,6 +482,7 @@ const Inventory = () => {
     { key: "schemes", label: "Schemes", icon: "🎁", active: activeTab === 'schemes' },
     { key: "seasonal", label: "Seasonal", icon: "🌤️", active: activeTab === 'seasonal' },
     { key: "applied-schemes", label: "Applied Schemes", icon: "✅", active: activeTab === 'applied-schemes' },
+    { key: "gifts", label: "Gifts", icon: "🎀", active: activeTab === 'gifts' },
     { key: "orders", label: "Orders", icon: "🧺", active: activeTab === 'orders' },
     { key: "expiry-return", label: "Expiry Return", icon: "🔄", active: activeTab === 'expiry-return' },
     { key: "complaints", label: "Complaints", icon: "📢", active: activeTab === 'complaints' },
@@ -593,6 +594,7 @@ const Inventory = () => {
               {activeTab === 'loyalty' && 'Loyalty Management'}
               {activeTab === 'bonuses' && 'Bonus Management'}
               {activeTab === 'schemes' && 'Scheme Management'}
+              {activeTab === 'gifts' && 'Gift Management'}
               {activeTab === 'seasonal' && 'Seasonal Medicine Mapping'}
               {activeTab === 'applied-schemes' && 'Applied Schemes'}
               {activeTab === 'expiry-return' && 'Expiry Return Requests'}
@@ -609,6 +611,7 @@ const Inventory = () => {
               {activeTab === 'loyalty' && 'View all customer loyalty points, tiers, and credit bill payments.'}
               {activeTab === 'bonuses' && 'View and manage customer Bonuses.'}
               {activeTab === 'schemes' && 'View and manage customer Schemes.'}
+              {activeTab === 'gifts' && 'Add and manage gifts that can be assigned to bonus schemes.'}
               {activeTab === 'seasonal' && 'Map medicines to seasons so they appear automatically on the customer dashboard.'}
               {activeTab === 'applied-schemes' && 'View all schemes applied by customers.'}
               {activeTab === 'expiry-return' && 'View and manage medicine expiry return requests from customers.'}
@@ -843,6 +846,7 @@ const Inventory = () => {
         {activeTab === 'schemes' && <SchemeManagement />}
         {activeTab === 'seasonal' && <SeasonalMedicineConfig />}
         {activeTab === 'applied-schemes' && <AppliedSchemes />}
+        {activeTab === 'gifts' && <GiftManagement />}
         {activeTab === 'orders' && <Orders />}
         {activeTab === 'expiry-return' && <ExpiryReturnRequests />}
         {activeTab === 'complaints' && <ComplaintsRequests />}
